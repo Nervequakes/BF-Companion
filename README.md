@@ -1,0 +1,125 @@
+# BF Companion
+
+An offline Android guide for **Brave Frontier Revived**: every unit, sphere, drop and summon gate in your
+pocket, plus a team builder that shows your squad's numbers like the game's Manage Squad screen.
+
+No account, no ads, no internet needed: everything is inside the app.
+
+**[⬇ Download the latest APK](../../releases/latest)** · ✅ No permissions · ✅ No internet access · ✅ [Code you can read](app) · ✅ [Scanned on VirusTotal](https://www.virustotal.com/gui/file/4a0becfd3c7d33b522ca3ecc7b6105d0245334f8b0ad832bdbb7cdcc6cafebd6) · [Is it safe?](#is-it-safe)
+
+<p align="center">
+  <img src="screenshots/1-units.jpg" width="200" alt="Unit list">
+  <img src="screenshots/2-unit.jpg" width="200" alt="Unit page with the animated battle sprite">
+  <img src="screenshots/3-skills.jpg" width="200" alt="Skills with roles and numbers">
+  <img src="screenshots/4-how-to-get.jpg" width="200" alt="Where to capture a unit in Revived">
+</p>
+<p align="center">
+  <img src="screenshots/5-team.jpg" width="200" alt="Team builder">
+  <img src="screenshots/6-battle-check.jpg" width="200" alt="Battle check">
+  <img src="screenshots/7-gate.jpg" width="200" alt="Summon gate with chances per pull">
+  <img src="screenshots/8-quest.jpg" width="200" alt="What drops in a quest">
+</p>
+
+## What's inside
+
+**Units**
+- All 2,292 units with artwork and their **animated battle sprite**, taken from the game's own files.
+- Stats for every type (Lord, Anima, Breaker, Guardian, Oracle), Imps, max level.
+- Leader Skill, BB, SBB, UBB, Extra Skill and Dual BB with BC cost, hits and the exact numbers.
+- Roles with how strong they are ("Mitigation 50%", "BB ATK 600%"), SP enhancements, evolution line and materials, lore.
+- Search by name, skill text or role, several words at once: `fire omni heal`, `def ignore`, `water mitigation`.
+- Sort by rarity, newest, stats, cost or the strongest unit for a role.
+
+**How to get them in Revived**
+- Summon gates the unit is in, with the **chance per pull**.
+- Quests where you can **capture** it, with the capture chance; clear rewards; event shops.
+- A page for every summon gate, and a *Get it* filter (Summon, Capture, Reward / shop).
+
+**Spheres and items**
+- Every sphere and material, where it drops in Revived (with the drop chance per kill or per hit), clear rewards and shops.
+- **Crafting planner**: all base materials and Karma for any Synthesis recipe, for any amount.
+- Best spheres for each unit, including the ones that switch on its extra skill.
+
+**Quest search**
+- Type an item to see where it drops, or a quest, area or raid to see what drops there and which units you can capture.
+
+**Team builder**
+- 3 teams of 5 units + a friend, on a battle field with the animated sprites.
+- Squad numbers like the game: HP, ATK, DEF, REC with the unit type, spheres, leader skill, friend skill, extra skills and Imps.
+- **Battle check**: how much BC the team's SBBs fill, who can cast again right away, and rough BB/SBB/UBB damage.
+- What the team covers (mitigation, healing, BB fill, buffs…), *Fill empty slots* with units that cover what's missing.
+- Share your team as a picture.
+
+**Also:** favorites, recently viewed, compare up to 3 units side by side, the element chart, swipe between units.
+
+## Install
+
+1. Download `BF-Companion.apk` from the [latest release](../../releases/latest) on your phone.
+2. Open it and allow installing apps from your browser or file manager when Android asks.
+3. Done. The app needs no permissions at all.
+
+Android 7.0 or newer. About 105 MB, because every unit's artwork and animated sprite is included.
+
+Android warns about "unknown apps" for **every** APK installed from outside the Play Store; that warning doesn't
+mean anything is wrong. If Google Play Protect offers to scan the app, let it.
+
+## Is it safe?
+
+Yes, and you don't have to take my word for it:
+
+- **It asks for no permissions at all.** After installing, open *Settings → Apps → BF Companion → Permissions*:
+  it says *No permissions requested*. Android's own tool shows the same for the APK (`aapt2 dump permissions`
+  lists nothing but the app's name).
+- **It can't use the internet.** Without the *Internet* permission Android blocks every network connection, and on
+  top of that the app's code refuses to load anything that isn't one of its own built-in pages
+  ([MainActivity.java, line 51](app/src/sg/bf/companion/MainActivity.java#L51)).
+- **It collects nothing.** No account, no ads, no analytics, no trackers. Your favorites and teams are saved only
+  on your phone, in the app's own storage, and are gone when you uninstall it.
+- **The only file it ever writes** is a picture you choose to share or save (a unit or team card), in
+  *Pictures/BF Companion*.
+- **Read the code.** The [`app`](app) folder holds everything that makes the APK:
+  - [`AndroidManifest.xml`](app/AndroidManifest.xml): what the app is allowed to do (nothing extra).
+  - [`MainActivity.java`](app/src/sg/bf/companion/MainActivity.java): the whole Android part, about 140 lines. It
+    shows the app's pages, saves or shares a picture when you tap *Share*, and handles the back button.
+  - [`www/index.html`](app/www/index.html): the app itself. An APK is a zip file: unzip it and you'll find this
+    exact file as `assets/www/index.html`. The rest of the APK is the game data, artwork and sprites it shows.
+  - [`build_apk.bat`](app/build_apk.bat): how the APK is built with Google's Android tools.
+- **Checked by antivirus engines on VirusTotal:** [see the scan of this exact file](https://www.virustotal.com/gui/file/4a0becfd3c7d33b522ca3ecc7b6105d0245334f8b0ad832bdbb7cdcc6cafebd6),
+  with the result of every engine.
+
+### Check that your download is the real one
+
+The APK of version 4.9 has this SHA-256 checksum:
+
+```
+4a0becfd3c7d33b522ca3ecc7b6105d0245334f8b0ad832bdbb7cdcc6cafebd6
+```
+
+On Windows: `certutil -hashfile BF-Companion.apk SHA256`. On Mac or Linux: `shasum -a 256 BF-Companion.apk`.
+If the result is different, the file isn't the one published here: don't install it.
+
+Every version is signed with the same key. Android refuses to install an update over the app when the signature
+doesn't match, so a fake "update" from someone else can't replace yours. The signing certificate's SHA-256 is:
+
+```
+DB:D6:69:F3:5B:A6:49:2B:CF:20:98:36:4B:8A:35:A9:79:A0:42:59:B5:47:41:4F:6A:F7:59:C2:B8:AD:81:F3
+```
+
+Only download BF Companion from this page's [Releases](../../releases).
+
+## Where the data comes from
+
+- **The game's own files**: unit, skill, sphere and item data, artwork, sprites and icons.
+- **[bfrevive.net](https://bfrevive.net/)**: Revived's server data for drops with chances, capture spots, summon gates and shops.
+- **[Brave Frontier Wiki](https://bravefrontierglobal.fandom.com/)**: skill numbers, SP enhancements, lore and evolution details.
+
+The data is a snapshot from the day the APK was built; new versions come with fresh data.
+
+## Credits
+
+Made by [@Nervequakes](https://github.com/Nervequakes).
+
+Thanks to the BF Revive team for bringing the game back and publishing its data, and to the Brave Frontier Wiki editors.
+
+*BF Companion is a fan-made guide and is not affiliated with gumi Inc., Alim or the BF Revive team. Brave Frontier, its
+characters, artwork and sprites belong to their owners.*

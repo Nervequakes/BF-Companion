@@ -1,0 +1,2 @@
+# keep the app files byte for byte as they are inside the APK
+app/** -text

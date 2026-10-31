@@ -1,0 +1,1313 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BF Companion</title>
+<meta name="theme-color" content="#161922">
+<style>
+/* The phone app: a guide to every Brave Frontier unit, styled after the game (its textures and font in /static).
+   Data: /data/units.json, details.json, items.json, drops.json and /data/w/<id>.json (from the wiki). */
+@font-face { font-family: Rodin; src: url(/static/rodin.woff2) format("woff2"); font-display: swap; }
+:root {
+  --bg: #0b0a14; --card: #141a2e; --card2: #1b2340; --line: #2a3350; --text: #fff; --dim: #c9c3b2; --accent: #ffd45c; --warn: #ff9a3c;
+  --gold: #e9c868; --gold2: #b8902f; --gold3: #5a3f12; --orange: #f7a21b; --blue: #3f8cff;
+  --Fire: #ff6a47; --Water: #49a4ff; --Earth: #5fc56c; --Thunder: #ffd24a; --Light: #f2ecd8; --Dark: #b382ff;
+  --ol: 0 0 2px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 2px 3px rgba(0,0,0,.7);
+  --steel: url(/static/iphx_footer.png); --navh: 78px;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+[hidden] { display: none !important; }
+html { color-scheme: dark; }
+body { margin: 0; color: var(--text); font: 14px/1.45 Arial, "Segoe UI", sans-serif; background: var(--bg) url(/static/base.jpg) center top / cover fixed; overscroll-behavior-y: none; }
+body::before { content: ""; position: fixed; inset: 0; background: linear-gradient(rgba(6,4,16,.5), rgba(6,4,16,.75)); z-index: -1; }
+.r, h1, h2, h3, .tag, .chip, .nav button, .badge, .st, .gname, .pill, .tbl th, .tbl td, .tabs2 button, select { font-family: Rodin, "Arial Black", Arial, sans-serif; }
+.ol { text-shadow: var(--ol); }
+button, select, input { font: inherit; color: var(--text); }
+input, select { background: linear-gradient(#0a1020, #121a36); border: 2px solid var(--gold2); border-radius: 10px; padding: 8px 12px; box-shadow: inset 0 0 0 1px #000, inset 0 2px 10px rgba(0,0,0,.7); }
+input:focus, select:focus { outline: none; border-color: var(--accent); }
+select { text-shadow: var(--ol); font-size: 13px; }
+
+/* top bar */
+.top { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 10px; padding: 6px 12px; padding-top: max(6px, env(safe-area-inset-top));
+  background: var(--steel) center / cover; border-bottom: 3px solid var(--gold); box-shadow: 0 3px 0 var(--gold3), 0 8px 18px rgba(0,0,0,.7); }
+.top .crest { height: 42px; filter: drop-shadow(0 2px 3px #000); }
+.top h1 { font-size: 19px; margin: 0; text-shadow: var(--ol); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.top .back { display: none; width: 40px; height: 40px; border-radius: 50%; border: 0; background: radial-gradient(circle at 40% 35%, #6ab0ff, #1a4fd0 60%, #0f2f8a);
+  box-shadow: 0 0 0 2px var(--gold), 0 0 0 3px #000; font-size: 20px; text-shadow: var(--ol); }
+body.sub .top .back { display: grid; place-items: center; } body.sub .top .crest { display: none; }
+.iconbtn { width: 40px; height: 40px; border-radius: 10px; border: 2px solid var(--gold2); background: linear-gradient(#0a1020, #121a36); display: grid; place-items: center; }
+.iconbtn svg { width: 20px; height: 20px; } .iconbtn.on { border-color: var(--accent); color: var(--accent); }
+.iconbtn img { width: 26px; height: 26px; filter: grayscale(1) brightness(.75) drop-shadow(0 1px 1px #000); } .iconbtn.on img { filter: drop-shadow(0 0 4px #ffd76a); }
+
+/* bottom navigation: the game's own footer buttons */
+.nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: flex; justify-content: center; gap: 10px; padding: 5px 8px 4px; padding-bottom: max(4px, env(safe-area-inset-bottom));
+  background: var(--steel) center / cover; border-top: 3px solid var(--gold); box-shadow: 0 -3px 0 var(--gold3), 0 -8px 18px rgba(0,0,0,.7); }
+.nav button { padding: 0; border: 0; background: none; height: 64px; width: 68px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.nav button img { height: 64px; width: auto; display: block; margin: 0 auto; transition: transform .15s, filter .15s; filter: brightness(.7) saturate(.7) drop-shadow(0 2px 2px #000); }
+.nav button.on img { filter: drop-shadow(0 0 5px rgba(255,215,106,.9)) drop-shadow(0 2px 2px #000); transform: translateY(-3px) scale(1.06); }
+.nav button:active img { transform: scale(.94); }
+.sti { width: 1.2em; height: 1.2em; vertical-align: -.25em; }
+main { padding-bottom: calc(var(--navh) + 20px); }
+.view { display: none; } .view.on { display: block; }
+
+/* filters */
+.bar2 { position: sticky; top: 57px; z-index: 10; padding: 8px 12px; background: linear-gradient(rgba(11,10,20,.96), rgba(11,10,20,.86)); border-bottom: 1px solid var(--gold3); }
+.searchrow { display: flex; gap: 8px; } .searchrow input { flex: 1; min-width: 0; }
+.scroller { display: flex; gap: 6px; overflow-x: auto; padding: 8px 0 2px; scrollbar-width: none; } .scroller::-webkit-scrollbar { display: none; }
+.chip { flex: none; display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: 999px; font-size: 12.5px; text-shadow: var(--ol);
+  border: 2px solid var(--gold2); background: linear-gradient(#0a1020, #121a36); box-shadow: inset 0 0 0 1px #000; opacity: .55; }
+.chip img { width: 22px; height: 22px; filter: drop-shadow(0 1px 1px #000); } .chip .sti { width: 17px; height: 17px; margin-left: -3px; } .chip.on { opacity: 1; border-color: var(--gold); background: linear-gradient(#20305c, #0f1733); }
+.fsum { margin-top: 8px; font-size: 12px; color: var(--dim); text-shadow: var(--ol); cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .fsum b { color: var(--accent); }
+.fbtn { position: relative; flex: none; } .fbtn span { position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; border-radius: 9px; background: #e8531a; font: 11px/18px Rodin, Arial, sans-serif; text-shadow: var(--ol); }
+.fbtn span:empty { display: none; }
+.count { color: var(--dim); font-size: 12px; padding: 8px 12px 0; text-shadow: var(--ol); }
+
+/* unit grid, like the in-game unit list */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 8px 6px; padding: 10px 10px 0; }
+.gu { position: relative; text-align: center; cursor: pointer; }
+.gu img { width: 100%; aspect-ratio: 1; display: block; filter: drop-shadow(0 2px 2px #000); }
+.gu .gname { font-size: 10.5px; line-height: 1.15; margin-top: 3px; text-shadow: var(--ol); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.gu .rr { position: absolute; left: 50%; transform: translateX(-50%); top: calc(100% - 46px); font-family: Rodin, Arial, sans-serif; font-size: 11px; text-shadow: var(--ol); color: var(--accent); white-space: nowrap; }
+.gu img.fav { position: absolute; top: 0; right: 0; width: 22px; height: 22px; aspect-ratio: auto; filter: drop-shadow(0 1px 1px #000); }
+.list { display: grid; gap: 8px; padding: 10px 10px 0; }
+.lu { display: flex; gap: 10px; align-items: center; padding: 8px; border-radius: 10px; border: 2px solid var(--gold2); background: var(--steel) center / cover; box-shadow: inset 0 0 0 1px #000; position: relative; overflow: hidden; cursor: pointer; }
+.lu::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, color-mix(in srgb, var(--el, #000) 24%, transparent), rgba(0,0,0,.35) 70%); pointer-events: none; }
+.lu > * { position: relative; z-index: 1; }
+.lu img { width: 64px; height: 64px; flex: none; }
+.lu .ln { font-family: Rodin, Arial, sans-serif; text-shadow: var(--ol); font-size: 14px; }
+.lu .ls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px 6px; margin-top: 4px; font-family: Rodin, Arial, sans-serif; font-size: 12px; text-shadow: var(--ol); }
+.lu .ls span { display: block; font-size: 9px; color: var(--orange); }
+.badges { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 3px; }
+.badge { display: inline-flex; align-items: center; gap: 3px; font-size: 10.5px; padding: 1px 6px; border-radius: 6px; background: rgba(0,0,0,.6); text-shadow: var(--ol); border: 1px solid rgba(0,0,0,.6); }
+.badge.pw { background: linear-gradient(#5aa8ff, #1e5fe0); border-color: #9ccaff; }
+.gu .pwtag { position: absolute; left: 0; top: calc(100% - 52px); font-family: Rodin, Arial, sans-serif; font-size: 10px; padding: 0 4px; border-radius: 4px; background: linear-gradient(#5aa8ff, #1e5fe0); text-shadow: var(--ol); white-space: nowrap; }
+.role b { color: var(--accent); font-weight: normal; }
+.badge img { width: 16px; height: 16px; } .badge .sti { width: 14px; height: 14px; margin-left: -1px; } .badge .omi { width: 17px; height: 17px; margin: -2px 1px -2px -3px; }
+.chip .omi { width: 22px; height: 22px; margin: -3px 0 -3px -4px; } .badge.omni { background: linear-gradient(#ffe38a, #e0a22a 55%, #b57a16); border-color: #fff3c4; } .badge.star { color: var(--accent); } .badge.cost { color: var(--orange); }
+.more { padding: 22px; text-align: center; color: var(--dim); }
+.empty { padding: 50px 20px; text-align: center; color: var(--dim); text-shadow: var(--ol); }
+.empty b { display: block; color: var(--accent); font-family: Rodin, Arial, sans-serif; font-size: 17px; margin-bottom: 6px; }
+
+/* detail pages */
+#page { display: none; } body.sub #page { display: block; } body.sub .view { display: none !important; }
+.hero { position: relative; min-height: 230px; overflow: hidden; border-bottom: 3px solid var(--gold); box-shadow: 0 3px 0 var(--gold3); }
+.hero .glow { position: absolute; inset: 0; background: radial-gradient(circle at 70% 45%, color-mix(in srgb, var(--el, #888) 45%, transparent), transparent 62%), linear-gradient(#141a2e, #070810); }
+.hero .art { position: absolute; right: -8%; bottom: 0; height: 100%; max-width: 92%; object-fit: contain; object-position: right bottom; filter: drop-shadow(0 6px 12px #000); }
+.hero .art.icon { right: 14px; bottom: 50%; transform: translateY(50%); height: 110px; }
+.hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(5,6,12,.72), rgba(5,6,12,.25) 55%, transparent 75%), linear-gradient(transparent 70%, rgba(5,6,12,.55)); pointer-events: none; }
+.hero .info { position: relative; z-index: 1; padding: 16px 14px; max-width: 64%; }
+.hero h2 { margin: 0 0 6px; font-size: 22px; line-height: 1.15; text-shadow: var(--ol); }
+.stars { display: flex; align-items: center; min-height: 24px; }
+.stars img { width: 24px; height: 24px; margin-right: -4px; filter: drop-shadow(0 1px 1px #000); }
+.stars img.omni { width: 34px; height: 34px; margin: -5px 2px -5px -3px; }
+.stars .omnit { font-family: Rodin, Arial, sans-serif; font-size: 17px; letter-spacing: 1px; text-shadow: none; background: linear-gradient(#ff7a6b, #ffd84a 30%, #6bff8a 55%, #5ad7ff 75%, #c78bff); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(1px 0 0 #000) drop-shadow(-1px 0 0 #000) drop-shadow(0 1px 0 #000) drop-shadow(0 -1px 0 #000); }
+.hero .meta { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; } .hero .meta .badge img { width: 18px; height: 18px; }
+.favbtn { position: absolute; right: 12px; top: 12px; z-index: 2; width: 46px; height: 46px; border-radius: 50%; border: 2px solid var(--gold2); background: rgba(0,0,0,.6); display: grid; place-items: center; padding: 0; }
+.navarrows { position: absolute; right: 10px; bottom: 10px; z-index: 2; display: flex; align-items: center; gap: 6px; font-family: Rodin, Arial, sans-serif; font-size: 11px; text-shadow: var(--ol); }
+.navarrows button { width: 38px; height: 38px; border-radius: 50%; border: 2px solid var(--gold2); background: rgba(0,0,0,.6); font-size: 24px; line-height: 1; padding: 0 0 3px; }
+.navarrows button:disabled { opacity: .3; }
+.chipwrap { display: flex; flex-wrap: wrap; gap: 6px; }
+/* squad numbers, styled after the game's Manage Squad panels */
+.sqbar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.costplate { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 8px; border: 2px solid var(--gold2); background: linear-gradient(#1c2340, #0b1024);
+  font-family: Rodin, Arial, sans-serif; color: var(--orange); text-shadow: var(--ol); font-size: 14px; }
+.costplate b { color: #fff; font-weight: normal; font-size: 17px; } .costplate.over b { color: #ff7a6b; }
+.costplate input { width: 52px; padding: 2px 6px; font-size: 15px; font-family: Rodin, Arial, sans-serif; border-radius: 6px; }
+.scards { display: grid; gap: 8px; } @media (min-width: 560px) { .scards { grid-template-columns: 1fr 1fr; } }
+.scard { position: relative; padding: 8px; border-radius: 10px; border: 2px solid var(--gold2); background: linear-gradient(90deg, color-mix(in srgb, var(--el) 22%, transparent), rgba(0,0,0,.45) 60%), linear-gradient(#141a2e, #0a0d18); box-shadow: inset 0 0 0 1px #000; }
+.sch { display: flex; align-items: center; gap: 8px; } .sch .ic { width: 46px; height: 46px; flex: none; cursor: pointer; }
+.scn { flex: 1; min-width: 0; font-family: Rodin, Arial, sans-serif; font-size: 13px; text-shadow: var(--ol); line-height: 1.2; cursor: pointer; }
+.scn small { display: block; font-family: Arial, sans-serif; font-size: 11px; color: var(--dim); }
+.ttype { height: 30px; font-size: 11.5px; padding: 0 6px; flex: none; }
+.scs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px 8px; margin: 8px 0 4px; padding: 6px 8px; border-radius: 8px; background: rgba(0,0,0,.5); border: 1px solid rgba(255,255,255,.1);
+  font-family: Rodin, Arial, sans-serif; font-size: 15px; text-shadow: var(--ol); font-variant-numeric: tabular-nums; }
+.scs div { white-space: nowrap; } .scs i { font-style: normal; font-size: 11px; color: #ffd45c; margin-right: 4px; } .scs i.c { color: var(--orange); }
+.spct { font-size: 10.5px; color: #9ff09f; margin: 0 0 6px; }
+.ssph { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.sphc { display: flex; align-items: center; gap: 4px; min-width: 0; height: 34px; padding: 0 6px; border-radius: 8px; border: 1px solid var(--gold2); background: rgba(0,0,0,.4); font-size: 11px; text-align: left; }
+.sphc img { width: 26px; height: 26px; flex: none; object-fit: contain; } .sphc span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sphc.none { color: var(--dim); justify-content: center; border-style: dashed; }
+.sca { display: flex; justify-content: flex-end; gap: 6px; margin-top: 6px; }
+.bcrow { display: flex; gap: 8px; align-items: center; padding: 6px 0; border-top: 1px solid rgba(255,255,255,.07); } .bcrow img { width: 40px; height: 40px; flex: none; cursor: pointer; }
+.bcl { font-size: 12.5px; } .bcl b { font-family: Rodin, Arial, sans-serif; text-shadow: var(--ol); } .bcd { font-size: 12px; color: var(--dim); } .bcd b { color: var(--accent); font-weight: normal; font-family: Rodin, Arial, sans-serif; }
+.okc { color: #7ad67a; } .noc { color: #ff8a7a; } .bcl .okc, .bcl .noc { margin-left: 4px; font-size: 11px; }
+.item .sb { font-size: 11px; color: #9ff09f; margin: 1px 0 2px; }
+.item .t .sti { width: 14px; height: 14px; flex: none; }  /* not the 46px item icon size */
+.item .craft { margin-left: 6px; font-size: 9.5px; padding: 0 6px; border-radius: 999px; background: linear-gradient(#5aa8ff, #1e5fe0); text-shadow: var(--ol); vertical-align: 2px; }
+.recent { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 4px; clear: both; } .recent::-webkit-scrollbar { display: none; }
+.recent .eu { flex: none; width: 64px; text-align: center; cursor: pointer; } .recent .eu img { width: 56px; height: 56px; object-fit: contain; }
+.recent .eu .gname { font-size: 9.5px; line-height: 1.15; text-shadow: var(--ol); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.favbtn img { width: 30px; height: 30px; filter: grayscale(1) brightness(.6); transition: .15s; } .favbtn.on { border-color: var(--accent); } .favbtn.on img { filter: drop-shadow(0 0 5px #ffd76a); transform: scale(1.1); }
+.sec { margin: 12px 10px; padding: 12px; border-radius: 12px; border: 2px solid var(--gold2); background: linear-gradient(rgba(12,16,32,.92), rgba(8,10,20,.92)); box-shadow: inset 0 0 0 1px #000, 0 3px 6px #000; }
+.sec > h3 { display: inline-block; margin: 0 0 10px; padding: 3px 18px 3px 12px; font-size: 13px; text-shadow: var(--ol); background: linear-gradient(#ff9a3c, #e8531a 55%, #c73a0e);
+  border: 2px solid #ffd37a; border-radius: 6px 14px 14px 6px; box-shadow: 0 2px 4px #000; }
+.sec > h3.blue { background: linear-gradient(#5aa8ff, #1e5fe0 55%, #123fa8); border-color: #9ccaff; }
+.sec > h3.green { background: linear-gradient(#7ad67a, #2a8f3a); border-color: #c9f0b0; }
+.sec > h3.purple { background: linear-gradient(#d7a6ff, #7a3fc4); border-color: #eed8ff; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 12.5px; text-shadow: var(--ol); }
+.tbl th { color: var(--orange); font-size: 10.5px; text-align: right; padding: 3px 4px; font-weight: normal; }
+.tbl th:first-child, .tbl td:first-child { text-align: left; }
+.tbl td { text-align: right; padding: 5px 4px; border-top: 1px solid rgba(255,255,255,.06); font-variant-numeric: tabular-nums; }
+.tbl td.best { color: var(--accent); }
+.sk { padding: 10px 0; border-top: 1px dashed var(--gold3); } .sk:first-of-type { border-top: 0; padding-top: 0; }
+.sk .kn { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tag { font-size: 10.5px; padding: 2px 8px; border-radius: 5px; text-shadow: var(--ol); background: linear-gradient(#5aa8ff, #1e5fe0); border: 1px solid rgba(255,255,255,.35); }
+.tag.ls { background: linear-gradient(#ff9a3c, #c73a0e); } .tag.es { background: linear-gradient(#d7a6ff, #7a3fc4); } .tag.dbb { background: linear-gradient(#ffe38a, #c98a16); }
+.tag.ubb { background: linear-gradient(#ff7ab0, #b8237a); } .tag.sbb { background: linear-gradient(#7ad6ff, #1e8fe0); }
+.sk .nm { font-family: Rodin, Arial, sans-serif; text-shadow: var(--ol); color: var(--accent); font-size: 14px; }
+.sk p { margin: 5px 0 0; color: #ece6d6; }
+.pills { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.pill { font-size: 10.5px; padding: 1px 7px; border-radius: 999px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); color: var(--dim); }
+.note { margin-top: 6px; padding: 6px 8px; border-radius: 6px; background: rgba(0,0,0,.45); border-left: 3px solid var(--blue); color: #c8d6ff; font-size: 12.5px; white-space: pre-line; overflow-wrap: anywhere; }
+.fx { list-style: none; margin: 6px 0 0; padding: 0; border-radius: 6px; background: rgba(0,0,0,.45); border-left: 3px solid var(--blue); }
+.fx li { padding: 6px 8px; color: #dfe7ff; font-size: 12.5px; overflow-wrap: anywhere; } .fx li + li { border-top: 1px solid rgba(255,255,255,.07); }
+.fxm { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
+.fxd, .fxt { font-size: 10px; padding: 0 6px; border-radius: 999px; line-height: 16px; }
+.fxd { background: rgba(63,140,255,.3); color: #cfe0ff; } .fxt { background: rgba(255,255,255,.1); color: var(--dim); }
+.dim { color: var(--dim); } .small { font-size: 12px; }
+.sp { padding: 8px 0; border-top: 1px dashed var(--gold3); } .sp:first-of-type { border-top: 0; }
+.sp .cat { font-family: Rodin, Arial, sans-serif; color: var(--orange); text-shadow: var(--ol); font-size: 12.5px; margin-bottom: 4px; }
+.spo { display: flex; gap: 8px; align-items: flex-start; padding: 3px 0; }
+.spo .c { flex: none; min-width: 38px; text-align: center; font-family: Rodin, Arial, sans-serif; font-size: 11.5px; padding: 1px 5px; border-radius: 6px; background: linear-gradient(#ffe38a, #c98a16); text-shadow: var(--ol); }
+.evo { display: flex; align-items: center; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+.evo .eu { flex: none; width: 72px; text-align: center; cursor: pointer; } .evo .eu img { width: 64px; height: 64px; } .evo .eu.cur img { filter: drop-shadow(0 0 6px var(--accent)); }
+.evo .eu .gname { font-size: 10px; line-height: 1.15; text-shadow: var(--ol); }
+.evo .ar { color: var(--accent); font-size: 20px; text-shadow: var(--ol); flex: none; }
+.mats { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; } .mats .eu { width: 58px; } .mats .eu img { width: 52px; height: 52px; }
+.quote { margin: 8px 0 0; padding: 8px 10px; border-left: 3px solid var(--gold2); background: rgba(0,0,0,.35); font-style: italic; color: #ece6d6; }
+.quote b { display: block; font-style: normal; font-family: Rodin, Arial, sans-serif; font-size: 11px; color: var(--orange); text-shadow: var(--ol); margin-bottom: 2px; }
+.lore { white-space: pre-line; color: #ece6d6; }
+.tabs2 { display: flex; gap: 6px; margin-bottom: 10px; }
+.tabs2 button { flex: 1; height: 36px; border-radius: 8px; border: 2px solid var(--gold2); background: linear-gradient(#1c2340, #0b1024); text-shadow: var(--ol); font-size: 12.5px; }
+.tabs2 button.on { border-color: var(--gold); background: linear-gradient(#3f8cff, #1a4fd0 60%, #0f2f8a); }
+details > summary { cursor: pointer; color: var(--accent); font-family: Rodin, Arial, sans-serif; font-size: 12px; text-shadow: var(--ol); list-style: none; margin-top: 6px; }
+details > summary::before { content: "▸ "; } details[open] > summary::before { content: "▾ "; }
+
+/* spheres, items, drops */
+.item { display: flex; gap: 10px; align-items: center; padding: 8px; margin: 0 10px 8px; border-radius: 10px; border: 2px solid var(--gold2); background: linear-gradient(rgba(12,16,32,.92), rgba(8,10,20,.92)); box-shadow: inset 0 0 0 1px #000; cursor: pointer; }
+.item img { width: 46px; height: 46px; flex: none; object-fit: contain; }
+.item .t { font-family: Rodin, Arial, sans-serif; text-shadow: var(--ol); } .item .s { color: var(--dim); font-size: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.get { list-style: none; margin: 6px 0 0; padding: 0; font-size: 13px; }
+.get > li { padding: 6px 0; border-top: 1px dashed var(--gold3); display: flex; gap: 8px; align-items: flex-start; } .get > li > div { min-width: 0; flex: 1; }
+.gtag { flex: none; font-size: 10px; padding: 2px 7px; border-radius: 5px; text-shadow: var(--ol); border: 1px solid rgba(255,255,255,.35); margin-top: 1px; background: linear-gradient(#6d7a99, #3a4663); font-family: Rodin, Arial, sans-serif; }
+.gtag.craft { background: linear-gradient(#5aa8ff, #1e5fe0); } .gtag.raid { background: linear-gradient(#ff9a3c, #c73a0e); } .gtag.quests { background: linear-gradient(#7ad67a, #2a8f3a); }
+.gtag.achievement, .gtag.questreward, .gtag.grandquestreward, .gtag.clearreward { background: linear-gradient(#ffe38a, #c98a16); } .gtag.exchange, .gtag.shop { background: linear-gradient(#d7a6ff, #7a3fc4); }
+.gtag.drops, .gtag.capture { background: linear-gradient(#7ad67a, #2a8f3a); } .gtag.summon { background: linear-gradient(#ff9ad5, #b0306f); } .gtag.eventshop { background: linear-gradient(#d7a6ff, #7a3fc4); }
+.glink { cursor: pointer; } .glink b::after { content: " ›"; color: var(--gold); }
+.gate { display: flex; align-items: center; gap: 8px; padding: 9px 4px; border-top: 1px solid rgba(255,255,255,.07); cursor: pointer; } .gate b { flex: 1; font-weight: normal; }
+.gate .n { font-size: 11px; color: var(--dim); white-space: nowrap; }
+.rowlbl { flex: none; align-self: center; font-size: 11px; color: var(--dim); }
+.qlist.drops li { padding: 4px 0; } .qlist.drops li + li { border-top: 1px solid rgba(255,255,255,.06); }
+.chance { font-size: 10.5px; padding: 0 7px; border-radius: 999px; line-height: 17px; background: linear-gradient(#7ad67a, #2a8f3a); font-family: Rodin, Arial, sans-serif; text-shadow: var(--ol); }
+.boss { font-size: 10px; padding: 0 6px; border-radius: 999px; line-height: 16px; background: linear-gradient(#ff7a6b, #b8232a); text-shadow: var(--ol); }
+.ichip small { color: #9ff09f; font-family: Rodin, Arial, sans-serif; margin-left: 2px; }
+.qlist { list-style: none; margin: 0; padding: 0; } .qlist li { padding: 1px 0; } .qlist b { font-weight: normal; color: #fff; }
+.src { font-size: 10px; color: #9aa4bf; margin: 1px 0 3px; } .rv { font-size: 10px; color: #7ad67a; margin-left: 6px; white-space: nowrap; }
+.mlist { list-style: none; margin: 6px 0 0; padding: 0 0 0 10px; border-left: 2px solid var(--gold3); } .mlist > li { padding: 4px 0 4px 8px; } .mlist b { color: var(--accent); font-weight: 600; }
+.mlist .get > li { border-top: 0; padding: 2px 0; }
+.place { padding: 10px 0; border-top: 1px dashed var(--gold3); } .place b { display: block; margin-bottom: 6px; font-family: Rodin, Arial, sans-serif; text-shadow: var(--ol); font-size: 13px; }
+.ichip { display: inline-flex; align-items: center; gap: 5px; margin: 0 6px 6px 0; padding: 3px 10px 3px 4px; border-radius: 999px; border: 2px solid var(--gold2); background: linear-gradient(#0a1020, #121a36); font-size: 12.5px; text-shadow: var(--ol); }
+.ichip img { width: 24px; height: 24px; object-fit: contain; }
+.toast { position: fixed; left: 50%; bottom: calc(var(--navh) + 24px); transform: translate(-50%, 10px); background: linear-gradient(#ffe38a, #e0a22a); padding: 9px 18px; border-radius: 10px; font-family: Rodin, Arial, sans-serif; text-shadow: var(--ol); border: 2px solid #fff3c4; opacity: 0; transition: .2s; pointer-events: none; z-index: 30; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* game-style buttons, my box, roles */
+.gbtn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 38px; padding: 0 16px; border-radius: 9px; border: 2px solid #ffd37a; font-family: Rodin, Arial, sans-serif; font-size: 13px; text-shadow: var(--ol);
+  background: linear-gradient(#ff9a3c, #e8531a 55%, #c73a0e); box-shadow: inset 0 0 0 1px #000, 0 2px 4px #000; cursor: pointer; }
+.gbtn.blue { background: linear-gradient(#5aa8ff, #1e5fe0 55%, #123fa8); border-color: #9ccaff; } .gbtn.red { background: linear-gradient(#ff6b6b, #b8232a); border-color: #ffb3b3; }
+.gbtn.dark { background: linear-gradient(#1c2340, #0b1024); border-color: var(--gold2); } .gbtn.small { height: 30px; padding: 0 10px; font-size: 11.5px; }
+.gbtn.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent), 0 2px 4px #000; }
+.gbtn:disabled { opacity: .45; } .gbtn:active:not(:disabled) { transform: translateY(1px); filter: brightness(1.1); }
+select.gsel { height: 38px; font-size: 12.5px; padding: 0 10px; }
+.btngrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; } .btngrid > * { min-width: 0; }
+.btnrow { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+.roles { display: flex; flex-wrap: wrap; gap: 5px; margin: 0 0 10px; }
+.role { font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid rgba(255,255,255,.2); background: rgba(90,168,255,.18); text-shadow: var(--ol); }
+.role small { color: var(--dim); font-size: 9.5px; margin-left: 3px; }
+.acts { display: flex; gap: 8px; margin: 10px 10px 0; } .acts .gbtn { flex: 1; }
+.qty { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; } .qty .gbtn { width: 38px; padding: 0; font-size: 18px; }
+.qty b { font-family: Rodin, Arial, sans-serif; font-size: 20px; min-width: 30px; text-align: center; text-shadow: var(--ol); }
+.need { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.ni { display: flex; align-items: center; gap: 6px; min-width: 0; padding: 5px 7px; border-radius: 8px; background: rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.09); cursor: pointer; font-size: 12px; }
+.ni img { width: 30px; height: 30px; flex: none; object-fit: contain; } .ni b { flex: none; color: var(--accent); font-family: Rodin, Arial, sans-serif; text-shadow: var(--ol); }
+.ni span { min-width: 0; line-height: 1.2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+.ctree, .ctree ul { list-style: none; margin: 4px 0 0; padding: 0; } .ctree ul { padding-left: 14px; border-left: 1px dashed var(--gold3); margin-left: 10px; }
+.ctree li { padding: 3px 0; } .ci { cursor: pointer; font-size: 12.5px; } .ci img { width: 22px; height: 22px; vertical-align: -6px; margin-right: 4px; object-fit: contain; }
+.ci b { color: var(--accent); } .ci small { color: var(--dim); font-size: 10px; }
+.jump { position: sticky; top: 57px; z-index: 9; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin-top: 10px; padding: 7px 10px;
+  background: linear-gradient(rgba(11,10,20,.97), rgba(11,10,20,.9)); border-bottom: 1px solid var(--gold3); }
+.jump::-webkit-scrollbar { display: none; }
+.jump button { flex: none; height: 28px; padding: 0 11px; border-radius: 999px; border: 2px solid var(--gold2); background: linear-gradient(#1c2340, #0b1024);
+  font-family: Rodin, Arial, sans-serif; font-size: 11.5px; text-shadow: var(--ol); }
+#ubody > .sec, #v-team > .sec { scroll-margin-top: 112px; }
+
+/* battle sprite stage and the team formation */
+.stage { position: relative; min-height: 170px; margin: -2px -2px 0; border-radius: 9px; overflow: hidden; background: #2b3a1c url(/static/battle_bg.jpg) center 62% / cover; display: grid; place-items: end center; padding: 10px 0 18px; }
+.stage::after { content: ""; position: absolute; inset: 0; background: linear-gradient(rgba(0,0,0,.05), rgba(0,0,0,.25)); pointer-events: none; }
+.stage .spr { position: relative; z-index: 1; image-rendering: pixelated; filter: drop-shadow(0 3px 2px rgba(0,0,0,.5)); }
+.formation { position: relative; isolation: isolate; height: 330px; border-radius: 12px; overflow: hidden; border: 2px solid var(--gold2); box-shadow: inset 0 0 0 1px #000, 0 3px 6px #000; background: #2b3a1c url(/static/battle_bg.jpg) center 70% / cover; }
+.slot { position: absolute; width: 112px; height: 104px; transform: translate(-50%, -100%); padding: 0; border: 0; background: none; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; cursor: pointer; }
+.slot img { max-width: 112px; max-height: 88px; filter: drop-shadow(0 3px 2px rgba(0,0,0,.55)); }
+.slot .empty { width: 54px; height: 54px; border-radius: 50%; border: 2px dashed rgba(255,255,255,.85); background: rgba(0,0,0,.35); display: grid; place-items: center; font-size: 28px; text-shadow: var(--ol); margin-bottom: 14px; }
+.slot .sl { position: absolute; bottom: -12px; font-family: Rodin, Arial, sans-serif; font-size: 10px; padding: 0 6px; border-radius: 4px; background: rgba(0,0,0,.65); text-shadow: var(--ol); white-space: nowrap; }
+.slot .sl.lead { background: linear-gradient(#ffe38a, #c98a16); } .slot .sl.friend { background: linear-gradient(#7ad6ff, #1e8fe0); }
+.mem { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px dashed var(--gold3); } .mem:first-child { border-top: 0; }
+.mem img.ic { width: 44px; height: 44px; flex: none; cursor: pointer; } .mem .mn { flex: 1; min-width: 0; font-family: Rodin, Arial, sans-serif; font-size: 13px; text-shadow: var(--ol); cursor: pointer; }
+.mem .mn small { display: block; font-family: Arial, sans-serif; font-size: 11px; color: var(--dim); }
+.cov { display: grid; grid-template-columns: 1fr; gap: 0; }
+.cov > div { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-top: 1px solid rgba(255,255,255,.06); min-height: 36px; }
+.cov .cl { width: 118px; flex: none; font-family: Rodin, Arial, sans-serif; font-size: 12px; text-shadow: var(--ol); }
+.cov .ok { color: #7ad67a; } .cov .no { color: #ff8a7a; } .cov .cl small { color: var(--accent); font-size: 10.5px; }
+.cov .who { display: flex; gap: 2px; flex-wrap: wrap; flex: 1; } .cov .who img { width: 26px; height: 26px; }
+
+/* compare */
+.cmpbar { position: fixed; right: 12px; bottom: calc(var(--navh) + 14px); z-index: 25; }
+.cmp { display: grid; gap: 0; font-size: 12px; overflow-x: auto; }
+.cmp .row { display: grid; grid-template-columns: 62px repeat(var(--n), minmax(96px, 1fr)); border-top: 1px solid rgba(255,255,255,.07); }
+.cmp .row > div { padding: 6px 4px; } .cmp .k { color: var(--orange); font-family: Rodin, Arial, sans-serif; font-size: 10.5px; text-shadow: var(--ol); }
+.cmp .num { font-family: Rodin, Arial, sans-serif; text-shadow: var(--ol); font-size: 13px; } .cmp .best { color: var(--accent); }
+.cmp .hd { text-align: center; } .cmp .hd img { width: 18px; height: 18px; vertical-align: -4px; } .cmp .hd img.ic { width: 56px; height: 56px; cursor: pointer; } .cmp .hd b { display: block; font-family: Rodin, Arial, sans-serif; font-size: 11.5px; text-shadow: var(--ol); line-height: 1.2; }
+.cmp .tx { color: #ece6d6; font-size: 11px; line-height: 1.35; }
+
+/* start screen: the game's title art while the data loads */
+#splash { position: fixed; inset: 0; z-index: 60; background: #000; display: grid; place-items: center; transition: opacity .45s; }
+#splash img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 30%; }
+#splash .sl { position: absolute; bottom: calc(40px + env(safe-area-inset-bottom)); font-family: Rodin, Arial, sans-serif; font-size: 16px; text-shadow: var(--ol); animation: blink 1.2s infinite; }
+#splash.gone { opacity: 0; pointer-events: none; }
+@keyframes blink { 50% { opacity: .35; } }
+
+/* pop-up */
+.modal { position: fixed; inset: 0; z-index: 40; background: rgba(0,0,0,.7); display: grid; place-items: center; padding: 16px; }
+.mbox { max-width: 520px; width: 100%; max-height: 86vh; overflow: auto; border-radius: 12px; border: 2px solid var(--gold); background: linear-gradient(#141a2e, #070810); box-shadow: 0 6px 24px #000; padding: 12px; text-align: center; }
+.mbox img { max-width: 100%; }
+/* on a PC screen: one centered column, like a big phone */
+@media (min-width: 1000px) { main { max-width: 920px; margin: 0 auto; } .top { padding-left: calc(50vw - 460px); padding-right: calc(50vw - 460px); } }
+@media (min-width: 700px) { .grid { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); } .hero { min-height: 300px; } .list { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); } }
+</style>
+</head>
+<body>
+<div id="splash"><img src="/static/title.jpg" alt=""><div class="sl">Loading…</div></div>
+<header class="top">
+  <button class="back" id="back" aria-label="Back">‹</button>
+  <img class="crest" src="/static/logo.png" alt="">
+  <h1 id="title">Units</h1>
+  <button class="iconbtn" id="favtab" title="Favorites" aria-label="Favorites"><img src="/static/star_fav.png" alt=""></button>
+  <button class="iconbtn" id="viewmode" title="Grid or list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></button>
+  <button class="iconbtn" id="share" title="Share" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.8 7.6-4.4M8.2 13.2l7.6 4.4"/></svg></button>
+</header>
+
+<main>
+  <section class="view on" id="v-units">
+    <div class="bar2">
+      <div class="searchrow"><input id="uq" type="search" placeholder="Name, skill, role… (fire omni heal)" autocomplete="off">
+        <select id="usort"><option value="rarity">Rarity</option><option value="new">Newest</option><option value="name">Name</option><option value="atk">ATK</option><option value="hp">HP</option><option value="def">DEF</option><option value="rec">REC</option><option value="cost">Cost</option><option value="power">Strongest (role)</option></select>
+        <button class="iconbtn fbtn" id="ufbtn" title="Filters" aria-label="Filters"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg><span id="ufn"></span></button></div>
+      <div id="ufilters">
+        <div class="scroller" id="uel"></div>
+        <div class="scroller" id="urar"></div>
+        <div class="scroller" id="urole" hidden></div>
+        <div class="scroller" id="uget"></div>
+      </div>
+      <div class="fsum" id="usum" hidden></div>
+    </div>
+    <div class="count" id="ucount"></div>
+    <div id="ulist"></div>
+  </section>
+  <section class="view" id="v-spheres">
+    <div class="bar2"><div class="searchrow"><input id="sq" type="search" placeholder="Search spheres and items…" autocomplete="off"></div><div class="scroller" id="stype"></div></div>
+    <div class="count" id="scount"></div><div id="slist" style="padding-top:10px"></div>
+  </section>
+  <section class="view" id="v-drops">
+    <div class="sec" style="text-align:center"><img src="/static/home_win_quest.png" alt="" style="height:96px;filter:drop-shadow(0 4px 6px #000)">
+      <p class="dim small" style="margin:6px 0 10px">Type an item or unit to see where to get it, or a quest, area or raid to see what drops and who joins there.</p>
+      <input id="dq" type="search" placeholder="Blue Claw, Kagan Desert, RC7…" style="width:100%" autocomplete="off"></div>
+    <div id="dres"></div>
+  </section>
+  <section class="view" id="v-favs"><div id="frecent"></div><div class="count" id="fcount"></div><div id="flist"></div></section>
+  <section class="view" id="v-team"></section>
+  <section id="page"></section>
+</main>
+
+<nav class="nav">
+  <button data-tab="units" class="on" aria-label="Units"><img src="/static/nav_unit.png" alt=""></button>
+  <button data-tab="spheres" aria-label="Spheres and items"><img src="/static/nav_item.png" alt=""></button>
+  <button data-tab="drops" aria-label="Drops"><img src="/static/nav_quest.png" alt=""></button>
+  <button data-tab="team" aria-label="Team builder"><img src="/static/nav_team.png" alt=""></button>
+</nav>
+<button class="gbtn blue cmpbar" id="cmpbar" hidden></button>
+<div class="modal" id="modal" hidden><div class="mbox" id="mbox"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+// the start screen goes once the app is ready, or after 4 s whatever happens
+const hideSplash = () => { const s = $("splash"); if (s && !s.classList.contains("gone")) { s.classList.add("gone"); setTimeout(() => s.remove(), 500); } };
+setTimeout(hideSplash, 4000);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const ELS = ["Fire", "Water", "Earth", "Thunder", "Light", "Dark"];
+const orb = e => e ? `<img src="/static/orb_${e}.png" alt="">` : "";
+// the game's own stars: rarity (orange) and favorite (yellow)
+const STAR = `<img class="sti" src="/static/star.png" alt="★">`, FAVSTAR = `<img class="sti" src="/static/star_fav.png" alt="★">`;
+const OMNI = `<img class="sti omi" src="/static/omni.png" alt="">`;  // the game's Omni rarity mark
+const SEX = { M: ["m", "Male"], F: ["f", "Female"] };
+const uImg = id => `/thumbs/u/${id}.webp`, iImg = id => `/thumbs/i/${id}.webp`, aImg = id => `/thumbs/a/${id}.webp`;
+const sImg = id => `/thumbs/s/${id}.webp`;  // the game's animated battle sprite (idle loop)
+const DB = {}, load = n => DB[n] ??= fetch(`/data/${n}.json`).then(r => r.ok ? r.json() : {}).catch(() => ({}));
+const wiki = id => load(`w/${id}`);
+const store = { get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
+function toast(m) { $("toast").textContent = m; $("toast").classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => $("toast").classList.remove("show"), 1800); }
+const loadImg = src => new Promise(res => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; });
+function modal(html) { $("mbox").innerHTML = html; $("modal").hidden = false; }
+$("modal").onclick = e => { if (e.target.id === "modal" || e.target.closest(".mclose")) $("modal").hidden = true; };
+const elementChart = () => modal(`<img src="/static/elements.png" alt="Element correlation"><div class="btnrow" style="justify-content:center"><button class="gbtn mclose">Close</button></div>`);
+
+try { localStorage.removeItem("bf.box"); } catch {}  // a box imported in version 4.0–4.3 (the import is gone)
+
+// ---------------- roles (tags.json) and skill text search ----------------
+let TAGS = { labels: {}, units: {}, power: {}, powerUnit: {} };
+const roleOf = (id, code, leaderToo) => { const s = TAGS.units[id]?.[code] || ""; return leaderToo ? !!s : /[EBSU]/.test(s); };
+const SKILL_NAMES = { L: "LS", E: "ES", B: "BB", S: "SBB", U: "UBB" };
+// how strong a role is on the unit's BB/SBB: [value, skill letter], e.g. mitigation [50, "B"]
+const powerOf = (id, c) => TAGS.power[id]?.[c];
+const fmtPower = (c, p) => !p ? "" : c === "heal" && p[0] >= 10000 ? "full heal" : `${p[0].toLocaleString()}${TAGS.powerUnit[c] || ""}`;
+let POWER_MAX = {};  // strongest value per role, to weigh roles against each other
+const rolePills = id => Object.entries(TAGS.units[id] || {}).map(([c, s]) => { const p = powerOf(id, c);
+  return `<span class="role">${esc(TAGS.labels[c] || c)}${p ? ` <b>${fmtPower(c, p)}</b>` : ""}<small>${[...new Set(s)].map(k => SKILL_NAMES[k]).join(" ")}</small></span>`; }).join("");
+// the role a list is about: the first role filter, or a role named in the search
+const activeRole = () => [...uState.roles][0] || (uState.q.trim() ? parseQuery(uState.q.trim().toLowerCase()).roles[0] : undefined);
+const byPower = c => (a, b) => (powerOf(b.id, c)?.[0] || 0) - (powerOf(a.id, c)?.[0] || 0) || b.r - a.r || b.no - a.no;
+const powerTag = (u, c) => { const p = c && powerOf(u.id, c); return p ? `<span class="pwtag">${fmtPower(c, p)}</span>` : ""; };
+let SKTXT = null;
+async function skillText() {
+  if (SKTXT) return SKTXT;
+  const D = await load("details"); SKTXT = {};
+  for (const [id, d] of Object.entries(D)) SKTXT[id] = [d.leader?.name, d.leader?.desc, d.extra, ...(d.skills || []).flatMap(s => [s.name, s.desc])].join(" ").toLowerCase();
+  return SKTXT;
+}
+
+// ---------------- units ----------------
+let UNITS = [], UMAP = {};
+const FODDER = /^((fire|water|earth|thunder|light|dark) (crystal|god|idol|nymph|spirit|totem|jewel|sprite|elemental)|metal (king|ghost|mimic|totem|god)|(dragon |king )?mimic|gs-220|.*burny|.*bulb|sphere frog|.*imp)$/i;
+const RARITY = [["omni", `${OMNI}Omni`, u => u.r === 8], ["7", `7${STAR}`, u => u.r === 7], ["6", `6${STAR}`, u => u.r === 6], ["5", `5${STAR}`, u => u.r === 5], ["low", `4${STAR} and below`, u => u.r < 5]];
+let uState = { els: new Set(ELS), rar: new Set(["omni", "7", "6"]), q: "", sort: "rarity", roles: [], get: [], showRoles: false, ...store.get("bf.units", {}) };
+uState.els = new Set(uState.els); uState.rar = new Set(uState.rar); uState.roles = new Set(uState.roles); uState.get = new Set(uState.get);
+delete uState.mine; if (uState.sort === "lv") uState.sort = "rarity";  // box filter and sort from 4.0–4.3
+let viewMode = store.get("bf.view", "grid"), favs = new Set(store.get("bf.favs", []));
+let RECENT = store.get("bf.recent", []);  // [["u" | "i", id], ...] opened last, newest first
+function remember(t, id) { RECENT = [[t, id], ...RECENT.filter(([a, b]) => !(a === t && b === id))].slice(0, 16); store.set("bf.recent", RECENT); }
+function saveU() { store.set("bf.units", { ...uState, els: [...uState.els], rar: [...uState.rar], roles: [...uState.roles], get: [...uState.get] }); }
+// ways to get a unit in Revived right now (bfrevive.net, usrc.json): c = capture, g = summon gate, r = clear reward, s = event shop
+let USRC = null;
+const GETS = [["g", "Summon"], ["c", "Capture"], ["rs", "Reward / shop"]];
+const hasSrc = id => { const s = USRC?.u?.[id]; return !!s && [...uState.get].some(k => k === "rs" ? s.r || s.s : s[k]); };
+
+function unitBadges(u) {
+  return `${u.r === 8 ? `<span class="badge star">${OMNI}OMNI</span>` : `<span class="badge star">${u.r}${STAR}</span>`}${u.e ? `<span class="badge">${orb(u.e)}${u.e}</span>` : ""}${u.c ? `<span class="badge cost">COST ${u.c}</span>` : ""}`;
+}
+function gridCell(u, onTap, role) {
+  const d = document.createElement("div"); d.className = "gu"; d.onclick = onTap ? () => onTap(u) : () => go(`#/unit/${u.id}`);
+  d.innerHTML = `<img loading="lazy" src="${uImg(u.id)}" alt="" onerror="this.style.visibility='hidden'">${favs.has(u.id) ? `<img class="fav" src="/static/star_fav.png" alt="★">` : ""}${powerTag(u, role)}<div class="gname">${esc(u.n)}</div>`;
+  return d;
+}
+function listRow(u, onTap, role) {
+  const d = document.createElement("div"); d.className = "lu"; d.onclick = onTap ? () => onTap(u) : () => go(`#/unit/${u.id}`);
+  if (u.e) d.style.setProperty("--el", `var(--${u.e})`);
+  const p = role && powerOf(u.id, role);
+  d.innerHTML = `<img loading="lazy" src="${uImg(u.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1">
+    <div class="ln">${favs.has(u.id) ? FAVSTAR + " " : ""}${esc(u.n)}</div><div class="badges">${unitBadges(u)}${p ? `<span class="badge pw">${esc(TAGS.labels[role])} ${fmtPower(role, p)} · ${SKILL_NAMES[p[1]]}</span>` : ""}</div>
+    <div class="ls"><div><span>HP</span>${u.hp}</div><div><span>ATK</span>${u.atk}</div><div><span>DEF</span>${u.def}</div><div><span>REC</span>${u.rec}</div></div></div>`;
+  return d;
+}
+// lists draw in batches as you scroll: thousands of icons at once is slow on a phone
+let NAV_LIST = [];  // ids of the unit list shown last, for previous / next on a unit page
+function paged(container, items, make, cls) {
+  const box = document.createElement("div"); box.className = cls; container.replaceChildren(box);
+  const more = document.createElement("div"); more.className = "more"; more.textContent = "…";
+  let n = 0;
+  const step = () => { const next = items.slice(n, n + 150); n += next.length; box.append(...next.map(make)); if (n < items.length) container.append(more); else more.remove(); };
+  step();
+  new IntersectionObserver((es, ob) => { if (es[0].isIntersecting) { more.remove(); step(); if (n >= items.length) ob.disconnect(); } }, { rootMargin: "1200px" }).observe(more);
+}
+const SORTS = { rarity: (a, b) => b.r - a.r || b.no - a.no, new: (a, b) => b.no - a.no || b.r - a.r, name: (a, b) => a.n.localeCompare(b.n),
+  atk: (a, b) => b.atk - a.atk, hp: (a, b) => b.hp - a.hp, def: (a, b) => b.def - a.def, rec: (a, b) => b.rec - a.rec, cost: (a, b) => b.c - a.c || b.r - a.r };
+// one word or phrase: the name, or (3+ letters) the skill text or a role ("spark", "def ignore", "mitigation")
+const phraseHit = (u, q) => q.length >= 3 && (!!SKTXT?.[u.id]?.includes(q) || Object.entries(TAGS.labels).some(([c, l]) => l.toLowerCase().includes(q) && TAGS.units[u.id]?.[c]));
+// words that describe the unit itself: "omni", "7", "7*", "fire" (they match only that, not skill text)
+const isAttr = t => /^(omni|[1-7](\*|★|star)?)$/.test(t) || ELS.some(e => e.toLowerCase() === t);
+function attrHit(u, t) {
+  if (t === "omni") return u.r === 8;
+  const r = t.match(/^([1-7])(?:\*|★|star)?$/); if (r) return u.r === +r[1];
+  return !!u.e && u.e.toLowerCase() === t;
+}
+// a search matches the whole phrase, or else its role names ("def ignore", "bb fill") and every other word on its
+// own: "fire omni mitigation", "water omni def ignore", "earth 7 heal"
+const parsedQ = {};
+function parseQuery(q) {
+  if (parsedQ[q]) return parsedQ[q];
+  let rest = ` ${q} `; const roles = [];
+  for (const [c, l] of Object.entries(TAGS.labels).sort((a, b) => b[1].length - a[1].length)) {
+    const ll = ` ${l.toLowerCase()} `;
+    if (rest.includes(ll)) { roles.push(c); rest = rest.replace(ll, " "); }
+  }
+  return parsedQ[q] = { roles, words: rest.split(/\s+/).filter(Boolean) };
+}
+function searchHit(u, q) {
+  if (!q) return true;
+  const name = u.n.toLowerCase();
+  if (name.includes(q) || phraseHit(u, q)) return true;
+  const { roles, words } = parseQuery(q);
+  if (roles.length + words.length < 2) return false;
+  return roles.every(c => roleOf(u.id, c, true)) && words.every(t => isAttr(t) ? attrHit(u, t) : name.includes(t) || phraseHit(u, t));
+}
+function filteredUnits() {
+  const q = uState.q.trim().toLowerCase(), rars = RARITY.filter(r => uState.rar.has(r[0]));
+  const list = UNITS.filter(u => (!u.e || uState.els.has(u.e)) && (q || !rars.length || rars.some(r => r[2](u))) && (q || !u.f)
+    && [...uState.roles].every(c => roleOf(u.id, c, true)) && (!uState.get.size || hasSrc(u.id)) && searchHit(u, q));
+  const role = activeRole();
+  if (uState.sort === "power" && role) return list.sort(byPower(role));  // strongest first
+  list.sort(SORTS[uState.sort] || SORTS.rarity);
+  if (q) list.sort((a, b) => !a.n.toLowerCase().includes(q) - !b.n.toLowerCase().includes(q));  // name matches first (stable)
+  return list;
+}
+async function renderUnits() {
+  saveU(); updateFilterUI();
+  const q = uState.q.trim().toLowerCase();
+  if (q.length >= 3) await skillText();
+  if (uState.get.size) USRC = await load("usrc");
+  const list = filteredUnits(), bySkill = q ? list.filter(u => !u.n.toLowerCase().includes(q)).length : 0, role = activeRole();
+  NAV_LIST = list.map(u => u.id);
+  $("ucount").textContent = `${list.length} units${uState.q ? ` matching “${uState.q}”${bySkill ? ` (${bySkill} by skill or role)` : ""}` : ""}${
+    uState.sort === "power" ? role ? ` · strongest ${TAGS.labels[role]} first` : " · pick a role to sort by strength" : ""}`;
+  if (!list.length) return $("ulist").innerHTML = `<div class="empty"><b>No units match</b>Try another name or turn filters back on.</div>`;
+  paged($("ulist"), list, viewMode === "grid" ? u => gridCell(u, null, role) : u => listRow(u, null, role), viewMode === "grid" ? "grid" : "list");
+}
+const chip = (html, on) => { const b = document.createElement("button"); b.className = "chip" + (on ? " on" : ""); b.innerHTML = html; return b; };
+// the filter rows fold away behind the filter button; folded, one line says what is filtered
+function filterSummary() {
+  const rl = { omni: "Omni", 7: "7★", 6: "6★", 5: "5★", low: "≤4★" }, parts = [];
+  parts.push(uState.els.size === ELS.length ? "All elements" : [...uState.els].join(", ") || "No element");
+  parts.push([...uState.rar].map(k => rl[k]).join(", ") || "All rarities");
+  if (uState.roles.size) parts.push([...uState.roles].map(c => TAGS.labels[c]).join(" + "));
+  if (uState.get.size) parts.push(GETS.filter(g => uState.get.has(g[0])).map(g => g[1]).join(" / "));
+  return parts.join(" · ");
+}
+function updateFilterUI() {
+  const n = (uState.els.size < ELS.length ? 1 : 0) + uState.roles.size + uState.get.size;
+  $("ufn").textContent = n || ""; $("ufbtn").classList.toggle("on", !!uState.showFilters);
+  $("ufilters").hidden = !uState.showFilters; $("usum").hidden = !!uState.showFilters;
+  $("usum").innerHTML = `${esc(filterSummary())} <b>▾</b>`;
+}
+$("ufbtn").onclick = $("usum").onclick = () => { uState.showFilters = !uState.showFilters; saveU(); updateFilterUI(); };
+// a sticky row of a page's sections to jump to
+function jumpBar(container, secs) {
+  if (secs.length < 3) return;
+  const bar = document.createElement("div"); bar.className = "jump";
+  for (const s of secs) {
+    const b = document.createElement("button"); b.textContent = s.querySelector(":scope > h3")?.textContent || s.dataset.jump || "";
+    b.onclick = () => s.scrollIntoView({ behavior: "smooth", block: "start" });
+    bar.append(b);
+  }
+  container.prepend(bar);
+}
+function setupUnitFilters() {
+  const els = $("uel"), rar = $("urar"), roles = $("urole");
+  for (const e of ELS) {
+    const b = chip(`${orb(e)}${e}`, uState.els.has(e));
+    b.onclick = () => { uState.els.has(e) ? uState.els.delete(e) : uState.els.add(e); b.classList.toggle("on"); renderUnits(); };
+    els.append(b);
+  }
+  const help = chip(`<img src="/static/orb_Light.png" alt="">Which beats which?`, true); help.onclick = elementChart; els.append(help);
+  for (const [k, label] of RARITY) {
+    const b = chip(label, uState.rar.has(k));
+    b.onclick = () => { uState.rar.has(k) ? uState.rar.delete(k) : uState.rar.add(k); b.classList.toggle("on"); renderUnits(); };
+    rar.append(b);
+  }
+  const rb = chip("", uState.showRoles || uState.roles.size);
+  const rbLabel = () => { rb.innerHTML = `Roles${uState.roles.size ? ` (${uState.roles.size})` : ""} ${uState.showRoles ? "▴" : "▾"}`; rb.classList.toggle("on", uState.showRoles || uState.roles.size > 0); };
+  rbLabel();
+  rb.onclick = () => { uState.showRoles = !uState.showRoles; roles.hidden = !uState.showRoles; rbLabel(); saveU(); };
+  rar.prepend(rb);  // first, so it's visible without scrolling the row
+  roles.hidden = !uState.showRoles;
+  for (const [c, label] of Object.entries(TAGS.labels)) {
+    const b = chip(esc(label), uState.roles.has(c));
+    b.onclick = () => { uState.roles.has(c) ? uState.roles.delete(c) : uState.roles.add(c); b.classList.toggle("on"); rbLabel(); renderUnits(); };
+    roles.append(b);
+  }
+  const gl = document.createElement("span"); gl.className = "rowlbl"; gl.textContent = "Get it:"; $("uget").append(gl);
+  for (const [k, label] of GETS) {
+    const b = chip(label, uState.get.has(k));
+    b.onclick = () => { uState.get.has(k) ? uState.get.delete(k) : uState.get.add(k); b.classList.toggle("on"); renderUnits(); };
+    $("uget").append(b);
+  }
+  $("usort").value = uState.sort; $("uq").value = uState.q;
+  $("usort").onchange = e => { uState.sort = e.target.value; renderUnits(); };
+  let t; $("uq").oninput = e => { clearTimeout(t); t = setTimeout(() => { uState.q = e.target.value; renderUnits(); }, 180); };
+}
+
+// ---------------- unit page ----------------
+const statRows = (u, w) => {
+  const rows = [["Lv 1", [u.h1, u.a1, u.d1, u.r1]], ["Max level", [u.hp, u.atk, u.def, u.rec]]];
+  const T = w.stats || {};
+  for (const [k, l] of [["lord", "Lord"], ["anima", "Anima"], ["breaker", "Breaker"], ["guardian", "Guardian"], ["oracle", "Oracle"]]) {
+    if (!T[k]) continue;
+    const base = T.lord || rows[1][1];  // types only list the stats they change; the rest are Lord's
+    rows.push([l, T[k].map((v, i) => v || base[i])]);
+  }
+  if (T.bonus) rows.push(["Imps (max)", T.bonus.map(v => v ? `+${v}` : "")]);
+  return rows;
+};
+function statTable(u, w) {
+  const rows = statRows(u, w), typed = rows.filter(r => !["Lv 1", "Imps (max)"].includes(r[0]));
+  const best = [0, 1, 2, 3].map(i => Math.max(...typed.map(r => +r[1][i] || 0)));
+  return `<table class="tbl"><tr><th></th><th>HP</th><th>ATK</th><th>DEF</th><th>REC</th></tr>${rows.map(([l, v]) =>
+    `<tr><td>${l}</td>${v.map((x, i) => `<td class="${typed.length > 2 && +x === best[i] && l !== "Lv 1" ? "best" : ""}">${x || "–"}</td>`).join("")}</tr>`).join("")}</table>
+    ${typed.length > 2 ? `<p class="dim small" style="margin:6px 0 0">Gold = best value among the unit's types (Lord, Anima…). Imps raise stats further.</p>` : ""}`;
+}
+function skillBlock(s) {
+  const cls = { "Leader Skill": "ls", "Extra Skill": "es", "Dual BB": "dbb", "UBB": "ubb", "SBB": "sbb", "BB": "" }[s.kind] ?? "";
+  const pills = [s.bc && s.kind !== "Dual BB" ? `${s.bc} BC` : "", s.hits ? `${s.hits} hits` : "", s.type, s.partner ? `with ${s.partner}` : ""].filter(Boolean);
+  return `<div class="sk"><div class="kn"><span class="tag ${cls}">${s.kind}</span><span class="nm">${esc(s.name)}</span></div>
+    <p>${esc(s.desc)}</p>${pills.length ? `<div class="pills">${pills.map(p => `<span class="pill">${esc(p)}</span>`).join("")}</div>` : ""}
+    ${s.item ? `<div class="note" style="border-color:#b382ff">Needs: ${esc(s.item)}</div>` : ""}
+    ${s.fx?.length ? `<details><summary>Numbers</summary><ul class="fx">${s.fx.map(e => `<li>${esc(e.p)}${e.d || e.t ? `<span class="fxm">${e.d ? `<span class="fxd">${esc(e.d)}</span>` : ""}${e.t ? `<span class="fxt">${esc(e.t)}</span>` : ""}</span>` : ""}</li>`).join("")}</ul></details>`
+      : s.note ? `<details><summary>Numbers</summary><div class="note">${esc(s.note)}</div></details>` : ""}</div>`;
+}
+const slug = k => k.toLowerCase().replace(/[^a-z]/g, "");
+// one quest of Revived's drop table: chance per enemy kill (chests) or per hit, how many, boss only
+const dropRow = d => `<li><b>${esc(d.p)}</b><span class="fxm"><span class="chance">${d.c}%</span><span class="fxt">per ${d.w === "hit" ? "hit" : "kill"}</span>${
+  d.n > 1 ? `<span class="fxt">${d.w === "hit" ? "up to " : "×"}${d.n}</span>` : ""}${d.b ? `<span class="boss">Boss</span>` : ""}</span></li>`;
+const dropsHtml = g => `<div class="src">✓ Revived's own drop table (bfrevive.net) · best chance first</div><ul class="qlist drops">${g.drops.slice(0, 6).map(dropRow).join("")}</ul>${
+  g.drops.length > 6 ? `<details><summary>${g.drops.length - 6} more quest${g.drops.length > 7 ? "s" : ""}</summary><ul class="qlist drops">${g.drops.slice(6).map(dropRow).join("")}</ul></details>` : ""}${
+  g.total > g.drops.length ? `<div class="src">…and ${g.total - g.drops.length} more with lower chances</div>` : ""}`;
+const getLine = g => `<li><span class="gtag ${slug(g.kind)}">${esc(g.kind)}</span><div>${
+  g.drops ? dropsHtml(g)
+  : g.places ? `<div class="src">${esc(g.note || "✓ Revived quest names · drops from the wiki")}</div><ul class="qlist">${g.places.map(p => `<li><b>${esc(p.path)}</b>${p.note ? `<span class="dim"> · ${esc(p.note)}</span>` : ""}</li>`).join("")}</ul>`
+  : g.lines ? `${g.kind === "Wiki" ? `<div class="src">Wiki (global game), not found in Revived</div>` : ""}<ul class="qlist">${g.lines.map(([l, t]) => `<li style="padding-left:${(l - 1) * 12}px">${esc(t)}</li>`).join("")}</ul>` : esc(g.text)}${
+  g.mats ? `<ul class="mlist">${g.mats.map(m => `<li><b>${m.count}× ${esc(m.name)}</b>${m.get.length ? `<ul class="get">${m.get.map(getLine).join("")}</ul>` : ""}</li>`).join("")}</ul>` : ""}</div></li>`;
+const getHtml = s => s.get?.length ? `<ul class="get">${s.get.map(getLine).join("")}</ul>` : `<p class="dim small">No current way to get it in the game data, probably from a past event.</p>`;
+const sphereCard = s => `<div class="item" style="margin:0 0 8px;cursor:default;align-items:flex-start"><img src="${iImg(s.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1">
+  <div class="t">${esc(s.name)} <span class="dim small">${s.type ? `${s.type} sphere` : "item"}${s.rarity ? ` · ${s.rarity}${STAR}` : ""}</span></div>
+  <div class="small" style="color:#ece6d6;margin:3px 0">${esc(s.desc)}</div><details><summary>Where to get it</summary>${getHtml(s)}</details></div></div>`;
+const unitMini = (id, cur) => { const u = UMAP[id]; return u ? `<div class="eu ${cur ? "cur" : ""}" onclick="go('#/unit/${id}')"><img src="${uImg(id)}" alt="" onerror="this.style.visibility='hidden'"><div class="gname">${esc(u.n)}</div></div>` : ""; };
+
+// a quest of Revived's map as "Area › Dungeon › Quest"
+const srcQuest = (S, m) => { const x = S.m[m] || [`Quest ${m}`, 0], p = S.p[x[1]]; return p ? `${p} › ${x[0]}` : x[0]; };
+// the first few rows, the rest folded away
+const foldList = (rows, f, n = 5) => `<ul class="qlist drops">${rows.slice(0, n).map(f).join("")}</ul>${
+  rows.length > n ? `<details><summary>${rows.length - n} more</summary><ul class="qlist drops">${rows.slice(n).map(f).join("")}</ul></details>` : ""}`;
+// how to get a unit in Revived right now: summon gates, capture spots, clear rewards, event shops
+function unitSrcHtml(S, id) {
+  const s = S?.u?.[id]; if (!s) return "";
+  const out = [];
+  if (s.g) out.push(["Summon", foldList(s.g, ([g, p]) => `<li class="glink" data-gate="${g}"><b>${esc(S.g[g]?.[0] || `Gate ${g}`)}</b><span class="fxm"><span class="chance">${p}%</span><span class="fxt">per pull</span>${
+    S.g[g]?.[1] & 1 ? `<span class="boss">This week</span>` : ""}</span></li>`, 3)]);
+  if (s.c) out.push(["Capture", foldList(s.c, ([m, cap, appear, n, boss, as]) => `<li><b>${esc(srcQuest(S, m))}</b><span class="fxm"><span class="chance">${cap}%</span><span class="fxt">capture</span>${
+    n > 1 ? `<span class="fxt">×${n}</span>` : ""}${appear < 100 ? `<span class="fxt">in ${appear}% of runs</span>` : ""}${boss ? `<span class="boss">Boss</span>` : ""}${as && UMAP[as] ? `<span class="fxt">fights as ${esc(UMAP[as].n)}</span>` : ""}</span></li>`)]);
+  if (s.r) out.push(["Clear reward", foldList(s.r, ([m, first, n]) => `<li><b>${esc(srcQuest(S, m))}</b><span class="fxm"><span class="fxt">${first === 1 ? "first clear" : "every clear"}</span>${n > 1 ? `<span class="fxt">×${n}</span>` : ""}</span></li>`)]);
+  if (s.s) out.push(["Event shop", foldList(s.s, ([t, price, most, n]) => `<li><b>${esc(S.t[t] || "Event token")} shop</b><span class="fxm"><span class="chance">${price} ${esc(S.t[t] || "tokens")}</span>${
+    n > 1 ? `<span class="fxt">for ${n}</span>` : ""}<span class="fxt">buy up to ${most}</span></span></li>`)]);
+  return `<div class="src">✓ Revived's live game data (bfrevive.net, ${new Date(S.built * 1000).toLocaleDateString()})</div><ul class="get">${out.map(([k, h]) => `<li><span class="gtag ${slug(k)}">${k}</span><div>${h}</div></li>`).join("")}</ul>`;
+}
+// every unit a summon gate can give: the rarest first, then the best chance
+async function showGate(g) {
+  const S = await load("usrc"), G = S.g?.[g]; if (!G) return showMissing();
+  setTitle(G[0], true);
+  const list = Object.entries(S.u).map(([id, s]) => [UMAP[id], s.g?.find(x => x[0] == g)?.[1]]).filter(x => x[0] && x[1])
+    .sort((a, b) => b[0].r - a[0].r || b[1] - a[1] || a[0].n.localeCompare(b[0].n));
+  NAV_LIST = list.map(x => x[0].id);
+  const omni = list.filter(x => x[0].r === 8).length, top = list.filter(x => x[0].r >= 7).length;
+  $("page").innerHTML = `<div class="sec"><h3 class="purple">${esc(G[0])}</h3><p class="small" style="margin:0">${list.length} units${top ? ` · ${top} of them 7★ or Omni${omni ? ` (${omni} Omni)` : ""}` : ""}${
+    G[1] & 1 ? " · featured this week" : G[1] & 2 ? " · rotating gate" : ""}</p><p class="small dim" style="margin:4px 0 0">Chance per pull, from Revived's game server. Gem price shows in the game.</p></div><div id="glist"></div>`;
+  paged($("glist"), list, ([u, p]) => { const d = listRow(u); d.querySelector(".badges").insertAdjacentHTML("beforeend", `<span class="badge pw">${p}% per pull</span>`); return d; }, "list");
+  window.scrollTo(0, 0);
+}
+const gatesHtml = S => { const n = {}; for (const s of Object.values(S.u || {})) for (const [g] of s.g || []) n[g] = (n[g] || 0) + 1;
+  const gates = Object.entries(S.g || {}).filter(([g]) => n[g]).sort((a, b) => (b[1][1] & 1) - (a[1][1] & 1));
+  return gates.length ? `<div class="sec"><h3 class="purple">Summon gates</h3>${gates.map(([g, [t, f]]) => `<div class="gate" data-gate="${g}"><b>${esc(t)}</b>${f & 1 ? `<span class="boss">This week</span>` : ""}<span class="n">${n[g]} units ›</span></div>`).join("")}</div>` : ""; };
+
+async function evoChain(id) {
+  const chain = [id]; const seen = new Set(chain);
+  for (let cur = id, i = 0; i < 8; i++) { const w = await wiki(cur); const f = w.evo?.from; if (!f || seen.has(f) || !UMAP[f]) break; chain.unshift(f); seen.add(f); cur = f; }
+  for (let cur = id, i = 0; i < 8; i++) { const w = await wiki(cur); const n = w.evo?.into; if (!n || seen.has(n) || !UMAP[n]) break; chain.push(n); seen.add(n); cur = n; }
+  return chain;
+}
+async function showUnit(id) {
+  const u = UMAP[id]; if (!u) return showMissing();
+  setTitle(u.n, true); $("share").hidden = false; $("share").onclick = () => shareUnit(id);
+  const page = $("page");
+  remember("u", id);
+  const [art, spr] = await Promise.all([loadImg(aImg(id)), loadImg(sImg(id))]);
+  // previous / next unit of the list it was opened from
+  const at = NAV_LIST.indexOf(id), prev = at > 0 ? NAV_LIST[at - 1] : null, next = at >= 0 ? NAV_LIST[at + 1] : null;
+  // no artwork: the hero shows the animated sprite instead of the small icon
+  page.innerHTML = `<div class="hero" style="--el:var(--${u.e || "Light"})"><div class="glow"></div>
+      <img class="art ${art ? "" : "icon"}" src="${art ? aImg(id) : spr ? sImg(id) : uImg(id)}" alt="" ${!art && spr ? `style="image-rendering:pixelated;height:${Math.min(150, spr.naturalHeight * 1.5)}px"` : ""}>
+      <button class="favbtn ${favs.has(id) ? "on" : ""}" id="favbtn" aria-label="Favorite"><img src="/static/star_fav.png" alt=""></button>
+      ${at >= 0 && NAV_LIST.length > 1 ? `<div class="navarrows"><button id="uprev" ${prev ? "" : "disabled"} aria-label="Previous unit">‹</button><span>${at + 1}/${NAV_LIST.length}</span><button id="unext" ${next ? "" : "disabled"} aria-label="Next unit">›</button></div>` : ""}
+      <div class="info"><h2>${esc(u.n)}</h2><div class="stars">${u.r === 8 ? `<img class="omni" src="/static/omni.png" alt=""><span class="omnit">OMNI</span>` : `<img src="/static/star.png" alt="★">`.repeat(u.r)}</div>
+        <div class="meta">${u.e ? `<span class="badge" id="elbadge">${orb(u.e)}${u.e}</span>` : ""}${u.c ? `<span class="badge cost">COST ${u.c}</span>` : ""}<span id="hmeta"></span></div></div></div>
+    <div class="acts"><button class="gbtn" id="toteam">＋ Add to team</button><button class="gbtn blue ${CMP.includes(id) ? "on" : ""}" id="tocmp">⇄ Compare</button></div>
+    <div id="ubody"><div class="empty">Loading…</div></div>`;
+  $("favbtn").onclick = () => { favs.has(id) ? favs.delete(id) : favs.add(id); store.set("bf.favs", [...favs]); $("favbtn").classList.toggle("on"); toast(favs.has(id) ? "Added to favorites" : "Removed from favorites"); };
+  if ($("elbadge")) $("elbadge").onclick = elementChart;
+  $("toteam").onclick = () => addToTeam(id);
+  $("tocmp").onclick = () => { toggleCompare(id); $("tocmp").classList.toggle("on", CMP.includes(id)); };
+  // replace, not push: Back still goes to the list, not through every unit seen
+  if (prev) $("uprev").onclick = () => location.replace(`#/unit/${prev}`);
+  if (next) $("unext").onclick = () => location.replace(`#/unit/${next}`);
+  window.scrollTo(0, 0);
+  const [w, D, I] = await Promise.all([wiki(id), load("details"), load("items")]);
+  const d = D[id] || {};
+  $("hmeta").innerHTML = [w.maxlv ? `<span class="badge">Max Lv ${w.maxlv}</span>` : "", w.gender ? `<span class="badge">${SEX[w.gender] ? `<img src="/static/sex_${SEX[w.gender][0]}.png" alt="">${SEX[w.gender][1]}` : `<img src="/static/sex_o.png" alt="">${esc(w.gender)}`}</span>` : "",
+    w.hits ? `<span class="badge">${w.hits} hits</span>` : ""].join("");
+  // skills: the wiki's version has BC cost, hits and the numbers; fall back to the game's text
+  let skills = w.skills || [];
+  if (!skills.length) skills = [
+    d.leader?.desc ? { kind: "Leader Skill", name: d.leader.name, desc: d.leader.desc } : null,
+    ...(d.skills || []).map(s => ({ kind: s.label, name: s.name, desc: s.desc })),
+    d.extra ? { kind: "Extra Skill", name: "", desc: d.extra } : null].filter(Boolean);
+  // best spheres from the game data
+  let spheres = "";
+  if (d.es_spheres || d.es_types) {
+    const es = (d.es_spheres || []).map(i => I[i]).filter(Boolean);
+    if (es.length && !d.es_generic) spheres += `<p class="dim small" style="margin:0 0 8px">These switch on the unit's extra skill:</p>` + es.map(sphereCard).join("");
+    for (const t of d.es_types || []) {
+      const opts = t.ids.map(i => I[i]).filter(Boolean); if (!opts.length) continue;
+      spheres += `<p class="dim small" style="margin:8px 0">${d.es_generic ? "No sphere-specific bonus. Strong all-round picks:" : `Also works with any <b>${esc(t.type)}</b> sphere, for example:`}</p>` + opts.map(sphereCard).join("");
+    }
+    if (d.es_partners?.length) spheres = `<p class="dim small" style="margin:0 0 8px">Extra skill bonus with <b>${d.es_partners.map(esc).join(", ")}</b> in the squad.</p>` + spheres;
+  }
+  const chain = await evoChain(id);
+  const mats = (w.evo?.mats || []).map(n => { const m = UNITS.find(x => x.n === n.replace(/\s*\(.*\)$/, "")); return m ? unitMini(m.id) : `<span class="pill">${esc(n)}</span>`; }).join("");
+  const sp = w.sp?.length ? w.sp.map(c => `<div class="sp"><div class="cat">${esc(c.cat)}</div>${c.opts.map(o => `<div class="spo"><span class="c">${o.sp} SP</span><div>${esc(o.desc)}${o.note ? `<div class="dim small">${esc(o.note)}</div>` : ""}</div></div>`).join("")}</div>`).join("") : "";
+  const quotes = [["Summon", w.summon], ["Fusion", w.fusion], ["Evolution", w.evolution]].filter(q => q[1]);
+  const roles = rolePills(id);
+  USRC = await load("usrc");
+  const src = unitSrcHtml(USRC, id);
+  $("ubody").innerHTML = `
+    ${spr ? `<div class="sec"><h3 class="green">In battle</h3><div class="stage"><img class="spr" id="spr" src="${sImg(id)}" alt=""></div></div>` : ""}
+    <div class="sec"><h3>Stats</h3>${statTable(u, w)}</div>
+    ${skills.length || roles ? `<div class="sec"><h3 class="blue">Skills</h3>${roles ? `<div class="roles">${roles}</div>` : ""}${skills.map(skillBlock).join("")}</div>` : ""}
+    ${spheres ? `<div class="sec"><h3 class="purple">Best spheres</h3>${spheres}</div>` : ""}
+    ${sp ? `<div class="sec"><h3>SP Enhancements</h3>${sp}</div>` : ""}
+    ${chain.length > 1 || mats ? `<div class="sec"><h3 class="green">Evolution</h3><div class="evo">${chain.map((c, i) => (i ? `<span class="ar">›</span>` : "") + unitMini(c, c === id)).join("")}</div>
+      ${mats ? `<p class="dim small" style="margin:10px 0 0">Materials to evolve this unit${w.evo.zel ? ` · ${esc(w.evo.zel)} Zel` : ""}${w.evo.karma ? ` · ${esc(w.evo.karma)} Karma` : ""}</p><div class="mats">${mats}</div>` : ""}</div>` : ""}
+    ${src || w.how || w.bazaar?.length || d.clear ? `<div class="sec"><h3 class="green">How to get</h3>${src}${d.clear && !USRC?.u?.[id]?.r ? `<div class="note" style="border-color:var(--gold2);margin:0 0 8px">In Revived, first clear reward of:<ul class="qlist" style="margin-top:4px">${d.clear.map(p => `<li><b>${esc(p)}</b></li>`).join("")}</ul></div>` : ""}${w.how ? src ? `<details><summary>Wiki (global game)</summary><p class="lore" style="margin:0">${esc(w.how)}</p></details>` : `<p class="lore" style="margin:0">${esc(w.how)}</p>` : ""}${(w.bazaar || []).map(b => `<div class="note" style="border-color:var(--gold2)">Event Bazaar: ${esc(b.type)}${b.desc ? ` · ${esc(b.desc)}` : ""}${b.bonus ? ` · ${esc(b.bonus)} bonus` : ""}</div>`).join("")}</div>` : ""}
+    ${w.lore || quotes.length ? `<div class="sec"><h3 class="blue">Story</h3>${w.lore ? `<div class="lore">${esc(w.lore)}</div>` : ""}${quotes.map(([k, v]) => `<div class="quote"><b>${k}</b>${esc(v)}</div>`).join("")}</div>` : ""}
+    ${w.notes ? `<div class="sec"><h3>Notes</h3><div class="lore">${esc(w.notes)}</div></div>` : ""}
+    <p class="dim small" style="text-align:center;margin:14px">Game data + Brave Frontier Wiki${w.page ? ` (${esc(w.page)})` : ""}${src ? " + bfrevive.net" : ""}</p>`;
+  $("ubody").querySelectorAll("[data-gate]").forEach(b => b.onclick = () => go(`#/gate/${b.dataset.gate}`));
+  // a sticky row of the page's sections to jump to (the unit pages are long)
+  jumpBar($("ubody"), [...$("ubody").querySelectorAll(":scope > .sec")].filter(s => s.querySelector(":scope > h3")));
+  // pixel art scales best by whole numbers: as big as fits (at most 3x)
+  if (spr && $("spr")) {
+    const room = Math.min(($("spr").parentElement.clientWidth - 16) / spr.naturalWidth, 220 / spr.naturalHeight);
+    const k = room >= 1 ? Math.min(3, Math.floor(room)) : room;
+    $("spr").style.width = `${Math.round(spr.naturalWidth * k)}px`;
+  }
+}
+
+// ---------------- spheres ----------------
+let sType = store.get("bf.stype", "All");
+async function renderSpheres() {
+  const [I, R] = await Promise.all([load("items"), load("recipes")]), q = $("sq").value.trim().toLowerCase();
+  const all = Object.values(I).filter(s => s.name);
+  const types = ["All", "Craftable", ...[...new Set(all.filter(s => s.type).map(s => s.type))].sort(), "Materials"];
+  if (!$("stype").children.length) for (const t of types) {
+    const b = document.createElement("button"); b.className = "chip" + (t === sType ? " on" : ""); b.textContent = t;
+    b.onclick = () => { sType = t; store.set("bf.stype", t); [...$("stype").children].forEach(c => c.classList.toggle("on", c === b)); renderSpheres(); };
+    $("stype").append(b);
+  }
+  const pick = { All: s => s.type, Craftable: s => R[s.id], Materials: s => !s.type }[sType] || (s => s.type === sType);
+  const list = all.filter(s => (!q || s.name.toLowerCase().includes(q)) && (q || pick(s))).sort((a, b) => (b.rarity || 0) - (a.rarity || 0) || a.name.localeCompare(b.name));
+  $("scount").textContent = `${list.length} ${q ? "results" : sType === "Materials" ? "materials" : sType === "Craftable" ? "items you can craft in Synthesis" : "spheres"}`;
+  paged($("slist"), list, s => { const d = document.createElement("div"); d.className = "item"; d.onclick = () => go(`#/item/${s.id}`);
+    d.innerHTML = `<img loading="lazy" src="${iImg(s.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1"><div class="t">${esc(s.name)} <span class="dim small">${s.rarity ? `${s.rarity}${STAR}` : ""}</span>${R[s.id] ? `<span class="craft">craftable</span>` : ""}</div><div class="s">${esc(s.type ? s.type + " · " : "")}${esc(s.desc)}</div></div>`;
+    return d; }, "");
+}
+// ---------------- crafting planner (the game's Synthesis recipes: item -> [karma, [[material, count], ...]]) ----------------
+// expand every craftable material down to what has to be found or bought, adding up counts and Karma
+function craftPlan(id, qty, R) {
+  const base = new Map(); let karma = 0;
+  const node = (iid, n, depth) => {
+    const r = R[iid];
+    if (!r || depth > 12) { base.set(iid, (base.get(iid) || 0) + n); return { id: iid, n }; }
+    karma += r[0] * n;
+    return { id: iid, n, kids: r[1].map(([m, c]) => node(m, c * n, depth + 1)) };
+  };
+  const root = node(id, qty, 0);
+  return { root, base: [...base].sort((a, b) => b[1] - a[1]), karma };
+}
+const itemName = (I, iid) => I[iid]?.name || `Item ${iid}`;
+const craftTree = (I, nd, top) => `<li><span class="ci" data-i="${nd.id}"><img src="${iImg(nd.id)}" alt="" onerror="this.style.visibility='hidden'"><b>${nd.n}×</b> ${esc(itemName(I, nd.id))}${nd.kids && !top ? ` <small>craft</small>` : ""}</span>${
+  nd.kids ? `<ul>${nd.kids.map(k => craftTree(I, k)).join("")}</ul>` : ""}</li>`;
+function drawPlan(id, qty, I, R) {
+  const p = craftPlan(id, qty, R);
+  $("cplan").innerHTML = `<p class="small dim" style="margin:0 0 6px">Everything you need${qty > 1 ? ` for ${qty}` : ""}, with every craftable part made from scratch:</p>
+    <div class="need">${p.base.map(([m, n]) => `<div class="ni" data-i="${m}"><img src="${iImg(m)}" alt="" onerror="this.style.visibility='hidden'"><b>×${n}</b><span>${esc(itemName(I, m))}</span></div>`).join("")}</div>
+    ${p.karma ? `<p class="small" style="margin:8px 0 0">Total <b style="color:var(--accent)">${p.karma.toLocaleString()} Karma</b></p>` : ""}
+    <details><summary>Steps</summary><ul class="ctree">${craftTree(I, p.root, true)}</ul></details>`;
+  $("cplan").querySelectorAll("[data-i]").forEach(el => el.onclick = () => I[el.dataset.i] && go(`#/item/${el.dataset.i}`));
+}
+
+async function showItem(id) {
+  const [I, R] = await Promise.all([load("items"), load("recipes")]), s = I[id]; if (!s) return showMissing();
+  setTitle(s.name, true); $("share").hidden = true; remember("i", id);
+  const usedIn = Object.keys(R).filter(r => R[r][1].some(([m]) => m === id) && I[r]);
+  // units whose extra skill uses this sphere
+  const D = await load("details"), users = Object.entries(D).filter(([, d]) => (d.es_spheres || []).includes(id)).map(([u]) => u).filter(u => UMAP[u]);
+  $("page").innerHTML = `<div class="sec" style="display:flex;gap:12px;align-items:center"><img src="${iImg(id)}" alt="" style="width:72px;height:72px;object-fit:contain" onerror="this.style.visibility='hidden'">
+      <div><h2 style="margin:0;font-size:20px;text-shadow:var(--ol)">${esc(s.name)}</h2><div class="badges">${s.type ? `<span class="badge">${esc(s.type)} sphere</span>` : `<span class="badge">Item</span>`}${s.rarity ? `<span class="badge star">${s.rarity}${STAR}</span>` : ""}</div></div></div>
+    ${s.desc ? `<div class="sec"><h3 class="blue">Effect</h3><div class="lore">${esc(s.desc)}</div></div>` : ""}
+    <div class="sec"><h3 class="green">Where to get it</h3>${getHtml(s)}</div>
+    ${R[id] ? `<div class="sec"><h3>Crafting plan</h3><div class="qty"><button class="gbtn small dark" id="cminus" aria-label="Fewer">−</button><b id="cq">1</b><button class="gbtn small dark" id="cplus" aria-label="More">+</button><span class="small dim">to craft</span></div><div id="cplan"></div></div>` : ""}
+    ${usedIn.length ? `<div class="sec"><h3 class="blue">Used to craft</h3><div class="need">${usedIn.map(r => `<div class="ni" data-i="${r}"><img src="${iImg(r)}" alt="" onerror="this.style.visibility='hidden'"><b>×${R[r][1].find(([m]) => m === id)[1]}</b><span>${esc(I[r].name)}</span></div>`).join("")}</div></div>` : ""}
+    ${users.length ? `<div class="sec"><h3 class="purple">Best on</h3><div class="mats">${users.map(u => unitMini(u)).join("")}</div></div>` : ""}`;
+  $("page").querySelectorAll(".sec > .need [data-i]").forEach(el => el.onclick = () => go(`#/item/${el.dataset.i}`));
+  if (R[id]) {
+    let qty = 1;
+    const set = n => { qty = Math.max(1, Math.min(99, n)); $("cq").textContent = qty; drawPlan(id, qty, I, R); };
+    $("cminus").onclick = () => set(qty - 1); $("cplus").onclick = () => set(qty + 1);
+    set(1);
+  }
+  window.scrollTo(0, 0);
+}
+
+// ---------------- drops ----------------
+// before typing: your last searches and a few examples, as chips
+const DROP_EXAMPLES = ["Blue Claw", "Kagan Desert", "Excelsior Lead", "Empty Sphere", "RC7"];
+let dropRecent = store.get("bf.dq", []);
+function dropChips() {
+  const chips = (title, list) => list.length ? `<div class="sec"><h3 class="blue">${title}</h3><div class="chipwrap">${list.map(t => `<button class="chip on" data-q="${esc(t)}">${esc(t)}</button>`).join("")}</div></div>` : "";
+  $("dres").innerHTML = chips("Recent searches", dropRecent) + chips("Try", DROP_EXAMPLES.filter(t => !dropRecent.includes(t))) + gatesHtml(USRC || {});
+  $("dres").querySelectorAll("[data-gate]").forEach(b => b.onclick = () => go(`#/gate/${b.dataset.gate}`));
+  $("dres").querySelectorAll("[data-q]").forEach(b => b.onclick = () => { $("dq").value = b.dataset.q; renderDrops(); saveDropSearch(); });
+}
+function saveDropSearch() {
+  const q = $("dq").value.trim();
+  if (q.length < 2) return;
+  dropRecent = [q, ...dropRecent.filter(x => x.toLowerCase() !== q.toLowerCase())].slice(0, 8); store.set("bf.dq", dropRecent);
+}
+async function renderDrops() {
+  const q = $("dq").value.trim().toLowerCase();
+  if (q.length < 2) { await load("drops"); USRC = await load("usrc"); if (!$("dq").value.trim()) dropChips(); return; }
+  const [Dr, I, S] = await Promise.all([load("drops"), load("items"), load("usrc")]), places = new Map(), revived = new Set();
+  if ($("dq").value.trim().toLowerCase() !== q) return;  // a newer search is on its way
+  // rows: [item name, place (number into Dr.paths), 1 = Revived's own data, best chance % or null]
+  for (const [name, at, onMap, chance] of Dr.index) {
+    const place = typeof at === "number" ? Dr.paths[at] : at;
+    if (!place.toLowerCase().includes(q)) continue;
+    (places.get(place) || places.set(place, new Map()).get(place)).set(name, chance); if (onMap) revived.add(place);
+  }
+  const ranked = [...places].sort((a, b) => revived.has(b[0]) - revived.has(a[0]) || b[1].size - a[1].size || a[0].localeCompare(b[0])).slice(0, 60);
+  const items = Object.values(I).filter(s => s.name.toLowerCase().includes(q)).slice(0, 12);
+  const units = UNITS.filter(u => S.u?.[u.id] && u.n.toLowerCase().includes(q)).sort(SORTS.rarity).slice(0, 12);
+  // units you can capture in the quests that match: "Kagan Desert" lists who joins there
+  if (!S.where) { S.where = []; for (const [id, s] of Object.entries(S.u || {})) for (const [m, cap] of s.c || []) if (UMAP[id]) { const p = srcQuest(S, m); S.where.push([p.toLowerCase(), p, id, cap]); } }
+  const caught = new Map();
+  for (const [low, p, id, cap] of S.where) if (low.includes(q)) { const at = caught.get(p) || caught.set(p, new Map()).get(p); at.set(id, Math.max(at.get(id) || 0, cap)); }
+  const capPlaces = [...caught].sort((a, b) => b[1].size - a[1].size || a[0].localeCompare(b[0])).slice(0, 30);
+  $("dres").innerHTML = (units.length ? `<div class="sec"><h3 class="blue">Units</h3><div class="recent">${units.map(u => unitMini(u.id)).join("")}</div><p class="small dim" style="margin:4px 0 0">Open a unit for its summon gates, capture spots and rewards.</p></div>` : "")
+    + (items.length ? `<div class="sec"><h3 class="purple">Items</h3>${items.map(s => `<div class="item" style="margin:0 0 8px" onclick="go('#/item/${s.id}')"><img src="${iImg(s.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1"><div class="t">${esc(s.name)}</div><div class="s">${esc(s.desc)}</div></div></div>`).join("")}</div>` : "")
+    + (ranked.length ? `<div class="sec"><h3 class="green">Drops in</h3>${ranked.map(([p, ns]) => `<div class="place"><b>${esc(p)}${revived.has(p) ? `<span class="rv">✓ in Revived</span>` : ""}</b>${
+        [...ns].sort((a, b) => (b[1] || 0) - (a[1] || 0) || a[0].localeCompare(b[0])).map(([n, c]) => { const i = Dr.ids[n];
+        return `<span class="ichip" ${i ? `onclick="go('#/item/${i}')"` : ""}>${i ? `<img src="${iImg(i)}" alt="" onerror="this.remove()">` : ""}${esc(n)}${c ? `<small>${c}%</small>` : ""}</span>`; }).join("")}</div>`).join("")}</div>` : "")
+    + (capPlaces.length ? `<div class="sec"><h3 class="green">Capture here</h3>${capPlaces.map(([p, us]) => `<div class="place"><b>${esc(p)}</b>${
+        [...us].sort((a, b) => b[1] - a[1] || UMAP[b[0]].r - UMAP[a[0]].r).map(([id, c]) => `<span class="ichip" onclick="go('#/unit/${id}')"><img src="${uImg(id)}" alt="" onerror="this.remove()">${esc(UMAP[id].n)}<small>${c}%</small></span>`).join("")}</div>`).join("")}</div>` : "")
+    + (!items.length && !ranked.length && !units.length && !capPlaces.length ? `<div class="empty"><b>Nothing found</b>Try another name.</div>` : "");
+}
+
+// ---------------- favorites ----------------
+async function renderFavs() {
+  const list = UNITS.filter(u => favs.has(u.id)).sort((a, b) => b.r - a.r || a.n.localeCompare(b.n));
+  NAV_LIST = list.map(u => u.id);
+  // the units and items opened last
+  const I = RECENT.some(([t]) => t === "i") ? await load("items") : {};
+  const recent = RECENT.filter(([t, id]) => t === "u" ? UMAP[id] : I[id]).map(([t, id]) => t === "u" ? unitMini(id)
+    : `<div class="eu" onclick="go('#/item/${id}')"><img src="${iImg(id)}" alt="" onerror="this.style.visibility='hidden'"><div class="gname">${esc(I[id].name)}</div></div>`).join("");
+  $("frecent").innerHTML = recent ? `<div class="sec" style="padding:10px 10px 6px"><h3 class="blue">Recently viewed</h3><button class="gbtn small dark" id="rclear" style="float:right">Clear</button><div class="recent">${recent}</div></div>` : "";
+  if ($("rclear")) $("rclear").onclick = () => { RECENT = []; store.set("bf.recent", RECENT); renderFavs(); };
+  $("fcount").textContent = list.length ? `${list.length} favorite units` : "";
+  if (!list.length) return $("flist").innerHTML = `<div class="empty"><b>No favorites yet</b>Open a unit and tap the ${FAVSTAR} to keep it here.</div>`;
+  paged($("flist"), list, viewMode === "grid" ? u => gridCell(u) : u => listRow(u), viewMode === "grid" ? "grid" : "list");
+}
+
+// ---------------- share a unit as a picture ----------------
+async function shareUnit(id) {
+  const u = UMAP[id], w = await wiki(id), S = 2, W = 720, H = 900;
+  const cv = document.createElement("canvas"); cv.width = W * S; cv.height = H * S; const g = cv.getContext("2d"); g.scale(S, S);
+  await document.fonts.load("20px Rodin").catch(() => {});
+  const [bg, art, icon, orbI, starI, omniI] = await Promise.all([loadImg("/static/base.jpg"), loadImg(aImg(id)), loadImg(uImg(id)), u.e ? loadImg(`/static/orb_${u.e}.png`) : null, loadImg("/static/star.png"), loadImg("/static/omni.png")]);
+  const css = getComputedStyle(document.documentElement), col = n => css.getPropertyValue(n).trim();
+  if (bg) g.drawImage(bg, 0, 0, W, W * bg.height / bg.width); g.fillStyle = "rgba(6,4,16,.6)"; g.fillRect(0, 0, W, H);
+  if (art) { const h = 460, wd = h * art.width / art.height; g.drawImage(art, W - wd + 40, 40, wd, h); } else if (icon) g.drawImage(icon, W - 260, 80, 220, 220);
+  const ot = (t, x, y, px, fill = "#fff", maxw) => { g.font = `${px}px Rodin, Arial`; g.lineJoin = "round"; g.lineWidth = Math.max(3, px * .18); g.strokeStyle = "#000"; g.strokeText(t, x, y, maxw); g.fillStyle = fill; g.fillText(t, x, y, maxw); };
+  ot(u.n, 28, 70, 34, "#fff", 420);
+  if (u.r === 8) { if (omniI) g.drawImage(omniI, 22, 80, 42, 42); ot("OMNI", omniI ? 70 : 28, 112, 26, col("--accent")); }
+  else if (!starI) ot("★".repeat(u.r), 28, 112, 26, col("--accent"));
+  else for (let i = 0; i < u.r; i++) g.drawImage(starI, 24 + i * 27, 86, 32, 32);
+  if (orbI) g.drawImage(orbI, 28, 128, 30, 30); ot(`${u.e || ""}   COST ${u.c}`, 64, 152, 20, col("--" + (u.e || "Light")));
+  let y = 200; const lines = [["HP", u.hp], ["ATK", u.atk], ["DEF", u.def], ["REC", u.rec]];
+  for (const [k, v] of lines) { ot(k, 28, y, 18, col("--orange")); ot(String(v), 100, y, 22); y += 34; }
+  y = art ? 520 : 360; g.fillStyle = "rgba(8,10,20,.85)"; g.fillRect(16, y - 30, W - 32, H - y + 14);
+  const wrap = (text, x, yy, maxw, px, color) => { g.font = `${px}px Arial`; const words = String(text).split(" "); let line = "";
+    for (const wd of words) { if (g.measureText(line + wd).width > maxw && line) { g.fillStyle = color; g.fillText(line, x, yy); yy += px * 1.3; line = ""; } line += wd + " "; }
+    g.fillStyle = color; g.fillText(line, x, yy); return yy + px * 1.3; };
+  for (const s of (w.skills || []).filter(s => ["Leader Skill", "SBB", "UBB"].includes(s.kind)).slice(0, 3)) {
+    if (y > H - 60) break;
+    ot(`${s.kind} · ${s.name}`, 30, y, 18, col("--accent"), W - 60); y = wrap(s.desc, 30, y + 24, W - 60, 14, "#ece6d6") + 6;
+  }
+  ot("BF Companion", W - 170, H - 14, 14, col("--dim"));
+  const blob = await new Promise(r => cv.toBlob(r, "image/png"));
+  const b64 = await new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result.split(",")[1]); r.readAsDataURL(blob); });
+  if (window.BFApp) BFApp.shareImage(b64, `${u.n.replace(/[^\w ]+/g, "")}.png`, true);
+  else { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `${u.n}.png`; a.click(); }
+}
+
+// ---------------- team builder: 5 units + a friend, like the game's squad ----------------
+const SLOTS = ["Leader", "Unit", "Unit", "Unit", "Unit", "Friend"];
+// where each slot stands on the field (% across, % down to the feet): the front column faces the enemies on the left
+const SPOS = [[29, 66], [29, 37], [29, 95], [72, 30], [72, 59], [72, 88]];
+let TEAMS = store.get("bf.teams", null) || [0, 1, 2].map(() => Array(6).fill(null)), TCUR = store.get("bf.tcur", 0);
+const saveTeams = () => { store.set("bf.teams", TEAMS); store.set("bf.tcur", TCUR); };
+const COVER = ["mit", "heal", "bbf", "atk", "bbatk", "spark", "crit", "elem", "snull", "ko", "defign", "debuff"];
+// who gives a role: BB/SBB/UBB/extra skill for everyone, the leader skill only for the leader and the friend
+const providers = (team, code) => team.filter((id, i) => id && roleOf(id, code, i === 0 || i === 5));
+
+function addToTeam(id) {
+  const t = TEAMS[TCUR];
+  if (t.includes(id)) return toast(`Already in Team ${TCUR + 1}`);
+  let s = t.findIndex((x, i) => !x && i !== 5);
+  if (s < 0 && !t[5]) s = 5;
+  if (s < 0) return toast(`Team ${TCUR + 1} is full`);
+  t[s] = id; saveTeams(); toast(`Added to Team ${TCUR + 1} as ${SLOTS[s] === "Unit" ? "a unit" : SLOTS[s]}`);
+}
+// fill empty slots one by one with the unit that covers the most of what is still missing (only one element if chosen)
+let fillEl = store.get("bf.fillel", "");
+function autoFill(team, el) {
+  const pool = UNITS.filter(u => u.r >= 7 && !u.f && (!el || u.e === el));
+  let added = 0;
+  for (let s = 0; s < 6; s++) {
+    if (team[s]) continue;
+    const lead = s === 0 || s === 5, missing = COVER.filter(c => !providers(team, c).length);
+    let best = null, bestScore = -1;
+    for (const u of pool) {
+      if (team.includes(u.id)) continue;
+      const got = missing.filter(c => roleOf(u.id, c, lead));
+      // each missing role it brings counts, more when it's strong at it (compared with the strongest unit for that role)
+      const covers = got.length + got.reduce((a, c) => a + (powerOf(u.id, c)?.[0] || 0) / (POWER_MAX[c] || 1) * .6, 0);
+      const ls = lead ? ["atk", "mit", "bbf", "crit", "elem", "spark", "heal"].filter(c => (TAGS.units[u.id]?.[c] || "").includes("L")).length : 0;
+      const score = covers * 10 + ls * 3 + u.r + u.atk / 1e5;
+      if (score > bestScore) { bestScore = score; best = u; }
+    }
+    if (best) { team[s] = best.id; added++; }
+  }
+  return added;
+}
+// ---------------- squad numbers, like the game's Manage Squad screen ----------------
+const STATK = ["hp", "atk", "def", "rec"], TYPES = ["lord", "anima", "breaker", "guardian", "oracle"];
+const EL_RE = "(?:fire|water|earth|thunder|light|dark)", EL_LIST = `${EL_RE}(?:(?:,\\s*(?:and\\s+)?|\\s+and\\s+)${EL_RE})*`;
+const STAT_LIST = "((?:(?:all parameters|max hp|atk|def|rec)\\b(?:\\s*,\\s*(?:and\\s+)?|\\s+and\\s+|\\s*&\\s*)?)+)";
+const BOOST_A = new RegExp(`(\\d+)%\\s*(?:boost\\s*(?:to\\s*)?)?${STAT_LIST}`, "g");                       // "150% boost to Atk, Def"
+const BOOST_B = new RegExp(`boosts?\\s+${STAT_LIST}\\s*(?:for (${EL_LIST}) (?:types|units)\\s+)?by\\s*(\\d+)%`, "g");  // "boosts Atk for Fire types by 35%"
+// a leader skill's or sphere's stat boosts: [{pct, stats: ["atk", ...], els: ["fire"] | null, cond}]
+const boostCache = {};
+function statBoosts(text) {
+  if (!text) return [];
+  if (boostCache[text]) return boostCache[text];
+  const t = text.toLowerCase().replace(/guild raid:.*$/s, ""), out = [];  // "Guild Raid: …" only counts in guild raids
+  const add = (pct, list, start, end, els) => {
+    const stats = [...new Set((list.match(/all parameters|max hp|atk|def|rec/g) || []).flatMap(w => w === "all parameters" ? STATK : [w === "max hp" ? "hp" : w]))];
+    if (stats.length) out.push({ pct: +pct, stats, start, end, els: els ? els.match(new RegExp(EL_RE, "g")) : null });
+  };
+  for (const m of t.matchAll(BOOST_A)) if (!/^\s*relative/.test(t.slice(m.index + m[0].length))) add(m[1], m[2], m.index, m.index + m[0].length);
+  for (const m of t.matchAll(BOOST_B)) add(m[3], m[1], m.index, m.index + m[0].length, m[2]);
+  out.sort((a, b) => a.start - b.start);
+  for (const c of out) {  // "… of Water types", "(Thunder)", "when HP is above 50%" right after the boost
+    const tail = t.slice(c.end, c.end + 45).split(/,|&/)[0];
+    const e = tail.match(new RegExp(`(?:of |\\()(${EL_LIST})(?: types| units|\\))`));
+    if (!c.els && e) { c.els = e[1].match(new RegExp(EL_RE, "g")); c.tailEls = true; }
+    c.cond = /\bwhen\b|\bfor (?:first|\d)|\bturns?\b|\bif\b/.test(tail);
+  }
+  // "100% boost to Atk, Def and 80% boost to max HP of Water types": a condition written after a run of boosts
+  // covers the whole run (not one written inside its own boost: "boosts Atk for Fire types by 35%")
+  for (let i = out.length - 1; i > 0; i--) {
+    const gap = t.slice(out[i - 1].end, out[i].start);
+    if (out[i].tailEls && !out[i - 1].els && !/[a-z&]/.test(gap.replace(/\band\b/g, ""))) { out[i - 1].els = out[i].els; out[i - 1].tailEls = true; }
+  }
+  return boostCache[text] = out;
+}
+// short text for boosts: "+70% all", "ATK +150% · DEF +150% (Fire)"
+function boostText(clauses) {
+  return clauses.map(c => `${c.stats.length === 4 ? `+${c.pct}% all` : c.stats.map(s => `${s === "hp" ? "HP" : s.toUpperCase()} +${c.pct}%`).join(" · ")}${c.els ? ` (${c.els.map(e => e[0].toUpperCase() + e.slice(1)).join(", ")})` : ""}${c.cond ? " ✱" : ""}`).join(" · ");
+}
+const MAXLV = { 8: 150, 7: 120, 6: 100, 5: 80, 4: 60, 3: 40, 2: 30, 1: 15 };
+let TTYPE = store.get("bf.ttype", null) || TEAMS.map(() => Array(6).fill("lord"));
+let TSPH = store.get("bf.tsph", null) || TEAMS.map(() => Array.from({ length: 6 }, () => [null, null]));
+// what counts in the numbers; like the game's squad screen by default: leader skill and extra skills, no friend
+let SQ = { imps: true, lead: true, friend: false, es: true, maxcost: "", ...store.get("bf.sq", {}) };
+const saveSquad = () => { store.set("bf.ttype", TTYPE); store.set("bf.tsph", TSPH); store.set("bf.sq", SQ); };
+// a new unit in a slot starts as Lord without spheres
+const resetSlot = i => { TTYPE[TCUR][i] = "lord"; TSPH[TCUR][i] = [null, null]; saveSquad(); };
+const lsText = (id, w, D) => D[id]?.leader?.desc || (w?.skills || []).find(s => s.kind === "Leader Skill")?.desc || "";
+// one unit's numbers: max-level stats of its type, + imps, × (1 + leader / friend skill, own extra skill and sphere boosts)
+function unitNumbers(i, team, W, D, I) {
+  const id = team[i], u = UMAP[id], w = W[i] || {}, T = w.stats || {};
+  const lord = T.lord || [u.hp, u.atk, u.def, u.rec];
+  const types = TYPES.filter(t => t === "lord" || T[t]), ty = types.includes(TTYPE[TCUR][i]) ? TTYPE[TCUR][i] : "lord";
+  let base = (T[ty] || lord).map((v, k) => v || lord[k]);
+  if (SQ.imps && T.bonus) base = base.map((v, k) => v + (T.bonus[k] || 0));
+  const lsSlots = [...(SQ.lead ? [0] : []), ...(SQ.friend ? [5] : [])].filter(j => team[j]);
+  const leaders = lsSlots.flatMap(j => statBoosts(lsText(team[j], W[j], D)));
+  const mine = TSPH[TCUR][i].filter(s => s && I[s]), spheres = mine.flatMap(s => statBoosts(I[s].desc));
+  // its own extra skill; a boost "when <sphere> is equipped" only with that sphere picked
+  const esText = D[id]?.extra || (w.skills || []).find(s => s.kind === "Extra Skill")?.desc || "";
+  const hasEsSphere = mine.some(s => (D[id]?.es_spheres || []).includes(s) || esText.toLowerCase().includes(I[s].name.toLowerCase()));
+  const es = SQ.es ? statBoosts(esText).filter(c => !(c.cond && /equipped/i.test(esText)) || hasEsSphere) : [];
+  const el = (u.e || "").toLowerCase(), pct = [0, 0, 0, 0]; let cond = false;
+  for (const c of [...leaders, ...es, ...spheres]) if (!c.els || c.els.includes(el)) { c.stats.forEach(s => pct[STATK.indexOf(s)] += c.pct); cond = cond || c.cond; }
+  return { types, ty, lv: w.maxlv || MAXLV[u.r] || "", base, pct, cond, s: base.map((v, k) => Math.round(v * (1 + pct[k] / 100))) };
+}
+
+// ---------------- battle check: can the team cast SBB every turn, and roughly how hard do its BBs hit ----------------
+// BC a skill gives the party every turn it's cast: "Fills 12 BC", "Boosts BB gauge by 8~10 BC", plus a buff
+// "boosts BB gauge by 8 BC each turn"; a range counts its low end, 999 or "refills BB gauge to 100%" = to the max.
+// BC that depends on hits ("per spark", "when damage taken") isn't counted.
+const FILL_RE = /(?:fills|boosts bb gauge by)\s+(\d+(?:\.\d+)?)(?:\s*[~-]\s*\d+(?:\.\d+)?)?\s*bc\b(\s*(?:each turn|per turn|instantly))?(?!\s*(?:per|on|when|for each))/gi;
+function skillFill(s) {
+  if (!s) return 0;
+  const t = [s.desc, s.note, ...(s.fx || []).map(e => e.p)].join(" ; ");
+  if (/refills bb gauge to 100%|fills (?:own )?bb gauge to max/i.test(t)) return 999;
+  let now = 0, turn = 0;
+  for (const m of t.matchAll(FILL_RE)) { const v = +m[1]; if (/each|per/i.test(m[2] || "")) turn = Math.max(turn, v); else now = Math.max(now, v); }
+  return now + turn;
+}
+// the attack's damage modifier %; an HP-scaled one ("200% + 750% * HP") counted at full HP
+const fullMod = s => { if (!s?.mod) return 0; const m = s.hps && (s.fx || []).map(e => e.p.match(/(\d+)%\s*\+\s*(\d+)%/)).find(Boolean); return m ? +m[1] + +m[2] : s.mod; };
+const short = n => n >= 1e6 ? `${(n / 1e6).toFixed(n >= 1e7 ? 1 : 2)}M` : n >= 1e4 ? `${Math.round(n / 1e3)}K` : n.toLocaleString();
+function battleCheck(team, W, NUMS) {
+  const skill = (i, kind) => (W[i]?.skills || []).find(s => s.kind === kind);
+  // buffs of one kind don't stack in the game: the biggest one on the team's BB/SBB counts
+  const best = c => Math.max(0, ...team.filter(Boolean).map(id => { const p = powerOf(id, c); return p && "BS".includes(p[1]) ? p[0] : 0; }));
+  const atkBuff = best("atk"), bbAtk = best("bbatk");
+  const rows = team.map((id, i) => {
+    if (!id || !UMAP[id]) return null;
+    const s = skill(i, "SBB") || skill(i, "BB"), u = skill(i, "UBB"), N = NUMS[i];
+    const atk = N ? N.base[1] * (1 + (N.pct[1] + atkBuff) / 100) : UMAP[id].atk;
+    const dmg = sk => sk ? Math.round(atk * (fullMod(sk) + (sk.mod2 || 0)) / 100 * (1 + bbAtk / 100)) : 0;
+    return { i, id, s, cost: +s?.bc || 0, fill: Math.min(skillFill(s), 999), sDmg: dmg(s), uDmg: dmg(u), aoe: s?.aoe === "A" };
+  }).filter(Boolean);
+  const teamFill = rows.reduce((a, r) => a + r.fill, 0);  // everyone casts its SBB in the same turn
+  const full = rows.some(r => r.fill >= 999);              // a "fill to max" refills everyone
+  const ok = r => r.cost > 0 && (full || teamFill >= r.cost);
+  const known = rows.filter(r => r.cost);                  // units whose BB/SBB cost the wiki lists
+  return { rows, teamFill, full, ok, atkBuff, bbAtk, known: known.length, can: known.filter(ok).length };
+}
+function battleHtml(B) {
+  if (!B.rows.length) return "";
+  return `<div class="sec"><h3 class="purple">Battle check</h3>
+    <p class="small" style="margin:0 0 8px">When everyone casts SBB in the same turn, the team fills <b>${B.full ? "the gauge to max" : `${B.teamFill} BC`}</b>:
+      <b class="${B.can === B.known ? "okc" : "noc"}">${B.can} of ${B.known}</b> can cast SBB again right away.</p>
+    ${B.rows.map(r => `<div class="bcrow"><img src="${uImg(r.id)}" alt="" data-u="${r.id}"><div>
+      <div class="bcl">${r.s ? `<b>${esc(r.s.kind)}</b> ${r.cost ? `${r.cost} BC` : "<span class='dim'>cost not listed</span>"}` : "<span class='dim'>No BB listed</span>"}${r.fill ? ` · fills ${r.fill >= 999 ? "max" : r.fill + " BC"}` : ""}
+        ${r.cost ? B.ok(r) ? `<span class="okc">✓ every turn</span>` : `<span class="noc">needs ${r.cost - B.teamFill} BC more</span>` : ""}</div>
+      <div class="bcd">${r.sDmg ? `${esc(r.s.kind)} ≈ <b>${short(r.sDmg)}</b>${r.aoe ? " (all foes)" : ""}` : ""}${r.uDmg ? ` · UBB ≈ <b>${short(r.uDmg)}</b>` : ""}</div></div></div>`).join("")}
+    <p class="small dim" style="margin:8px 0 0">Rough: BC from hits, crystals and leader skills isn't counted. Damage = ATK${B.atkBuff ? ` with the team's +${B.atkBuff}% ATK buff` : ""}${B.bbAtk ? ` and +${B.bbAtk}% BB ATK` : ""} × the skill's modifier, before enemy DEF, critical hits, sparks and elements.</p></div>`;
+}
+
+async function renderTeam() {
+  const v = $("v-team"), team = TEAMS[TCUR];
+  const [D, I] = await Promise.all([load("details"), load("items")]);
+  const W = await Promise.all(team.map(id => id ? wiki(id) : {}));
+  const ls = (id, w) => { const s = (w.skills || []).find(s => s.kind === "Leader Skill"); return [s?.name || D[id]?.leader?.name || "", s?.desc || D[id]?.leader?.desc || ""]; };
+  const cost = team.slice(0, 5).reduce((a, id) => a + (UMAP[id]?.c || 0), 0);
+  const elems = ELS.map(e => [e, team.filter(id => UMAP[id]?.e === e).length]).filter(x => x[1]);
+  const info = id => { const u = UMAP[id]; return `${u.r === 8 ? "Omni" : u.r + "★"} ${u.e || ""}`; };
+  const fmt = n => n.toLocaleString();
+  const sphereChip = (i, n) => { const s = TSPH[TCUR][i][n], it = s && I[s];
+    return `<button class="sphc ${it ? "" : "none"}" data-sph="${i}/${n}">${it ? `<img src="${iImg(s)}" alt="" onerror="this.style.visibility='hidden'"><span>${esc(it.name)}</span>` : `＋ Sphere ${n + 1}`}</button>`; };
+  const NUMS = team.map((id, i) => id && UMAP[id] ? unitNumbers(i, team, W, D, I) : null);
+  const card = (id, i) => { const u = UMAP[id], N = NUMS[i];
+    return `<div class="scard" style="--el:var(--${u.e || "Light"})">
+      <div class="sch"><img class="ic" src="${uImg(id)}" data-u="${id}" alt=""><div class="scn" data-u="${id}">${esc(u.n)}<small>${SLOTS[i]} · ${info(id)}</small></div>
+        <select class="gsel ttype" data-ty="${i}" aria-label="Unit type">${N.types.map(t => `<option value="${t}" ${t === N.ty ? "selected" : ""}>${t[0].toUpperCase() + t.slice(1)}</option>`).join("")}</select></div>
+      <div class="scs"><div><i>Lv.</i>${N.lv}</div><div><i>HP</i>${fmt(N.s[0])}</div><div><i class="c">COST</i>${u.c || "?"}</div>
+        <div><i>ATK</i>${fmt(N.s[1])}</div><div><i>DEF</i>${fmt(N.s[2])}</div><div><i>REC</i>${fmt(N.s[3])}</div></div>
+      ${N.pct.some(Boolean) ? `<div class="spct">Boosts: ${N.pct.map((p, k) => p ? `${["HP", "ATK", "DEF", "REC"][k]} +${p}%` : "").filter(Boolean).join(" · ")}${N.cond ? " ✱" : ""}</div>` : ""}
+      <div class="ssph">${sphereChip(i, 0)}${sphereChip(i, 1)}</div>
+      <div class="sca">${i > 0 && i < 5 ? `<button class="gbtn small" data-lead="${i}">Lead</button>` : ""}<button class="gbtn small dark" data-s="${i}">Change</button><button class="gbtn small red" data-x="${i}" aria-label="Remove">✕</button></div>
+    </div>`; };
+  v.innerHTML = `<div class="sec" style="padding:8px" data-jump="Field">
+      <div class="tabs2">${TEAMS.map((t, i) => `<button class="${i === TCUR ? "on" : ""}" data-t="${i}">Team ${i + 1}</button>`).join("")}</div>
+      <div class="formation">${team.map((id, i) => `<button class="slot" data-s="${i}" style="left:${SPOS[i][0]}%;top:${SPOS[i][1]}%;z-index:${SPOS[i][1]}" aria-label="${SLOTS[i]}">${id && UMAP[id]
+        ? `<img src="${sImg(id)}" alt="" onerror="this.onerror=null;this.src='${uImg(id)}'">` : `<span class="empty">+</span>`}${i === 0 ? `<span class="sl lead">Leader</span>` : i === 5 ? `<span class="sl friend">Friend</span>` : ""}</button>`).join("")}</div>
+      <div class="btngrid"><button class="gbtn" id="tfill">Fill empty slots</button>
+        <select id="tfillel" class="gsel" aria-label="Element for Fill"><option value="">Any element</option>${ELS.map(e => `<option ${e === fillEl ? "selected" : ""}>${e}</option>`).join("")}</select>
+        <button class="gbtn blue" id="tshare" ${team.some(Boolean) ? "" : "disabled"}>Share picture</button><button class="gbtn dark" id="tclear">Clear team</button></div>
+      <p class="small dim" style="margin:0">Tap a spot to choose a unit. <b>Fill</b> picks 7★ and Omni units that cover what the team still misses.</p></div>
+    <div class="sec"><h3>Squad</h3>
+      <div class="sqbar"><span class="costplate ${SQ.maxcost && cost > +SQ.maxcost ? "over" : ""}">COST <b>${cost}</b>/<input id="maxcost" inputmode="numeric" value="${esc(SQ.maxcost)}" placeholder="max" aria-label="Your max cost"></span>
+        <button class="chip ${SQ.imps ? "on" : ""}" data-opt="imps">Imps max</button><button class="chip ${SQ.lead ? "on" : ""}" data-opt="lead">Leader skill</button><button class="chip ${SQ.friend ? "on" : ""}" data-opt="friend">Friend skill</button><button class="chip ${SQ.es ? "on" : ""}" data-opt="es">Extra skills</button></div>
+      ${team.some(Boolean) ? `<div class="scards">${team.map((id, i) => id && UMAP[id] ? card(id, i) : "").join("")}</div>`
+        : `<p class="dim">No units yet: tap the + spots above or <b>Fill empty slots</b>.</p>`}
+      <p class="small dim" style="margin:8px 0 0">Max level stats of the chosen type${SQ.imps ? ", max imps" : ""}${SQ.lead ? ", the leader's skill" : ""}${SQ.friend ? ", the friend's skill" : ""}${SQ.es ? ", each unit's extra skill" : ""} and the spheres you pick (the app can't see yours). Like the game's squad screen, the friend is off by default.
+        Tap a sphere to choose it. ✱ = a boost with a condition (counted). Cost: friend not counted. ${elems.map(([e, n]) => `<span class="badge">${orb(e)}×${n}</span>`).join(" ")}</p></div>
+    ${battleHtml(battleCheck(team, W, NUMS))}
+    ${team[0] || team[5] ? `<div class="sec"><h3 class="blue">Leader skills</h3>${[0, 5].filter(i => team[i]).map(i => { const [n, d] = ls(team[i], W[i]); const b = boostText(statBoosts(lsText(team[i], W[i], D)));
+        return `<div class="sk"><div class="kn"><span class="tag ls">${i ? "Friend" : "Leader"}</span><span class="nm">${esc(n || UMAP[team[i]]?.n)}</span></div><p>${d ? esc(d) : `<span class="dim">No leader skill</span>`}</p>${b ? `<div class="pills"><span class="pill">Counted: ${esc(b)}</span></div>` : ""}</div>`; }).join("")}</div>` : ""}
+    <div class="sec"><h3 class="green">What the team covers</h3><div class="cov">${COVER.map(c => { const p = providers(team, c);
+        const best = p.map(id => powerOf(id, c)).filter(Boolean).sort((a, b) => b[0] - a[0])[0];
+        return `<div><span class="cl ${p.length ? "ok" : "no"}">${p.length ? "✓" : "✗"} ${esc(TAGS.labels[c] || c)}${best ? `<small> ${fmtPower(c, best)}</small>` : ""}</span><span class="who">${p.map(id => `<img src="${uImg(id)}" alt="" data-u="${id}">`).join("")}</span>${p.length ? "" : `<button class="gbtn small blue" data-find="${c}">Find</button>`}</div>`; }).join("")}</div>
+      <p class="small dim" style="margin:8px 0 0">From the units' BB, SBB, UBB and extra skills; leader skills count for the leader and the friend.</p></div>`;
+  jumpBar(v, [...v.querySelectorAll(":scope > .sec")]);
+  v.querySelectorAll("[data-t]").forEach(b => b.onclick = () => { TCUR = +b.dataset.t; saveTeams(); renderTeam(); });
+  v.querySelectorAll("[data-s]").forEach(b => b.onclick = () => go(`#/pick/${b.dataset.s}`));
+  v.querySelectorAll("[data-x]").forEach(b => b.onclick = () => { const i = +b.dataset.x; team[i] = null; resetSlot(i); saveTeams(); renderTeam(); });
+  v.querySelectorAll("[data-u]").forEach(b => b.onclick = () => go(`#/unit/${b.dataset.u}`));
+  v.querySelectorAll("[data-find]").forEach(b => b.onclick = () => {
+    let s = team.findIndex((x, i) => !x && i !== 5); if (s < 0) s = team[5] ? 4 : 5;
+    go(`#/pick/${s}?role=${b.dataset.find}`);
+  });
+  v.querySelectorAll("[data-lead]").forEach(b => b.onclick = () => {
+    const i = +b.dataset.lead, T = TTYPE[TCUR], S = TSPH[TCUR];  // the unit keeps its type and spheres
+    [team[0], team[i]] = [team[i], team[0]]; [T[0], T[i]] = [T[i], T[0]]; [S[0], S[i]] = [S[i], S[0]];
+    saveTeams(); saveSquad(); renderTeam(); toast(`${UMAP[team[0]]?.n} leads the team`);
+  });
+  v.querySelectorAll("[data-ty]").forEach(s => s.onchange = () => { TTYPE[TCUR][+s.dataset.ty] = s.value; saveSquad(); renderTeam(); });
+  v.querySelectorAll("[data-sph]").forEach(b => b.onclick = () => go(`#/sphere/${b.dataset.sph}`));
+  v.querySelectorAll("[data-opt]").forEach(b => b.onclick = () => { SQ[b.dataset.opt] = !SQ[b.dataset.opt]; saveSquad(); renderTeam(); });
+  $("maxcost").onchange = e => { SQ.maxcost = e.target.value.replace(/\D/g, ""); saveSquad(); renderTeam(); };
+  $("tfillel").onchange = e => { fillEl = e.target.value; store.set("bf.fillel", fillEl); };
+  $("tfill").onclick = () => {
+    if (!team.includes(null)) return toast("No empty slots");
+    const n = autoFill(team, fillEl); saveTeams(); renderTeam();
+    toast(n ? `Added ${n} unit${n > 1 ? "s" : ""}` : `No ${fillEl ? fillEl + " " : ""}units left to add`);
+  };
+  $("tshare").onclick = () => shareTeam(team, W);
+  $("tclear").onclick = () => { TEAMS[TCUR] = Array(6).fill(null); for (let i = 0; i < 6; i++) resetSlot(i); saveTeams(); renderTeam(); };
+}
+
+// the team as a picture to share: the squad on the battle field, the members and the leader skills
+async function shareTeam(team, W) {
+  toast("Drawing the picture…");
+  const S = 2, WD = 720, FH = 440, D = await load("details");
+  const css = getComputedStyle(document.documentElement), col = n => css.getPropertyValue(n).trim();
+  await document.fonts.load("20px Rodin").catch(() => {});
+  const ids = team.map(id => id && UMAP[id] ? id : null);
+  const [bg, ...sprs] = await Promise.all([loadImg("/static/battle_bg.jpg"), ...ids.map(id => id ? loadImg(sImg(id)) : null)]);
+  const icons = await Promise.all(ids.map(id => id ? loadImg(uImg(id)) : null));
+  const lss = [0, 5].filter(i => ids[i]).map(i => {
+    const s = (W[i]?.skills || []).find(s => s.kind === "Leader Skill");
+    return [i ? "Friend" : "Leader", s?.name || D[ids[i]]?.leader?.name || "", s?.desc || D[ids[i]]?.leader?.desc || ""];
+  });
+  const members = ids.map((id, i) => [id, i]).filter(([id]) => id), rows = Math.ceil(members.length / 2);
+  // word-wrapped lines of a text, measured before the canvas exists so the picture is exactly as tall as it needs
+  const lines = (ctx, text, maxw, px) => { ctx.font = `${px}px Arial`; const out = []; let line = "";
+    for (const w of String(text).split(" ")) { if (ctx.measureText(line + w).width > maxw && line) { out.push(line); line = ""; } line += w + " "; }
+    return [...out, line]; };
+  const probe = document.createElement("canvas").getContext("2d");
+  const lsH = lss.reduce((a, [, , desc]) => a + 36 + lines(probe, desc, WD - 40, 14).length * 18.2, 0);
+  const H = Math.ceil(FH + 74 + rows * 88 + lsH + 44);
+  const cv = document.createElement("canvas"); cv.width = WD * S; cv.height = H * S;
+  const g = cv.getContext("2d"); g.scale(S, S);
+  const ot = (t, x, y, px, fill = "#fff", maxw) => { g.font = `${px}px Rodin, Arial`; g.lineJoin = "round"; g.lineWidth = Math.max(3, px * .18); g.strokeStyle = "#000"; g.strokeText(t, x, y, maxw); g.fillStyle = fill; g.fillText(t, x, y, maxw); };
+  const wrap = (text, x, y, maxw, px, color) => { g.fillStyle = color; for (const l of lines(g, text, maxw, px)) { g.fillText(l, x, y); y += px * 1.3; } return y; };
+  g.fillStyle = "#0b0a14"; g.fillRect(0, 0, WD, H);
+  if (bg) { const k = Math.max(WD / bg.width, FH / bg.height); g.drawImage(bg, (WD - bg.width * k) / 2, (FH - bg.height * k) * .6, bg.width * k, bg.height * k); }
+  // the squad, back rows first so the front ones stand in front
+  const feet = i => [SPOS[i][0] / 100 * WD, 60 + SPOS[i][1] / 100 * (FH - 80)];
+  [0, 1, 2, 3, 4, 5].sort((a, b) => SPOS[a][1] - SPOS[b][1]).forEach(i => {
+    const im = sprs[i] || icons[i]; if (!im) return;
+    const k = Math.min(1.8, 160 / im.width, 110 / im.height), w = im.width * k, h = im.height * k, [x, y] = feet(i);
+    g.imageSmoothingEnabled = k < 1; g.drawImage(im, x - w / 2, y - h, w, h); g.imageSmoothingEnabled = true;
+  });
+  for (const i of [0, 5]) if (ids[i]) { const [x, y] = feet(i); ot(i ? "Friend" : "Leader", x - 28, y + 14, 15, i ? "#7ad6ff" : col("--accent")); }
+  g.fillStyle = col("--gold"); g.fillRect(0, FH, WD, 3);
+  const cost = ids.slice(0, 5).reduce((a, id) => a + (UMAP[id]?.c || 0), 0);
+  ot(`Team ${TCUR + 1}`, 20, FH + 42, 28); ot(`Cost ${cost}`, WD - 150, FH + 42, 20, col("--orange"));
+  const I = await load("items");
+  members.forEach(([id, i], n) => {
+    const u = UMAP[id], x = 20 + (n % 2) * 350, y = FH + 64 + Math.floor(n / 2) * 88, N = unitNumbers(i, ids, W, D, I);
+    if (icons[i]) g.drawImage(icons[i], x, y, 64, 64);
+    ot(u.n, x + 74, y + 20, 16, "#fff", 262);
+    g.font = "12px Arial"; g.fillStyle = col("--dim");
+    g.fillText(`${SLOTS[i]} · Lv.${N.lv} · ${u.r === 8 ? "Omni" : u.r + "★"} ${u.e || ""} · Cost ${u.c || "?"}`, x + 74, y + 40, 262);
+    ot(`HP ${N.s[0].toLocaleString()}  ATK ${N.s[1].toLocaleString()}`, x + 74, y + 58, 13, col("--accent"), 262);
+    ot(`DEF ${N.s[2].toLocaleString()}  REC ${N.s[3].toLocaleString()}`, x + 74, y + 75, 13, col("--accent"), 262);
+  });
+  let y = FH + 74 + rows * 88 + 10;
+  for (const [label, name, desc] of lss) { ot(`${label} · ${name}`, 20, y, 17, col("--accent"), WD - 40); y = wrap(desc, 20, y + 24, WD - 40, 14, "#ece6d6") + 12; }
+  ot("BF Companion", WD - 170, H - 14, 14, col("--dim"));
+  const blob = await new Promise(r => cv.toBlob(r, "image/png"));
+  const b64 = await new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result.split(",")[1]); r.readAsDataURL(blob); });
+  if (window.BFApp) BFApp.shareImage(b64, `BF Team ${TCUR + 1}.png`, true);
+  else { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `BF Team ${TCUR + 1}.png`; a.click(); }
+}
+
+// choosing a sphere for a squad unit: the ones its extra skill wants first, then the biggest stat boosts for it
+let sphQ = "";
+async function showSpherePick(slot, n) {
+  const [I, D] = await Promise.all([load("items"), load("details")]), id = TEAMS[TCUR][slot], u = UMAP[id];
+  if (!u) return go("#/team");
+  setTitle(`Sphere ${n + 1} · ${u.n}`, true); $("share").hidden = true;
+  const el = (u.e || "").toLowerCase();
+  const gain = s => statBoosts(s.desc).filter(c => !c.els || c.els.includes(el)).reduce((a, c) => a + c.pct * c.stats.length, 0);
+  const best = (D[id]?.es_spheres || []).filter(x => I[x]);
+  const row = s => { const b = boostText(statBoosts(s.desc));
+    return `<div class="item" data-pick="${s.id}"><img loading="lazy" src="${iImg(s.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1">
+      <div class="t">${esc(s.name)} <span class="dim small">${s.rarity ? `${s.rarity}${STAR}` : ""} ${esc(s.type || "")}</span></div>${b ? `<div class="sb">${esc(b)}</div>` : ""}<div class="s">${esc(s.desc)}</div></div></div>`; };
+  $("page").innerHTML = `<div id="sphpage"><div class="bar2"><div class="searchrow"><input id="spq" type="search" placeholder="Search spheres…" value="${esc(sphQ)}" autocomplete="off"></div>
+      <div class="scroller"><button class="chip on" id="spnone">No sphere</button></div></div>
+    ${best.length ? `<div class="count">Best for ${esc(u.n)} (its extra skill)</div><div style="padding-top:8px">${best.map(x => row(I[x])).join("")}</div>` : ""}
+    <div class="count" id="spcount"></div><div id="splist" style="padding-top:8px"></div></div>`;
+  let picked = false;
+  const pick = sid => { if (picked) return; picked = true; TSPH[TCUR][slot][n] = sid; saveSquad(); history.back(); };
+  $("sphpage").onclick = e => { const r = e.target.closest("[data-pick]"); if (r) pick(r.dataset.pick); };
+  $("spnone").onclick = () => pick(null);
+  const draw = () => {
+    const q = sphQ.trim().toLowerCase();
+    const list = Object.values(I).filter(s => s.type && s.name && (!q || s.name.toLowerCase().includes(q) || s.desc.toLowerCase().includes(q)))
+      .map(s => [s, gain(s)]).sort((a, b) => b[1] - a[1] || (b[0].rarity || 0) - (a[0].rarity || 0) || a[0].name.localeCompare(b[0].name)).map(x => x[0]);
+    $("spcount").textContent = `${list.length} spheres, biggest stat boost for ${u.e || "this unit"} first`;
+    paged($("splist"), list, s => { const d = document.createElement("div"); d.innerHTML = row(s); return d.firstElementChild; }, "");
+  };
+  $("spq").oninput = e => { clearTimeout(showSpherePick.t); showSpherePick.t = setTimeout(() => { sphQ = e.target.value; draw(); }, 200); };
+  window.scrollTo(0, 0);
+  draw();
+}
+
+// choosing a unit for a team slot
+let pickQ = "";
+async function showPick(slot, role) {
+  setTitle(slot === 0 ? "Choose the leader" : slot === 5 ? "Choose the friend" : "Choose a unit", true); $("share").hidden = true;
+  $("page").innerHTML = `<div class="bar2"><div class="searchrow"><input id="pq" type="search" placeholder="Search name, skill or role…" value="${esc(pickQ)}" autocomplete="off"></div>
+      <div class="scroller">${role ? `<button class="chip on" id="prole">${esc(TAGS.labels[role] || role)} ✕</button>` : ""}</div></div>
+    <div class="count" id="pcount"></div><div id="plist"></div>`;
+  const draw = async () => {
+    const q = pickQ.trim().toLowerCase();
+    if (q.length >= 3) await skillText();
+    const list = UNITS.filter(u => !u.f && (!role || roleOf(u.id, role, slot === 0 || slot === 5)) && searchHit(u, q)).sort(role ? byPower(role) : SORTS.rarity);
+    $("pcount").textContent = `${list.length} units${role ? ` with ${TAGS.labels[role]}, strongest first` : ""}`;
+    paged($("plist"), list, u => listRow(u, x => { if (TEAMS[TCUR][slot] !== x.id) resetSlot(slot); TEAMS[TCUR][slot] = x.id; saveTeams(); history.back(); }, role), "list");
+  };
+  $("pq").oninput = e => { clearTimeout(showPick.t); showPick.t = setTimeout(() => { pickQ = e.target.value; draw(); }, 200); };
+  if ($("prole")) $("prole").onclick = () => location.replace(`#/pick/${slot}`);
+  window.scrollTo(0, 0);
+  draw();
+}
+
+
+// ---------------- compare up to 3 units ----------------
+let CMP = store.get("bf.cmp", []);
+function toggleCompare(id) {
+  const i = CMP.indexOf(id);
+  if (i >= 0) CMP.splice(i, 1); else { if (CMP.length >= 3) CMP.shift(); CMP.push(id); }
+  store.set("bf.cmp", CMP); updateCmpBar();
+  toast(i >= 0 ? "Removed from compare" : CMP.length > 1 ? `Comparing ${CMP.length} units` : "Added: open another unit to compare");
+}
+function updateCmpBar() { const b = $("cmpbar"); b.hidden = !CMP.length || location.hash === "#/compare"; b.textContent = `⇄ Compare (${CMP.length})`; }
+$("cmpbar").onclick = () => go("#/compare");
+async function showCompare() {
+  setTitle("Compare", true); $("share").hidden = true; updateCmpBar();
+  const us = CMP.map(id => UMAP[id]).filter(Boolean);
+  if (!us.length) return $("page").innerHTML = `<div class="empty"><b>Nothing to compare</b>Open a unit and tap ⇄ Compare (up to 3 units).</div>`;
+  const [D, W] = await Promise.all([load("details"), Promise.all(us.map(u => wiki(u.id)))]);
+  const skill = (i, kind) => {
+    const d = D[us[i].id] || {}, s = (W[i].skills || []).find(s => s.kind === kind);
+    const game = kind === "Leader Skill" ? d.leader?.desc : kind === "Extra Skill" ? d.extra : (d.skills || []).find(s => s.label === kind)?.desc;
+    return s?.desc || game || "";
+  };
+  const n = us.length, row = (k, cells, cls = "") => `<div class="row" style="--n:${n}"><div class="k">${k}</div>${cells.map(c => `<div class="${cls}">${c}</div>`).join("")}</div>`;
+  const num = (k, vals) => { const m = Math.max(...vals.map(v => +v || 0)); return row(k, vals.map(v => `<span class="${n > 1 && +v === m && m ? "best" : ""}">${v || "–"}</span>`), "num"); };
+  $("page").innerHTML = `<div class="sec"><div class="cmp">
+      ${row("", us.map(u => `<div class="hd"><img class="ic" src="${uImg(u.id)}" data-u="${u.id}" alt=""><b>${esc(u.n)}</b><span class="small">${u.r === 8 ? OMNI + "Omni" : u.r + STAR}</span> ${orb(u.e)}<br>
+        <button class="gbtn small dark" data-x="${u.id}" style="margin-top:4px">Remove</button></div>`))}
+      ${num("HP", us.map(u => u.hp))}${num("ATK", us.map(u => u.atk))}${num("DEF", us.map(u => u.def))}${num("REC", us.map(u => u.rec))}
+      ${row("Cost", us.map(u => u.c || "–"), "num")}${num("Hits", W.map(w => w.hits))}
+      ${["Leader Skill", "Extra Skill", "BB", "SBB", "UBB"].map(k => row(k.replace(" Skill", ""), us.map((u, i) => esc(skill(i, k)) || "–"), "tx")).join("")}
+      ${row("Roles", us.map(u => `<div class="roles" style="margin:0">${rolePills(u.id)}</div>`), "tx")}
+    </div></div>`;
+  $("page").querySelectorAll("[data-u]").forEach(b => b.onclick = () => go(`#/unit/${b.dataset.u}`));
+  $("page").querySelectorAll("[data-x]").forEach(b => b.onclick = () => { toggleCompare(b.dataset.x); showCompare(); });
+  window.scrollTo(0, 0);
+}
+
+// ---------------- navigation ----------------
+const TABS = { units: "Units", spheres: "Spheres", drops: "Drops", team: "Team", favs: "Favorites" };
+let tab = "units", tabsDrawn = new Set();
+function setTitle(t, sub) {
+  $("title").textContent = t; document.body.classList.toggle("sub", !!sub);
+  $("viewmode").hidden = sub || !["units", "favs"].includes(tab); $("favtab").hidden = !!sub;
+  if (!sub) $("share").hidden = true;
+}
+function showMissing() { $("page").innerHTML = `<div class="empty"><b>Not found</b></div>`; }
+function go(hash) { if (location.hash !== hash) location.hash = hash; else route(); }
+const scrollPos = {};
+async function route() {
+  const h = location.hash || "#/units";
+  let m;
+  $("modal").hidden = true; updateCmpBar();
+  if ((m = h.match(/^#\/unit\/(\d+)/))) return showUnit(m[1]);
+  if ((m = h.match(/^#\/item\/(\d+)/))) return showItem(m[1]);
+  if ((m = h.match(/^#\/pick\/(\d)(?:\?role=(\w+))?/))) return showPick(+m[1], m[2]);
+  if ((m = h.match(/^#\/sphere\/(\d)\/(\d)/))) return showSpherePick(+m[1], +m[2]);
+  if ((m = h.match(/^#\/gate\/(\d+)/))) return showGate(m[1]);
+  if (h === "#/compare") return showCompare();
+  const t = (h.match(/^#\/(\w+)/) || [])[1];
+  tab = TABS[t] ? t : "units";
+  document.querySelectorAll(".view").forEach(v => v.classList.toggle("on", v.id === "v-" + tab));
+  document.querySelectorAll(".nav button").forEach(b => b.classList.toggle("on", b.dataset.tab === tab));
+  $("favtab").classList.toggle("on", tab === "favs");
+  setTitle(TABS[tab], false);
+  if (tab === "favs") renderFavs();
+  else if (tab === "team") renderTeam();
+  else if (!tabsDrawn.has(tab)) { tabsDrawn.add(tab); if (tab === "units") renderUnits(); if (tab === "spheres") renderSpheres(); if (tab === "drops") renderDrops(); }
+  requestAnimationFrame(() => window.scrollTo(0, scrollPos[tab] || 0));
+}
+addEventListener("scroll", () => { if (!document.body.classList.contains("sub")) scrollPos[tab] = scrollY; }, { passive: true });
+addEventListener("hashchange", route);
+// tapping the tab you're on goes back to the top of its list
+document.querySelectorAll(".nav button").forEach(b => b.onclick = () =>
+  b.dataset.tab === tab && !document.body.classList.contains("sub") ? window.scrollTo({ top: 0, behavior: "smooth" }) : go(`#/${b.dataset.tab}`));
+// swipe left / right on a unit page for the next / previous unit (not when scrolling a row sideways)
+let swipe = null;
+$("page").addEventListener("touchstart", e => {
+  swipe = location.hash.startsWith("#/unit/") && !e.target.closest(".jump, .evo, .recent, .scroller, .cmp, .mats") ? [e.touches[0].clientX, e.touches[0].clientY] : null;
+}, { passive: true });
+$("page").addEventListener("touchend", e => {
+  if (!swipe) return;
+  const dx = e.changedTouches[0].clientX - swipe[0], dy = e.changedTouches[0].clientY - swipe[1]; swipe = null;
+  if (Math.abs(dx) > 70 && Math.abs(dy) < 50) $(dx < 0 ? "unext" : "uprev")?.click();
+}, { passive: true });
+$("favtab").onclick = () => go(tab === "favs" ? "#/units" : "#/favs");
+$("back").onclick = () => history.back();
+$("viewmode").onclick = () => { viewMode = viewMode === "grid" ? "list" : "grid"; store.set("bf.view", viewMode); tab === "favs" ? renderFavs() : renderUnits(); };
+let st; $("sq").oninput = () => { clearTimeout(st); st = setTimeout(renderSpheres, 180); };
+let dt; $("dq").oninput = () => { clearTimeout(dt); dt = setTimeout(renderDrops, 220); };
+$("dq").onchange = saveDropSearch;  // Enter or closing the keyboard keeps the search in "Recent searches"
+$("dres").addEventListener("click", e => { if (e.target.closest(".ichip, .item")) saveDropSearch(); });
+// Android back button (MainActivity calls this): leave a page, else let the app close
+window.BFBack = () => {
+  if (!$("modal").hidden) { $("modal").hidden = true; return true; }
+  if (document.body.classList.contains("sub") || (location.hash && location.hash !== "#/units")) { history.back(); return true; }
+  return false;
+};
+
+(async () => {
+  const [U, T] = await Promise.all([load("units"), load("tags")]);
+  TAGS = { labels: {}, units: {}, power: {}, powerUnit: {}, ...T };
+  for (const p of Object.values(TAGS.power)) for (const [c, [v]] of Object.entries(p)) POWER_MAX[c] = Math.max(POWER_MAX[c] || 0, c === "heal" ? Math.min(v, 10000) : v);
+  UNITS = Object.entries(U).map(([id, [n, r, e, c, h1, a1, d1, r1, hm, am, dm, rm, no]]) =>
+    ({ id, n, r, e, c, h1, a1, d1, r1, hp: hm || h1, atk: am || a1, def: dm || d1, rec: rm || r1, no: no || 0, f: r <= 5 && FODDER.test(n) }));
+  UMAP = Object.fromEntries(UNITS.map(u => [u.id, u]));
+  setupUnitFilters();
+  try { await route(); } finally { hideSplash(); }
+  // read the big files while nothing happens, so the first unit, item or search opens at once
+  const idle = window.requestIdleCallback || (f => setTimeout(f, 800));
+  idle(() => ["details", "items", "usrc", "drops"].reduce((p, n) => p.then(() => load(n)), Promise.resolve()));
+})();
+</script>
+</body>
+</html>
