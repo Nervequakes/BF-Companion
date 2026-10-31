@@ -30,13 +30,16 @@ No account, no ads, no internet needed: everything is inside the app.
 - Search by name, skill text or role, several words at once: `fire omni heal`, `def ignore`, `water mitigation`.
   A typo still finds it: *Did you mean…?* shows the closest names.
 - **Similar units** on every unit page: the same element and roles, for when you don't have one.
-- **My box**: mark the units you have, filter the list to them, and build teams from your own units.
-- Sort by rarity, newest, stats, cost or the strongest unit for a role.
+- **My box**: mark the units you have (many at once with *Edit box*), filter the list to them, see what you're
+  missing in each summon gate, and build teams from your own units.
+- Sort by rarity, **element**, newest, stats, cost or the strongest unit for a role.
 
 **How to get them in Revived**
-- Summon gates the unit is in, with the **chance per pull**.
+- Summon gates the unit is in, with the **chance per pull** and the chance to get it in 10 pulls.
 - Quests where you can **capture** it, with the capture chance; clear rewards; event shops.
-- A page for every summon gate, and a *Get it* filter (Summon, Capture, Reward / shop).
+- Every quest it **fights in as an enemy**, also where it can't be captured or a capture gives another unit.
+- Only Revived's own data: a unit you can't get directly shows which unit it evolves from.
+- A page for every summon gate, and a *Get it* filter (This week, Summon, Capture, Reward / shop).
 
 **Spheres and items**
 - Every sphere and material, where it drops in Revived (with the drop chance per kill or per hit), clear rewards and shops.
@@ -48,11 +51,13 @@ No account, no ads, no internet needed: everything is inside the app.
 - Type an item to see where it drops, or a quest, area or raid to see what drops there and which units you can capture.
 
 **Team builder**
-- 3 teams of 5 units + a friend, on a battle field with the animated sprites.
+- Up to 10 named teams of 5 units + a friend, on a battle field with the animated sprites.
 - Squad numbers like the game: HP, ATK, DEF, REC with the unit type, spheres, leader skill, friend skill, extra skills and Imps.
 - **Battle check**: how much BC the team's SBBs fill, who can cast again right away, and rough BB/SBB/UBB damage.
 - What the team covers (mitigation, healing, BB fill, buffs…), *Fill empty slots* with units that cover what's missing,
   from every unit or only from your box.
+- **Against each element**: how many of your units hit each enemy element hard or weakly, and the team's best element.
+- Choosing a leader or friend shows each unit's leader skill.
 - Share your team as a picture.
 
 **Also:** favorites, recently viewed, compare up to 3 units side by side, the element chart, swipe between units, and
@@ -93,12 +98,13 @@ Yes, and you don't have to take my word for it:
     exact file as `assets/www/index.html`. The rest of the APK is the game data, artwork and sprites it shows.
   - [`build_apk.bat`](app/build_apk.bat): how the APK is built with Google's Android tools.
 - **Checked by antivirus engines on VirusTotal:** [see the scan of version 4.9](https://www.virustotal.com/gui/file/4a0becfd3c7d33b522ca3ecc7b6105d0245334f8b0ad832bdbb7cdcc6cafebd6),
-  with the result of every engine. Later versions only change the data inside; the code in [`app`](app) is the same.
+  with the result of every engine. Later versions are built the same way, with their code in [`app`](app).
 
 ## Where the data comes from
 
 - **The game's own files**: unit, skill, sphere and item data, artwork, sprites and icons.
-- **[bfrevive.net](https://bfrevive.net/)**: Revived's server data for drops with chances, capture spots, summon gates and shops.
+- **[bfrevive.net](https://bfrevive.net/)**: Revived's server data for drops with chances, capture spots, the quests every unit
+  fights in, summon gates and shops.
 - **[Brave Frontier Wiki](https://bravefrontierglobal.fandom.com/)**: skill numbers, SP enhancements, lore and evolution details.
 
 The data is a snapshot from the day the APK was built; new versions come with fresh data.

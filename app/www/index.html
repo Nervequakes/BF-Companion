@@ -61,6 +61,9 @@ main { padding-bottom: calc(var(--navh) + 20px); }
 .fsum { margin-top: 8px; font-size: 12px; color: var(--dim); text-shadow: var(--ol); cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .fsum b { color: var(--accent); }
 .fbtn { position: relative; flex: none; } .fbtn span { position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; border-radius: 9px; background: #e8531a; font: 11px/18px Rodin, Arial, sans-serif; text-shadow: var(--ol); }
 .fbtn span:empty { display: none; }
+.ghead { grid-column: 1 / -1; display: flex; align-items: center; gap: 6px; margin: 8px 0 -2px; padding: 0 2px 4px; border-bottom: 2px solid color-mix(in srgb, var(--el, #888) 60%, transparent); }
+.ghead:first-child { margin-top: 0; } .ghead img { width: 24px; height: 24px; filter: drop-shadow(0 1px 1px #000); }
+.ghead b { font-family: Rodin, Arial, sans-serif; font-weight: normal; font-size: 15px; color: var(--el, #fff); text-shadow: var(--ol); } .ghead span { margin-left: auto; font-size: 11.5px; color: var(--dim); text-shadow: var(--ol); }
 .count { color: var(--dim); font-size: 12px; padding: 8px 12px 0; text-shadow: var(--ol); }
 
 /* unit grid, like the in-game unit list */
@@ -74,7 +77,7 @@ main { padding-bottom: calc(var(--navh) + 20px); }
 .lu { display: flex; gap: 10px; align-items: center; padding: 8px; border-radius: 10px; border: 2px solid var(--gold2); background: var(--steel) center / cover; box-shadow: inset 0 0 0 1px #000; position: relative; overflow: hidden; cursor: pointer; }
 .lu::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, color-mix(in srgb, var(--el, #000) 24%, transparent), rgba(0,0,0,.35) 70%); pointer-events: none; }
 .lu > * { position: relative; z-index: 1; }
-.lu img { width: 64px; height: 64px; flex: none; }
+.lu > img { width: 64px; height: 64px; flex: none; }
 .lu .ln { font-family: Rodin, Arial, sans-serif; text-shadow: var(--ol); font-size: 14px; }
 .lu .ls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px 6px; margin-top: 4px; font-family: Rodin, Arial, sans-serif; font-size: 12px; text-shadow: var(--ol); }
 .lu .ls span { display: block; font-size: 9px; color: var(--orange); }
@@ -84,6 +87,7 @@ main { padding-bottom: calc(var(--navh) + 20px); }
 .gu .own { position: absolute; top: 1px; right: 1px; width: 19px; height: 19px; border-radius: 50%; background: linear-gradient(#7ad67a, #2a8f3a); border: 1px solid #c8f5c8;
   font: 12px/17px Arial, sans-serif; color: #fff; text-shadow: var(--ol); box-shadow: 0 1px 2px #000; } .gu .own.f { right: 24px; }
 .badge.own { background: linear-gradient(#7ad67a, #2a8f3a); border-color: #c8f5c8; }
+.why ul { margin: 6px 0 0; padding-left: 18px; font-size: 12.5px; color: #ece6d6; } .why li { margin: 4px 0; } .why b { color: var(--accent); font-weight: normal; font-family: Rodin, Arial, sans-serif; }
 .about .news { text-align: left; background: rgba(0,0,0,.3); border-radius: 8px; padding: 8px 10px; margin: 10px 0; }
 .about .news ul { margin: 4px 0 6px; padding-left: 18px; font-size: 12.5px; } .about .news li { margin: 3px 0; } .about .news summary { font-size: 12.5px; color: var(--accent); }
 .farm li { padding: 5px 0; cursor: pointer; } .farm .small { margin-top: 1px; }
@@ -209,6 +213,7 @@ details > summary::before { content: "▸ "; } details[open] > summary::before {
 .glink { cursor: pointer; } .glink b::after { content: " ›"; color: var(--gold); }
 .gate { display: flex; align-items: center; gap: 8px; padding: 9px 4px; border-top: 1px solid rgba(255,255,255,.07); cursor: pointer; } .gate b { flex: 1; font-weight: normal; }
 .gate .n { font-size: 11px; color: var(--dim); white-space: nowrap; }
+.ulink { color: var(--accent); text-decoration: underline; cursor: pointer; }
 .rowlbl { flex: none; align-self: center; font-size: 11px; color: var(--dim); }
 .qlist.drops li { padding: 4px 0; } .qlist.drops li + li { border-top: 1px solid rgba(255,255,255,.06); }
 .chance { font-size: 10.5px; padding: 0 7px; border-radius: 999px; line-height: 17px; background: linear-gradient(#7ad67a, #2a8f3a); font-family: Rodin, Arial, sans-serif; text-shadow: var(--ol); }
@@ -261,7 +266,15 @@ select.gsel { height: 38px; font-size: 12.5px; padding: 0 10px; }
 .formation { position: relative; isolation: isolate; height: 330px; border-radius: 12px; overflow: hidden; border: 2px solid var(--gold2); box-shadow: inset 0 0 0 1px #000, 0 3px 6px #000; background: #2b3a1c url(/static/battle_bg.jpg) center 70% / cover; }
 .slot { position: absolute; width: 112px; height: 104px; transform: translate(-50%, -100%); padding: 0; border: 0; background: none; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; cursor: pointer; }
 .slot img { max-width: 112px; max-height: 88px; filter: drop-shadow(0 3px 2px rgba(0,0,0,.55)); }
-.slot .empty { width: 54px; height: 54px; border-radius: 50%; border: 2px dashed rgba(255,255,255,.85); background: rgba(0,0,0,.35); display: grid; place-items: center; font-size: 28px; text-shadow: var(--ol); margin-bottom: 14px; }
+.slot .pad { position: relative; width: 70px; height: 24px; margin-bottom: 2px; border-radius: 50%; border: 2px dashed rgba(255,236,170,.9);
+  background: radial-gradient(closest-side, rgba(0,0,0,.55), rgba(0,0,0,.2)); box-shadow: 0 0 12px rgba(255,215,106,.35); }
+.slot .pad b { position: absolute; left: 50%; bottom: 9px; width: 40px; height: 40px; margin-left: -20px; border-radius: 50%; display: grid; place-items: center;
+  background: radial-gradient(circle at 40% 35%, #6ab0ff, #1a4fd0 60%, #0f2f8a); box-shadow: 0 0 0 2px var(--gold), 0 0 0 3px #000, 0 5px 8px rgba(0,0,0,.55);
+  font: bold 24px/1 Arial, sans-serif; text-shadow: var(--ol); animation: bob 2.6s ease-in-out infinite; }
+.slot:nth-child(2n) .pad b { animation-delay: -1.3s; } .slot:active .pad b { filter: brightness(1.25); }
+@keyframes bob { 50% { transform: translateY(-4px); } }
+.formation .hint { position: absolute; left: 50%; top: 10px; transform: translateX(-50%); z-index: 200; pointer-events: none; padding: 6px 14px; border-radius: 999px;
+  background: rgba(0,0,0,.6); font-family: Rodin, Arial, sans-serif; font-size: 12.5px; text-shadow: var(--ol); white-space: nowrap; }
 .slot .sl { position: absolute; bottom: -12px; font-family: Rodin, Arial, sans-serif; font-size: 10px; padding: 0 6px; border-radius: 4px; background: rgba(0,0,0,.65); text-shadow: var(--ol); white-space: nowrap; }
 .slot .sl.lead { background: linear-gradient(#ffe38a, #c98a16); } .slot .sl.friend { background: linear-gradient(#7ad6ff, #1e8fe0); }
 .mem { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px dashed var(--gold3); } .mem:first-child { border-top: 0; }
@@ -272,6 +285,25 @@ select.gsel { height: 38px; font-size: 12.5px; padding: 0 10px; }
 .cov .cl { width: 118px; flex: none; font-family: Rodin, Arial, sans-serif; font-size: 12px; text-shadow: var(--ol); }
 .cov .ok { color: #7ad67a; } .cov .no { color: #ff8a7a; } .cov .cl small { color: var(--accent); font-size: 10.5px; }
 .cov .who { display: flex; gap: 2px; flex-wrap: wrap; flex: 1; } .cov .who img { width: 26px; height: 26px; }
+.mu { display: grid; grid-template-columns: 96px repeat(6, 1fr); align-items: center; text-align: center; font-family: Rodin, Arial, sans-serif; font-size: 14px; text-shadow: var(--ol); }
+.mu > div { padding: 5px 0; border-top: 1px solid rgba(255,255,255,.06); } .mu > div:nth-child(-n+7) { border-top: 0; }
+.mut img { width: 18px; height: 18px; vertical-align: -4px; margin-right: 2px; } .mu .k { text-align: left; font-size: 11px; color: var(--orange); } .mu img { width: 26px; height: 26px; vertical-align: middle; filter: drop-shadow(0 1px 1px #000); }
+.mu .best img { filter: drop-shadow(0 0 5px #7ad67a) drop-shadow(0 0 2px #7ad67a); } .mu .worst img { filter: drop-shadow(0 0 5px #ff6b6b) drop-shadow(0 0 2px #ff6b6b); } .mu .dim { opacity: .45; }
+/* ＋ Team: which team */
+.tlist { display: grid; gap: 8px; margin: 10px 0; text-align: left; }
+.tpick { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 10px; border-radius: 10px; border: 2px solid var(--gold2); background: linear-gradient(#1c2340, #0b1024); }
+.tpick.on { border-color: var(--accent); } .tpick:disabled { opacity: .45; }
+.tpick b { flex: 1; min-width: 0; font-family: Rodin, Arial, sans-serif; font-weight: normal; font-size: 13.5px; text-shadow: var(--ol); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tpick small { flex: none; font-size: 11px; color: var(--dim); } .tpick .ti { display: flex; flex: none; } .tpick .ti img, .tpick .ti i { width: 24px; height: 24px; margin-left: -4px; border-radius: 50%; }
+.tpick .ti i { display: inline-block; border: 1px dashed rgba(255,255,255,.35); }
+/* a tap shows: the app turns off the browser's own tap highlight */
+.gu > img:first-child { transition: transform .1s; } .gu:active > img:first-child { transform: scale(.93); }
+.lu:active, .item:active, .gate:active, .ni:active, .tpick:active { filter: brightness(1.25); } .eu:active img, .ichip:active { transform: scale(.94); }
+.chip:active, .jump button:active, .tabs2 button:active, .iconbtn:active, .favbtn:active { transform: scale(.94); }
+/* pages fade in */
+#page > *, .view.on { animation: fadein .2s ease-out; }
+@keyframes fadein { from { opacity: 0; transform: translateY(6px); } }
+@media (prefers-reduced-motion: reduce) { #page > *, .view.on, .slot .pad b { animation: none; } }
 
 /* compare */
 .cmpbar { position: fixed; right: 12px; bottom: calc(var(--navh) + 14px); z-index: 25; }
@@ -293,6 +325,27 @@ select.gsel { height: 38px; font-size: 12.5px; padding: 0 10px; }
 .modal { position: fixed; inset: 0; z-index: 40; background: rgba(0,0,0,.7); display: grid; place-items: center; padding: 16px; }
 .mbox { max-width: 520px; width: 100%; max-height: 86vh; overflow: auto; border-radius: 12px; border: 2px solid var(--gold); background: linear-gradient(#141a2e, #070810); box-shadow: 0 6px 24px #000; padding: 12px; text-align: center; }
 .mbox img { max-width: 100%; }
+/* box editing, back to top, named teams, leader skills in the picker, numbers in skill text */
+.nb { font-weight: bold; color: #ffdf8f; }
+.editbar { position: fixed; left: 10px; right: 10px; bottom: calc(var(--navh) + 10px); z-index: 25; display: flex; align-items: center; gap: 10px; padding: 8px 10px 8px 14px; border-radius: 12px;
+  border: 2px solid var(--gold); background: linear-gradient(#20305c, #0f1733); box-shadow: 0 4px 14px #000; }
+.editbar div { flex: 1; min-width: 0; font-size: 12px; text-shadow: var(--ol); } .editbar b { display: block; font-family: Rodin, Arial, sans-serif; font-weight: normal; font-size: 14px; color: #9ff09f; }
+body.boxedit main { padding-bottom: calc(var(--navh) + 90px); }
+body.boxedit #v-units .gu:not(.got) > img:first-child, body.boxedit #v-units .lu:not(.got) > img { filter: grayscale(.85) brightness(.5); }
+.totop { position: fixed; right: 12px; bottom: calc(var(--navh) + 14px); z-index: 25; width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--gold2); background: rgba(10,16,32,.92); font-size: 15px; box-shadow: 0 2px 6px #000; }
+#cmpbar:not([hidden]) ~ .totop { bottom: calc(var(--navh) + 64px); }
+body.boxedit .totop { bottom: calc(var(--navh) + 78px); } body.boxedit .toast { bottom: calc(var(--navh) + 84px); }
+.jump button.on { border-color: var(--accent); background: linear-gradient(#3f8cff, #1a4fd0 60%, #0f2f8a); }
+.tabs2.teams { position: relative; overflow-x: auto; scrollbar-width: none; } .tabs2.teams::-webkit-scrollbar { display: none; }
+.tabs2.teams button { flex: 1 0 auto; min-width: 78px; padding: 0 12px; white-space: nowrap; } .tabs2.teams .add { flex: 0 0 40px; min-width: 40px; padding: 0; font-size: 18px; }
+.lsl { font-size: 11.5px; color: #9ff09f; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: var(--ol); }
+.lsl b { color: var(--orange); font-family: Rodin, Arial, sans-serif; font-weight: normal; margin-right: 4px; }
+.hero .art.zoom { cursor: zoom-in; }
+@media (hover: hover) {
+  .gu > img:first-child { transition: transform .12s; } .gu:hover > img:first-child { transform: translateY(-2px); }
+  .lu:hover, .item:hover { border-color: var(--gold); } .gate:hover { background: rgba(255,255,255,.05); }
+  .gbtn:hover:not(:disabled), .chip:hover, .jump button:hover { filter: brightness(1.15); }
+}
 /* on a PC screen: one centered column, like a big phone */
 @media (min-width: 1000px) { main { max-width: 920px; margin: 0 auto; } .top { padding-left: calc(50vw - 460px); padding-right: calc(50vw - 460px); } }
 @media (min-width: 700px) { .grid { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); } .hero { min-height: 300px; } .list { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); } }
@@ -313,7 +366,7 @@ select.gsel { height: 38px; font-size: 12.5px; padding: 0 10px; }
   <section class="view on" id="v-units">
     <div class="bar2">
       <div class="searchrow"><input id="uq" type="search" placeholder="Name, skill, role… (fire omni heal)" autocomplete="off">
-        <select id="usort"><option value="rarity">Rarity</option><option value="new">Newest</option><option value="name">Name</option><option value="atk">ATK</option><option value="hp">HP</option><option value="def">DEF</option><option value="rec">REC</option><option value="cost">Cost</option><option value="power">Strongest (role)</option></select>
+        <select id="usort"><option value="rarity">Rarity</option><option value="element">Element</option><option value="new">Newest</option><option value="name">Name</option><option value="atk">ATK</option><option value="hp">HP</option><option value="def">DEF</option><option value="rec">REC</option><option value="cost">Cost</option><option value="power">Strongest (role)</option></select>
         <button class="iconbtn fbtn" id="ufbtn" title="Filters" aria-label="Filters"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg><span id="ufn"></span></button></div>
       <div id="ufilters">
         <div class="scroller" id="uel"></div>
@@ -336,7 +389,7 @@ select.gsel { height: 38px; font-size: 12.5px; padding: 0 10px; }
       <input id="dq" type="search" placeholder="Blue Claw, Kagan Desert, RC7…" style="width:100%" autocomplete="off"></div>
     <div id="dres"></div>
   </section>
-  <section class="view" id="v-favs"><div id="frecent"></div><div class="count" id="fcount"></div><div id="flist"></div></section>
+  <section class="view" id="v-favs"><div id="frecent"></div><div id="fbox"></div><div class="count" id="fcount"></div><div id="flist"></div></section>
   <section class="view" id="v-team"></section>
   <section id="page"></section>
 </main>
@@ -348,6 +401,8 @@ select.gsel { height: 38px; font-size: 12.5px; padding: 0 10px; }
   <button data-tab="team" aria-label="Team builder"><img src="/static/nav_team.png" alt=""></button>
 </nav>
 <button class="gbtn blue cmpbar" id="cmpbar" hidden></button>
+<div class="editbar" id="editbar" hidden><div><b>Editing your box</b>Tap the units you have · <span id="ebn">0</span> in your box</div><button class="gbtn green" id="ebdone">Done</button></div>
+<button class="totop" id="totop" hidden aria-label="Back to top">▲</button>
 <div class="modal" id="modal" hidden><div class="mbox" id="mbox"></div></div>
 <div class="toast" id="toast"></div>
 
@@ -365,10 +420,19 @@ const OMNI = `<img class="sti omi" src="/static/omni.png" alt="">`;  // the game
 const SEX = { M: ["m", "Male"], F: ["f", "Female"] };
 const uImg = id => `/thumbs/u/${id}.webp`, iImg = id => `/thumbs/i/${id}.webp`, aImg = id => `/thumbs/a/${id}.webp`;
 const sImg = id => `/thumbs/s/${id}.webp`;  // the game's animated battle sprite (idle loop)
-const DB = {}, load = n => DB[n] ??= fetch(`/data/${n}.json`).then(r => r.ok ? r.json() : {}).catch(() => ({}));
+// "no-cache": ask for the newest copy every time (the PC guide's server lets a browser keep files for an hour, so an
+// update could show old data); unchanged files come back as a quick "not modified"
+const DB = {}, load = n => DB[n] ??= fetch(`/data/${n}.json`, { cache: "no-cache" }).then(r => r.ok ? r.json() : {}).catch(() => ({}));
 const wiki = id => load(`w/${id}`);
 const store = { get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
 function toast(m) { $("toast").textContent = m; $("toast").classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => $("toast").classList.remove("show"), 1800); }
+// numbers and dates look the same on every phone, whatever its language: "25,330", "31 October 2026"
+const fmt = n => n.toLocaleString("en");
+const day = t => new Date(t).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+// skill and sphere text with its numbers picked out: "<b>150%</b> boost to Atk for <b>3</b> turns"
+const hl = t => esc(t).replace(/\d+(?:[.,]\d+)?(?:\s*[~-]\s*\d+(?:[.,]\d+)?)?%?/g, m => `<b class="nb">${m}</b>`);
+// the chance to get a unit at least once in 10 pulls of p% each
+const in10 = p => { const v = 100 * (1 - (1 - p / 100) ** 10); return v >= 99.95 ? ">99.9" : v < .1 ? "<0.1" : v < 10 ? v.toFixed(1) : Math.round(v); };
 const loadImg = src => new Promise(res => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; });
 function modal(html) { $("mbox").innerHTML = html; $("modal").hidden = false; }
 $("modal").onclick = e => { if (e.target.id === "modal" || e.target.closest(".mclose")) $("modal").hidden = true; };
@@ -376,11 +440,10 @@ $("modal").onclick = e => { if (e.target.id === "modal" || e.target.closest(".mc
 async function showAbout() {
   const [V, S, U, I, C] = await Promise.all([load("version"), load("usrc"), load("units"), load("items"), load("changelog")]);
   const log = Array.isArray(C) ? C : [], notes = e => `<ul>${(e.notes || []).map(n => `<li>${esc(n)}</li>`).join("")}</ul>`;
-  const day = t => new Date(t).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
   const url = "https://github.com/Nervequakes/BF-Companion/releases";
   modal(`<div class="about"><img src="/static/logo.png" alt="" style="height:64px"><div class="big">BF Companion</div>
     <p class="dim">${V.version ? `Version ${esc(V.version)}${V.built ? ` · built ${day(V.built)}` : ""}` : "Offline guide for Brave Frontier Revived"}</p>
-    <div class="facts"><div><b>${Object.keys(U).length.toLocaleString()}</b>units</div><div><b>${Object.values(I).filter(s => s.name).length.toLocaleString()}</b>spheres & items</div><div><b>${Object.keys(S.g || {}).length}</b>summon gates</div></div>
+    <div class="facts"><div><b>${Object.keys(U).length.toLocaleString("en")}</b>units</div><div><b>${Object.values(I).filter(s => s.name).length.toLocaleString("en")}</b>spheres & items</div><div><b>${Object.keys(S.g || {}).length}</b>summon gates</div></div>
     ${S.built ? `<p>Revived's drop, capture and summon data from <b>${day(S.built * 1000)}</b>.</p>` : ""}
     ${log.length ? `<div class="news"><b>What's new in ${esc(log[0].version)}</b>${notes(log[0])}${log.length > 1 ? `<details><summary>Earlier versions</summary>${
       log.slice(1).map(e => `<p class="small" style="margin:8px 0 0"><b>${esc(e.version)}</b>${e.date ? ` · ${day(e.date)}` : ""}</p>${notes(e)}`).join("")}</details>` : ""}</div>` : ""}
@@ -401,7 +464,7 @@ const roleOf = (id, code, leaderToo) => { const s = TAGS.units[id]?.[code] || ""
 const SKILL_NAMES = { L: "LS", E: "ES", B: "BB", S: "SBB", U: "UBB" };
 // how strong a role is on the unit's BB/SBB: [value, skill letter], e.g. mitigation [50, "B"]
 const powerOf = (id, c) => TAGS.power[id]?.[c];
-const fmtPower = (c, p) => !p ? "" : c === "heal" && p[0] >= 10000 ? "full heal" : `${p[0].toLocaleString()}${TAGS.powerUnit[c] || ""}`;
+const fmtPower = (c, p) => !p ? "" : c === "heal" && p[0] >= 10000 ? "full heal" : `${p[0].toLocaleString("en")}${TAGS.powerUnit[c] || ""}`;
 let POWER_MAX = {};  // strongest value per role, to weigh roles against each other
 const rolePills = id => Object.entries(TAGS.units[id] || {}).map(([c, s]) => { const p = powerOf(id, c);
   return `<span class="role">${esc(TAGS.labels[c] || c)}${p ? ` <b>${fmtPower(c, p)}</b>` : ""}<small>${[...new Set(s)].map(k => SKILL_NAMES[k]).join(" ")}</small></span>`; }).join("");
@@ -441,19 +504,37 @@ const hasSrc = id => { const s = USRC?.u?.[id]; return !!s && [...uState.get].so
 function unitBadges(u) {
   return `${u.r === 8 ? `<span class="badge star">${OMNI}OMNI</span>` : `<span class="badge star">${u.r}${STAR}</span>`}${u.e ? `<span class="badge">${orb(u.e)}${u.e}</span>` : ""}${u.c ? `<span class="badge cost">COST ${u.c}</span>` : ""}`;
 }
+// a unit drawn in a list keeps how to draw itself again, so its ★ and ✓ can change without drawing the whole list
+const markSig = id => `${favs.has(id)}/${mine.has(id)}`;
+function marked(d, u, redraw) { d.dataset.id = u.id; d.redraw = redraw; d.sig = markSig(u.id); d.classList.toggle("got", mine.has(u.id)); return d; }
+const refreshMarks = root => root.querySelectorAll("[data-id]").forEach(d => d.redraw && d.sig !== markSig(d.dataset.id) && d.replaceWith(d.redraw()));
+// "Edit box": tapping units in the list marks them as yours (or not), one after another
+let boxEdit = false;
+function setBoxEdit(on) {
+  boxEdit = on; document.body.classList.toggle("boxedit", on); $("editbar").hidden = !on; $("ebn").textContent = mine.size;
+  $("uedit")?.classList.toggle("on", on); updateCmpBar(); onScrollTop();
+  // editing needs every unit in the list, not only the ones already in the box
+  if (on && uState.mine) { uState.mine = false; $("umine")?.classList.remove("on"); renderUnits(); }
+}
+function tapUnit(u, d, onTap) {
+  if (onTap) return onTap(u);
+  if (!boxEdit) return go(`#/unit/${u.id}`);
+  mine.has(u.id) ? mine.delete(u.id) : mine.add(u.id); saveMine();
+  d.replaceWith(d.redraw()); $("ebn").textContent = mine.size;
+}
 function gridCell(u, onTap, role) {
-  const d = document.createElement("div"); d.className = "gu"; d.onclick = onTap ? () => onTap(u) : () => go(`#/unit/${u.id}`);
+  const d = document.createElement("div"); d.className = "gu"; d.onclick = () => tapUnit(u, d, onTap);
   d.innerHTML = `<img loading="lazy" src="${uImg(u.id)}" alt="" onerror="this.style.visibility='hidden'">${favs.has(u.id) ? `<img class="fav" src="/static/star_fav.png" alt="★">` : ""}${mine.has(u.id) ? `<span class="own ${favs.has(u.id) ? "f" : ""}" title="In my box">✓</span>` : ""}${powerTag(u, role)}<div class="gname">${esc(u.n)}</div>`;
-  return d;
+  return marked(d, u, () => gridCell(u, onTap, role));
 }
 function listRow(u, onTap, role) {
-  const d = document.createElement("div"); d.className = "lu"; d.onclick = onTap ? () => onTap(u) : () => go(`#/unit/${u.id}`);
+  const d = document.createElement("div"); d.className = "lu"; d.onclick = () => tapUnit(u, d, onTap);
   if (u.e) d.style.setProperty("--el", `var(--${u.e})`);
   const p = role && powerOf(u.id, role);
   d.innerHTML = `<img loading="lazy" src="${uImg(u.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1">
     <div class="ln">${favs.has(u.id) ? FAVSTAR + " " : ""}${esc(u.n)}</div><div class="badges">${unitBadges(u)}${mine.has(u.id) ? `<span class="badge own">✓ My box</span>` : ""}${p ? `<span class="badge pw">${esc(TAGS.labels[role])} ${fmtPower(role, p)} · ${SKILL_NAMES[p[1]]}</span>` : ""}</div>
     <div class="ls"><div><span>HP</span>${u.hp}</div><div><span>ATK</span>${u.atk}</div><div><span>DEF</span>${u.def}</div><div><span>REC</span>${u.rec}</div></div></div>`;
-  return d;
+  return marked(d, u, () => listRow(u, onTap, role));
 }
 // lists draw in batches as you scroll: thousands of icons at once is slow on a phone
 let NAV_LIST = [];  // ids of the unit list shown last, for previous / next on a unit page
@@ -465,7 +546,8 @@ function paged(container, items, make, cls) {
   step();
   new IntersectionObserver((es, ob) => { if (es[0].isIntersecting) { more.remove(); step(); if (n >= items.length) ob.disconnect(); } }, { rootMargin: "1200px" }).observe(more);
 }
-const SORTS = { rarity: (a, b) => b.r - a.r || b.no - a.no, new: (a, b) => b.no - a.no || b.r - a.r, name: (a, b) => a.n.localeCompare(b.n),
+const elOrder = u => (ELS.indexOf(u.e) + 1) || 9;  // Fire, Water, Earth, Thunder, Light, Dark, then units without one
+const SORTS = { rarity: (a, b) => b.r - a.r || b.no - a.no, element: (a, b) => elOrder(a) - elOrder(b) || b.r - a.r || b.no - a.no, new: (a, b) => b.no - a.no || b.r - a.r, name: (a, b) => a.n.localeCompare(b.n),
   atk: (a, b) => b.atk - a.atk, hp: (a, b) => b.hp - a.hp, def: (a, b) => b.def - a.def, rec: (a, b) => b.rec - a.rec, cost: (a, b) => b.c - a.c || b.r - a.r };
 // one word or phrase: the name, or (3+ letters) the skill text or a role ("spark", "def ignore", "mitigation")
 const phraseHit = (u, q) => q.length >= 3 && (!!SKTXT?.[u.id]?.includes(q) || Object.entries(TAGS.labels).some(([c, l]) => l.toLowerCase().includes(q) && TAGS.units[u.id]?.[c]));
@@ -538,7 +620,7 @@ function filteredUnits() {
   const role = activeRole();
   if (uState.sort === "power" && role) return list.sort(byPower(role));  // strongest first
   list.sort(SORTS[uState.sort] || SORTS.rarity);
-  if (q) list.sort((a, b) => !a.n.toLowerCase().includes(q) - !b.n.toLowerCase().includes(q));  // name matches first (stable)
+  if (q && uState.sort !== "element") list.sort((a, b) => !a.n.toLowerCase().includes(q) - !b.n.toLowerCase().includes(q));  // name matches first (stable)
   return list;
 }
 async function renderUnits() {
@@ -552,12 +634,20 @@ async function renderUnits() {
     uState.sort === "power" ? role ? ` · strongest ${TAGS.labels[role]} first` : " · pick a role to sort by strength" : ""}`;
   if (!list.length) {
     const close = q ? closeNames(q, UNITS, u => u.n, u => u.r).slice(0, 12) : [];
-    $("ulist").innerHTML = uState.mine && !mine.size ? `<div class="empty"><b>Your box is empty</b>Open a unit you have and tap <b>＋ My box</b>.</div>`
+    $("ulist").innerHTML = uState.mine && !mine.size ? `<div class="empty"><b>Your box is empty</b>Your box is the units you own in the game: mark them here, or open one and tap <b>＋ My box</b>. The app then shows a ✓ on them, can fill teams from them and tells you which gate units you're missing.<div class="btnrow" style="justify-content:center"><button class="gbtn green" id="ueditnow">✎ Edit my box</button></div></div>`
       : `<div class="empty"><b>No units match</b>${close.length ? "Did you mean one of these? (any element or rarity)" : "Try another name or turn filters back on."}</div>`;
+    if ($("ueditnow")) $("ueditnow").onclick = () => setBoxEdit(true);
     if (close.length) { NAV_LIST = close.map(u => u.id); const g = document.createElement("div"); g.className = "grid"; g.append(...close.map(u => gridCell(u))); $("ulist").append(g); }
     return;
   }
-  paged($("ulist"), list, viewMode === "grid" ? u => gridCell(u, null, role) : u => listRow(u, null, role), viewMode === "grid" ? "grid" : "list");
+  const cell = viewMode === "grid" ? u => gridCell(u, null, role) : u => listRow(u, null, role);
+  if (uState.sort !== "element") return paged($("ulist"), list, cell, viewMode === "grid" ? "grid" : "list");
+  // by element: a heading with the count before each element's units
+  const n = {}; for (const u of list) n[u.e || ""] = (n[u.e || ""] || 0) + 1;
+  const items = list.flatMap((u, i) => i && (list[i - 1].e || "") === (u.e || "") ? [u] : [{ head: u.e || "" }, u]);
+  paged($("ulist"), items, x => { if (!("head" in x)) return cell(x);
+    const h = document.createElement("div"); h.className = "ghead"; if (x.head) h.style.setProperty("--el", `var(--${x.head})`);
+    h.innerHTML = `${orb(x.head)}<b>${x.head || "No element"}</b><span>${n[x.head]} unit${n[x.head] > 1 ? "s" : ""}</span>`; return h; }, viewMode === "grid" ? "grid" : "list");
 }
 const chip = (html, on) => { const b = document.createElement("button"); b.className = "chip" + (on ? " on" : ""); b.innerHTML = html; return b; };
 // the filter rows fold away behind the filter button; folded, one line says what is filtered
@@ -580,12 +670,26 @@ $("ufbtn").onclick = $("usum").onclick = () => { uState.showFilters = !uState.sh
 function jumpBar(container, secs) {
   if (secs.length < 3) return;
   const bar = document.createElement("div"); bar.className = "jump";
-  for (const s of secs) {
+  const btns = secs.map(s => {
     const b = document.createElement("button"); b.textContent = s.querySelector(":scope > h3")?.textContent || s.dataset.jump || "";
     b.onclick = () => s.scrollIntoView({ behavior: "smooth", block: "start" });
-    bar.append(b);
-  }
+    bar.append(b); return b;
+  });
   container.prepend(bar);
+  // the section you're reading lights up, and the bar scrolls along to keep it in sight
+  let raf = 0, cur = -1;
+  const spy = () => {
+    raf = 0;
+    if (!bar.isConnected) return removeEventListener("scroll", onScroll);
+    if (!bar.offsetParent) return;  // its tab is hidden
+    let i = 0; secs.forEach((s, k) => { if (s.getBoundingClientRect().top < 150) i = k; });
+    if (i === cur) return; cur = i;
+    btns.forEach((b, k) => b.classList.toggle("on", k === i));
+    const b = btns[i];
+    if (b.offsetLeft < bar.scrollLeft || b.offsetLeft + b.offsetWidth > bar.scrollLeft + bar.clientWidth) bar.scrollTo({ left: b.offsetLeft - 10, behavior: "smooth" });
+  };
+  const onScroll = () => { raf ||= requestAnimationFrame(spy); };
+  addEventListener("scroll", onScroll, { passive: true }); requestAnimationFrame(spy);
 }
 function setupUnitFilters() {
   const els = $("uel"), rar = $("urar"), roles = $("urole");
@@ -605,9 +709,11 @@ function setupUnitFilters() {
   rbLabel();
   rb.onclick = () => { uState.showRoles = !uState.showRoles; roles.hidden = !uState.showRoles; rbLabel(); saveU(); };
   rar.prepend(rb);  // first, so it's visible without scrolling the row
-  const mb = chip("✓ My box", uState.mine);
+  const mb = chip("✓ My box", uState.mine); mb.id = "umine";
   mb.onclick = () => { uState.mine = !uState.mine; mb.classList.toggle("on", uState.mine); renderUnits(); };
-  rb.after(mb);
+  const eb = chip("✎ Edit box", false); eb.id = "uedit";
+  eb.onclick = () => setBoxEdit(!boxEdit);
+  rb.after(mb, eb);
   roles.hidden = !uState.showRoles;
   for (const [c, label] of Object.entries(TAGS.labels)) {
     const b = chip(esc(label), uState.roles.has(c));
@@ -648,7 +754,7 @@ function skillBlock(s) {
   const cls = { "Leader Skill": "ls", "Extra Skill": "es", "Dual BB": "dbb", "UBB": "ubb", "SBB": "sbb", "BB": "" }[s.kind] ?? "";
   const pills = [s.bc && s.kind !== "Dual BB" ? `${s.bc} BC` : "", s.hits ? `${s.hits} hits` : "", s.type, s.partner ? `with ${s.partner}` : ""].filter(Boolean);
   return `<div class="sk"><div class="kn"><span class="tag ${cls}">${s.kind}</span><span class="nm">${esc(s.name)}</span></div>
-    <p>${esc(s.desc)}</p>${pills.length ? `<div class="pills">${pills.map(p => `<span class="pill">${esc(p)}</span>`).join("")}</div>` : ""}
+    <p>${hl(s.desc)}</p>${pills.length ? `<div class="pills">${pills.map(p => `<span class="pill">${esc(p)}</span>`).join("")}</div>` : ""}
     ${s.item ? `<div class="note" style="border-color:#b382ff">Needs: ${esc(s.item)}</div>` : ""}
     ${s.fx?.length ? `<details><summary>Numbers</summary><ul class="fx">${s.fx.map(e => `<li>${esc(e.p)}${e.d || e.t ? `<span class="fxm">${e.d ? `<span class="fxd">${esc(e.d)}</span>` : ""}${e.t ? `<span class="fxt">${esc(e.t)}</span>` : ""}</span>` : ""}</li>`).join("")}</ul></details>`
       : s.note ? `<details><summary>Numbers</summary><div class="note">${esc(s.note)}</div></details>` : ""}</div>`;
@@ -664,11 +770,13 @@ const getLine = g => `<li><span class="gtag ${slug(g.kind)}">${esc(g.kind)}</spa
   g.drops ? dropsHtml(g)
   : g.places ? `<div class="src">${esc(g.note || "✓ Revived quest names · drops from the wiki")}</div><ul class="qlist">${g.places.map(p => `<li><b>${esc(p.path)}</b>${p.note ? `<span class="dim"> · ${esc(p.note)}</span>` : ""}</li>`).join("")}</ul>`
   : g.lines ? `${g.kind === "Wiki" ? `<div class="src">Wiki (global game), not found in Revived</div>` : ""}<ul class="qlist">${g.lines.map(([l, t]) => `<li style="padding-left:${(l - 1) * 12}px">${esc(t)}</li>`).join("")}</ul>` : esc(g.text)}${
-  g.mats ? `<ul class="mlist">${g.mats.map(m => `<li><b>${m.count}× ${esc(m.name)}</b>${m.get.length ? `<ul class="get">${m.get.map(getLine).join("")}</ul>` : ""}</li>`).join("")}</ul>` : ""}</div></li>`;
-const getHtml = s => s.get?.length ? `<ul class="get">${s.get.map(getLine).join("")}</ul>` : `<p class="dim small">No current way to get it in the game data, probably from a past event.</p>`;
+  g.mats ? `<ul class="mlist">${g.mats.map(m => `<li><b>${m.count}× ${esc(m.name)}</b>${revGet(m).length ? `<ul class="get">${revGet(m).map(getLine).join("")}</ul>` : ""}</li>`).join("")}</ul>` : ""}</div></li>`;
+// the wiki's ways (global game) only for an item Revived's own data has no way for
+const revGet = s => { const g = s?.get || []; return g.some(x => x.kind !== "Wiki") ? g.filter(x => x.kind !== "Wiki") : g; };
+const getHtml = s => revGet(s).length ? `<ul class="get">${revGet(s).map(getLine).join("")}</ul>` : `<p class="dim small">No current way to get it in the game data, probably from a past event.</p>`;
 const sphereCard = s => `<div class="item" style="margin:0 0 8px;cursor:default;align-items:flex-start"><img src="${iImg(s.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1">
   <div class="t">${esc(s.name)} <span class="dim small">${s.type ? `${s.type} sphere` : "item"}${s.rarity ? ` · ${s.rarity}${STAR}` : ""}</span></div>
-  <div class="small" style="color:#ece6d6;margin:3px 0">${esc(s.desc)}</div><details><summary>Where to get it</summary>${getHtml(s)}</details></div></div>`;
+  <div class="small" style="color:#ece6d6;margin:3px 0">${hl(s.desc)}</div><details><summary>Where to get it</summary>${getHtml(s)}</details></div></div>`;
 const unitMini = (id, cur) => { const u = UMAP[id]; return u ? `<div class="eu ${cur ? "cur" : ""}" onclick="go('#/unit/${id}')"><img src="${uImg(id)}" alt="" onerror="this.style.visibility='hidden'"><div class="gname">${esc(u.n)}</div></div>` : ""; };
 
 // a quest of Revived's map as "Area › Dungeon › Quest"
@@ -676,20 +784,32 @@ const srcQuest = (S, m) => { const x = S.m[m] || [`Quest ${m}`, 0], p = S.p[x[1]
 // the first few rows, the rest folded away
 const foldList = (rows, f, n = 5) => `<ul class="qlist drops">${rows.slice(0, n).map(f).join("")}</ul>${
   rows.length > n ? `<details><summary>${rows.length - n} more</summary><ul class="qlist drops">${rows.slice(n).map(f).join("")}</ul></details>` : ""}`;
+const unitLink = id => UMAP[id] ? `<span class="ulink" data-unit="${id}">${esc(UMAP[id].n)}${UMAP[id].r === 8 ? " (Omni)" : ""}</span>` : "another unit";
 // how to get a unit in Revived right now: summon gates, capture spots, clear rewards, event shops
 function unitSrcHtml(S, id) {
-  const s = S?.u?.[id]; if (!s) return "";
+  const s = S?.u?.[id]; if (!s || !(s.g || s.c || s.r || s.s)) return "";
   const out = [];
-  if (s.g) out.push(["Summon", foldList(s.g, ([g, p]) => `<li class="glink" data-gate="${g}"><b>${esc(S.g[g]?.[0] || `Gate ${g}`)}</b><span class="fxm"><span class="chance">${p}%</span><span class="fxt">per pull</span>${
+  if (s.g) out.push(["Summon", foldList(s.g, ([g, p]) => `<li class="glink" data-gate="${g}"><b>${esc(S.g[g]?.[0] || `Gate ${g}`)}</b><span class="fxm"><span class="chance">${p}%</span><span class="fxt">per pull</span><span class="fxt">≈${in10(p)}% in 10 pulls</span>${
     S.g[g]?.[1] & 1 ? `<span class="boss">This week</span>` : ""}</span></li>`, 3)]);
   if (s.c) out.push(["Capture", foldList(s.c, ([m, cap, appear, n, boss, as]) => `<li><b>${esc(srcQuest(S, m))}</b><span class="fxm"><span class="chance">${cap}%</span><span class="fxt">capture</span>${
-    n > 1 ? `<span class="fxt">×${n}</span>` : ""}${appear < 100 ? `<span class="fxt">in ${appear}% of runs</span>` : ""}${boss ? `<span class="boss">Boss</span>` : ""}${as && UMAP[as] ? `<span class="fxt">fights as ${esc(UMAP[as].n)}</span>` : ""}</span></li>`)]);
+    n > 1 ? `<span class="fxt">×${n}</span>` : ""}${appear < 100 ? `<span class="fxt">in ${appear}% of runs</span>` : ""}${boss ? `<span class="boss">Boss</span>` : ""}${as ? `<span class="fxt">fights as ${unitLink(as)}</span>` : ""}</span></li>`)]);
   if (s.r) out.push(["Clear reward", foldList(s.r, ([m, first, n]) => `<li><b>${esc(srcQuest(S, m))}</b><span class="fxm"><span class="fxt">${first === 1 ? "first clear" : "every clear"}</span>${n > 1 ? `<span class="fxt">×${n}</span>` : ""}</span></li>`)]);
   if (s.s) out.push(["Event shop", foldList(s.s, ([t, price, most, n]) => `<li><b>${esc(S.t[t] || "Event token")} shop</b><span class="fxm"><span class="chance">${price} ${esc(S.t[t] || "tokens")}</span>${
     n > 1 ? `<span class="fxt">for ${n}</span>` : ""}<span class="fxt">buy up to ${most}</span></span></li>`)]);
-  return `<div class="src">✓ Revived's live game data (bfrevive.net, ${new Date(S.built * 1000).toLocaleDateString()})</div><ul class="get">${out.map(([k, h]) => `<li><span class="gtag ${slug(k)}">${k}</span><div>${h}</div></li>`).join("")}</ul>`;
+  return `<div class="src">✓ Revived's live game data (bfrevive.net, ${day(S.built * 1000)})</div><ul class="get">${out.map(([k, h]) => `<li><span class="gtag ${slug(k)}">${k}</span><div>${h}</div></li>`).join("")}</ul>`;
+}
+// the other quests a unit fights in as an enemy (bfrevive.net's "Fights as an enemy"): it can't be captured there,
+// or a capture gives another unit (Kranus, the Argent joins as Berserk Ezra)
+function enemyHtml(S, id) {
+  const e = S?.u?.[id]?.e; if (!e) return "";
+  const other = e.filter(r => r[1] > 0).length;
+  return `<p class="small" style="margin:0 0 6px">${UMAP[id]?.n ? esc(UMAP[id].n) : "It"} fights in <b>${e.length}</b> quest${e.length > 1 ? "s" : ""} in Revived${
+    other ? `. Capturing it there gives another unit${other < e.length ? ` (in ${other} of them; in the rest it can't be captured)` : ""}` : ", but it can't be captured there"}.</p>
+    ${foldList(e, ([m, cap, appear, n, boss, got]) => `<li><b>${esc(srcQuest(S, m))}</b><span class="fxm">${cap > 0 ? `<span class="chance">${cap}%</span><span class="fxt">capture: joins as ${unitLink(got)}</span>` : `<span class="fxt">no capture</span>`}${
+      n > 1 ? `<span class="fxt">×${n}</span>` : ""}${appear < 100 ? `<span class="fxt">in ${appear}% of runs</span>` : ""}${boss ? `<span class="boss">Boss</span>` : ""}</span></li>`)}`;
 }
 // every unit a summon gate can give: the rarest first, then the best chance
+let gateHide = store.get("bf.ghide", false);  // "Hide units I have"
 async function showGate(g) {
   const nav = NAV, S = await load("usrc"), G = S.g?.[g];
   if (nav !== NAV) return;  // left the page while it loaded
@@ -697,11 +817,15 @@ async function showGate(g) {
   setTitle(G[0], true);
   const list = Object.entries(S.u).map(([id, s]) => [UMAP[id], s.g?.find(x => x[0] == g)?.[1]]).filter(x => x[0] && x[1])
     .sort((a, b) => b[0].r - a[0].r || b[1] - a[1] || a[0].n.localeCompare(b[0].n));
-  NAV_LIST = list.map(x => x[0].id);
-  const omni = list.filter(x => x[0].r === 8).length, top = list.filter(x => x[0].r >= 7).length;
+  const omni = list.filter(x => x[0].r === 8).length, top = list.filter(x => x[0].r >= 7).length, have = list.filter(x => mine.has(x[0].id)).length;
   $("page").innerHTML = `<div class="sec"><h3 class="purple">${esc(G[0])}</h3><p class="small" style="margin:0">${list.length} units${top ? ` · ${top} of them 7★ or Omni${omni ? ` (${omni} Omni)` : ""}` : ""}${
-    G[1] & 1 ? " · featured this week" : G[1] & 2 ? " · rotating gate" : ""}</p><p class="small dim" style="margin:4px 0 0">Chance per pull, from Revived's game server. Gem price shows in the game.</p></div><div id="glist"></div>`;
-  paged($("glist"), list, ([u, p]) => { const d = listRow(u); d.querySelector(".badges").insertAdjacentHTML("beforeend", `<span class="badge pw">${p}% per pull</span>`); return d; }, "list");
+    G[1] & 1 ? " · featured this week" : G[1] & 2 ? " · rotating gate" : ""}</p>${mine.size ? `<p class="small" style="margin:4px 0 0">You have <b>${have}</b> of them in your box.</p>` : ""}
+    <p class="small dim" style="margin:4px 0 0">Chance per pull from Revived's game server, and the chance to get the unit at least once in 10 pulls. Gem price shows in the game.</p>
+    ${have ? `<div class="chipwrap" style="margin-top:8px"><button class="chip ${gateHide ? "on" : ""}" id="ghide">Hide units I have</button></div>` : ""}</div><div id="glist"></div>`;
+  const row = ([u, p]) => { const d = listRow(u); d.querySelector(".badges").insertAdjacentHTML("beforeend", `<span class="badge pw">${p}% per pull</span><span class="badge">≈${in10(p)}% in 10 pulls</span>`); d.redraw = () => row([u, p]); return d; };
+  const draw = () => { const shown = gateHide && have ? list.filter(x => !mine.has(x[0].id)) : list; NAV_LIST = shown.map(x => x[0].id); paged($("glist"), shown, row, "list"); };
+  if ($("ghide")) $("ghide").onclick = () => { gateHide = !gateHide; store.set("bf.ghide", gateHide); $("ghide").classList.toggle("on", gateHide); draw(); };
+  draw();
   window.scrollTo(0, 0);
 }
 const gatesHtml = S => { const n = {}; for (const s of Object.values(S.u || {})) for (const [g] of s.g || []) n[g] = (n[g] || 0) + 1;
@@ -733,8 +857,9 @@ async function showUnit(id) {
     <div class="acts"><button class="gbtn" id="toteam">＋ Team</button><button class="gbtn blue ${CMP.includes(id) ? "on" : ""}" id="tocmp">⇄ Compare</button><button class="gbtn ${mine.has(id) ? "green" : "dark"}" id="tomine">${mine.has(id) ? "✓ In my box" : "＋ My box"}</button></div>
     <div id="ubody"><div class="empty">Loading…</div></div>`;
   $("favbtn").onclick = () => { favs.has(id) ? favs.delete(id) : favs.add(id); store.set("bf.favs", [...favs]); $("favbtn").classList.toggle("on"); toast(favs.has(id) ? "Added to favorites" : "Removed from favorites"); };
+  if (art) { const a = page.querySelector(".hero .art"); a.classList.add("zoom"); a.onclick = () => modal(`<img src="${aImg(id)}" alt="${esc(u.n)}" style="max-height:72vh"><div class="btnrow" style="justify-content:center"><button class="gbtn mclose">Close</button></div>`); }
   if ($("elbadge")) $("elbadge").onclick = elementChart;
-  $("toteam").onclick = () => addToTeam(id);
+  $("toteam").onclick = () => chooseTeam(id);
   $("tomine").onclick = () => {
     mine.has(id) ? mine.delete(id) : mine.add(id); saveMine();
     $("tomine").textContent = mine.has(id) ? "✓ In my box" : "＋ My box"; $("tomine").classList.toggle("green", mine.has(id)); $("tomine").classList.toggle("dark", !mine.has(id));
@@ -780,7 +905,9 @@ async function showUnit(id) {
     .sort((a, b) => mine.has(b[0].id) - mine.has(a[0].id) || b[1] - a[1] || b[0].r - a[0].r || b[0].no - a[0].no).slice(0, 10).map(([x]) => x.id);
   USRC = await load("usrc");
   if (nav !== NAV) return;  // left the page while it loaded
-  const src = unitSrcHtml(USRC, id), wk = weekGate(id);
+  const src = unitSrcHtml(USRC, id), foe = enemyHtml(USRC, id), wk = weekGate(id);
+  // how to get it: Revived's own data only (the wiki's ways are the global game's); else the unit it evolves from
+  const clear = d.clear && !USRC?.u?.[id]?.r ? d.clear : null, from = chain[chain.indexOf(id) - 1];
   if (wk) { $("hmeta").insertAdjacentHTML("afterbegin", `<span class="badge wk" data-gate="${wk[0]}">This week: ${esc(USRC.g[wk[0]][0])} ›</span>`); $("hmeta").querySelector(".wk").onclick = () => go(`#/gate/${wk[0]}`); }
   $("ubody").innerHTML = `
     ${spr ? `<div class="sec"><h3 class="green">In battle</h3><div class="stage"><img class="spr" id="spr" src="${sImg(id)}" alt=""></div></div>` : ""}
@@ -791,11 +918,15 @@ async function showUnit(id) {
     ${chain.length > 1 || mats ? `<div class="sec"><h3 class="green">Evolution</h3><div class="evo">${chain.map((c, i) => (i ? `<span class="ar">›</span>` : "") + unitMini(c, c === id)).join("")}</div>
       ${mats ? `<p class="dim small" style="margin:10px 0 0">Materials to evolve this unit${w.evo.zel ? ` · ${esc(w.evo.zel)} Zel` : ""}${w.evo.karma ? ` · ${esc(w.evo.karma)} Karma` : ""}</p><div class="mats">${mats}</div>` : ""}</div>` : ""}
     ${similar.length ? `<div class="sec"><h3 class="blue">Similar units</h3><p class="dim small" style="margin:0 0 6px">Same element and roles, for when you don't have this one${similar.some(x => mine.has(x)) ? " (yours first)" : ""}:</p><div class="recent">${similar.map(x => unitMini(x)).join("")}</div></div>` : ""}
-    ${src || w.how || w.bazaar?.length || d.clear ? `<div class="sec"><h3 class="green">How to get</h3>${src}${d.clear && !USRC?.u?.[id]?.r ? `<div class="note" style="border-color:var(--gold2);margin:0 0 8px">In Revived, first clear reward of:<ul class="qlist" style="margin-top:4px">${d.clear.map(p => `<li><b>${esc(p)}</b></li>`).join("")}</ul></div>` : ""}${w.how ? src ? `<details><summary>Wiki (global game)</summary><p class="lore" style="margin:0">${esc(w.how)}</p></details>` : `<p class="lore" style="margin:0">${esc(w.how)}</p>` : ""}${(w.bazaar || []).map(b => `<div class="note" style="border-color:var(--gold2)">Event Bazaar: ${esc(b.type)}${b.desc ? ` · ${esc(b.desc)}` : ""}${b.bonus ? ` · ${esc(b.bonus)} bonus` : ""}</div>`).join("")}</div>` : ""}
+    <div class="sec"><h3 class="green">How to get</h3>${src}${clear ? `<div class="note" style="border-color:var(--gold2);margin:0 0 8px">In Revived, first clear reward of:<ul class="qlist" style="margin-top:4px">${d.clear.map(p => `<li><b>${esc(p)}</b></li>`).join("")}</ul></div>` : ""}${
+      src || clear ? "" : from ? `<p class="small" style="margin:0">Not given directly in Revived right now: evolve it from ${unitLink(from)}.</p>`
+      : `<p class="small dim" style="margin:0">Not in Revived's summons, quests, clear rewards or event shops right now (bfrevive.net).</p>`}</div>
+    ${foe ? `<div class="sec"><h3>Fights as an enemy</h3><div class="src">✓ Revived's live game data (bfrevive.net, ${day(USRC.built * 1000)})</div>${foe}</div>` : ""}
     ${w.lore || quotes.length ? `<div class="sec"><h3 class="blue">Story</h3>${w.lore ? `<div class="lore">${esc(w.lore)}</div>` : ""}${quotes.map(([k, v]) => `<div class="quote"><b>${k}</b>${esc(v)}</div>`).join("")}</div>` : ""}
     ${w.notes ? `<div class="sec"><h3>Notes</h3><div class="lore">${esc(w.notes)}</div></div>` : ""}
-    <p class="dim small" style="text-align:center;margin:14px">Game data + Brave Frontier Wiki${w.page ? ` (${esc(w.page)})` : ""}${src ? " + bfrevive.net" : ""}</p>`;
+    <p class="dim small" style="text-align:center;margin:14px">Game data + Brave Frontier Wiki${w.page ? ` (${esc(w.page)})` : ""}${src || foe ? " + bfrevive.net" : ""}</p>`;
   $("ubody").querySelectorAll("[data-gate]").forEach(b => b.onclick = () => go(`#/gate/${b.dataset.gate}`));
+  $("ubody").querySelectorAll("[data-unit]").forEach(b => b.onclick = () => go(`#/unit/${b.dataset.unit}`));
   // a sticky row of the page's sections to jump to (the unit pages are long)
   jumpBar($("ubody"), [...$("ubody").querySelectorAll(":scope > .sec")].filter(s => s.querySelector(":scope > h3")));
   // pixel art scales best by whole numbers: as big as fits (at most 3x)
@@ -844,7 +975,7 @@ const craftTree = (I, nd, top) => `<li><span class="ci" data-i="${nd.id}"><img s
   nd.kids ? `<ul>${nd.kids.map(k => craftTree(I, k)).join("")}</ul>` : ""}</li>`;
 // the best way to get a base material: its best drop in Revived (chance per kill or per hit), else how it's obtained
 function farmLine(I, m, n) {
-  const it = I[m], d = it?.get?.find(g => g.drops)?.drops?.[0], g = it?.get?.[0];
+  const it = I[m], d = it?.get?.find(g => g.drops)?.drops?.[0], g = revGet(it)[0];
   const how = d ? `${d.p} · per ${d.w === "hit" ? "hit" : "kill"}${d.b ? " · boss" : ""}` : g ? `${g.kind}${g.text ? `: ${g.text}` : ""}` : "No current way to get it";
   return `<li data-i="${m}"><b>${n}× ${esc(itemName(I, m))}</b>${d ? ` <span class="chance">${d.c}%</span>` : ""}<div class="small dim">${esc(how)}</div></li>`;
 }
@@ -852,7 +983,7 @@ function drawPlan(id, qty, I, R) {
   const p = craftPlan(id, qty, R);
   $("cplan").innerHTML = `<p class="small dim" style="margin:0 0 6px">Everything you need${qty > 1 ? ` for ${qty}` : ""}, with every craftable part made from scratch:</p>
     <div class="need">${p.base.map(([m, n]) => `<div class="ni" data-i="${m}"><img src="${iImg(m)}" alt="" onerror="this.style.visibility='hidden'"><b>×${n}</b><span>${esc(itemName(I, m))}</span></div>`).join("")}</div>
-    ${p.karma ? `<p class="small" style="margin:8px 0 0">Total <b style="color:var(--accent)">${p.karma.toLocaleString()} Karma</b></p>` : ""}
+    ${p.karma ? `<p class="small" style="margin:8px 0 0">Total <b style="color:var(--accent)">${p.karma.toLocaleString("en")} Karma</b></p>` : ""}
     <details class="farm" open><summary>Where to farm</summary><ul class="qlist drops">${p.base.map(([m, n]) => farmLine(I, m, n)).join("")}</ul></details>
     <details><summary>Steps</summary><ul class="ctree">${craftTree(I, p.root, true)}</ul></details>`;
   $("cplan").querySelectorAll("[data-i]").forEach(el => el.onclick = () => I[el.dataset.i] && go(`#/item/${el.dataset.i}`));
@@ -870,7 +1001,7 @@ async function showItem(id) {
   const users = Object.entries(D).filter(([, d]) => (d.es_spheres || []).includes(id)).map(([u]) => u).filter(u => UMAP[u]);
   $("page").innerHTML = `<div class="sec" style="display:flex;gap:12px;align-items:center"><img src="${iImg(id)}" alt="" style="width:72px;height:72px;object-fit:contain" onerror="this.style.visibility='hidden'">
       <div><h2 style="margin:0;font-size:20px;text-shadow:var(--ol)">${esc(s.name)}</h2><div class="badges">${s.type ? `<span class="badge">${esc(s.type)} sphere</span>` : `<span class="badge">Item</span>`}${s.rarity ? `<span class="badge star">${s.rarity}${STAR}</span>` : ""}</div></div></div>
-    ${s.desc ? `<div class="sec"><h3 class="blue">Effect</h3><div class="lore">${esc(s.desc)}</div></div>` : ""}
+    ${s.desc ? `<div class="sec"><h3 class="blue">Effect</h3><div class="lore">${hl(s.desc)}</div></div>` : ""}
     <div class="sec"><h3 class="green">Where to get it</h3>${getHtml(s)}</div>
     ${R[id] ? `<div class="sec"><h3>Crafting plan</h3><div class="qty"><button class="gbtn small dark" id="cminus" aria-label="Fewer">−</button><b id="cq">1</b><button class="gbtn small dark" id="cplus" aria-label="More">+</button><span class="small dim">to craft</span></div><div id="cplan"></div></div>` : ""}
     ${usedIn.length ? `<div class="sec"><h3 class="blue">Used to craft</h3><div class="need">${usedIn.map(r => `<div class="ni" data-i="${r}"><img src="${iImg(r)}" alt="" onerror="this.style.visibility='hidden'"><b>×${R[r][1].find(([m]) => m === id)[1]}</b><span>${esc(I[r].name)}</span></div>`).join("")}</div></div>` : ""}
@@ -939,6 +1070,24 @@ async function renderFavs() {
     : `<div class="eu" onclick="go('#/item/${id}')"><img src="${iImg(id)}" alt="" onerror="this.style.visibility='hidden'"><div class="gname">${esc(I[id].name)}</div></div>`).join("");
   $("frecent").innerHTML = recent ? `<div class="sec" style="padding:10px 10px 6px"><h3 class="blue">Recently viewed</h3><button class="gbtn small dark" id="rclear" style="float:right">Clear</button><div class="recent">${recent}</div></div>` : "";
   if ($("rclear")) $("rclear").onclick = () => { RECENT = []; store.set("bf.recent", RECENT); renderFavs(); };
+  // your box at a glance, and the way to mark many units at once
+  const box = UNITS.filter(u => mine.has(u.id)), count = (f, keys) => keys.map(([k, l]) => [l, box.filter(u => f(u, k)).length]).filter(x => x[1]);
+  const rar = count((u, k) => k === "low" ? u.r < 6 : u.r === k, [[8, `${OMNI}Omni`], [7, `7${STAR}`], [6, `6${STAR}`], ["low", `5${STAR} and below`]]);
+  const els = count((u, k) => u.e === k, ELS.map(e => [e, orb(e)]));
+  $("fbox").innerHTML = `<div class="sec"><h3 class="green">My box</h3>${box.length
+    ? `<p class="small" style="margin:0 0 6px"><b>${box.length}</b> unit${box.length > 1 ? "s" : ""} marked as yours</p><div class="badges">${rar.map(([l, n]) => `<span class="badge star">${l} ×${n}</span>`).join("")}</div>
+      <div class="badges" style="margin-top:5px">${els.map(([l, n]) => `<span class="badge">${l}×${n}</span>`).join("")}</div>`
+    : `<p class="small" style="margin:0">Your box is empty.</p>`}
+    <details class="why" ${box.length ? "" : "open"}><summary>What is My box for?</summary><ul>
+      <li>Your box is the units you own in Brave Frontier. You mark them yourself: the app can't see your game account.</li>
+      <li>Your units get a <b>✓</b> in every list, and the <b>✓ My box</b> filter shows only them.</li>
+      <li>Team builder: <b>✓ Fill from my box only</b> builds a team from units you really have, and the unit picker has a My box filter too.</li>
+      <li>Summon gates show how many of their units you already have, and can hide those so you see what you're missing.</li>
+      <li>On a unit page, Similar units shows yours first: alternatives you can use right away.</li>
+      <li>Mark many at once with <b>✎ Edit my box</b>, or one at a time with <b>＋ My box</b> on a unit page. It stays on this phone only.</li></ul></details>
+    <div class="btnrow" style="margin-bottom:0">${box.length ? `<button class="gbtn blue small" id="fshow">Show my box</button>` : ""}<button class="gbtn green small" id="fedit">✎ Edit my box</button></div></div>`;
+  if ($("fshow")) $("fshow").onclick = () => { uState.mine = true; uState.q = ""; $("uq").value = ""; $("umine").classList.add("on"); tabsDrawn.add("units"); go("#/units"); renderUnits(); };
+  $("fedit").onclick = () => { go("#/units"); setBoxEdit(true); };
   $("fcount").textContent = list.length ? `${list.length} favorite units` : "";
   if (!list.length) return $("flist").innerHTML = `<div class="empty"><b>No favorites yet</b>Open a unit and tap the ${FAVSTAR} to keep it here.</div>`;
   paged($("flist"), list, viewMode === "grid" ? u => gridCell(u) : u => listRow(u), viewMode === "grid" ? "grid" : "list");
@@ -981,18 +1130,32 @@ const SLOTS = ["Leader", "Unit", "Unit", "Unit", "Unit", "Friend"];
 // where each slot stands on the field (% across, % down to the feet): the front column faces the enemies on the left
 const SPOS = [[29, 66], [29, 37], [29, 95], [72, 30], [72, 59], [72, 88]];
 let TEAMS = store.get("bf.teams", null) || [0, 1, 2].map(() => Array(6).fill(null)), TCUR = store.get("bf.tcur", 0);
-const saveTeams = () => { store.set("bf.teams", TEAMS); store.set("bf.tcur", TCUR); };
+// up to 10 teams, each with a name you can give it ("Team 1" until then)
+const MAXT = 10;
+let TNAMES = store.get("bf.tnames", []);
+if (!TEAMS[TCUR]) TCUR = 0;
+const teamName = i => TNAMES[i] || `Team ${i + 1}`;
+const saveTeams = () => { store.set("bf.teams", TEAMS); store.set("bf.tcur", TCUR); store.set("bf.tnames", TNAMES); };
 const COVER = ["mit", "heal", "bbf", "atk", "bbatk", "spark", "crit", "elem", "snull", "ko", "defign", "debuff"];
 // who gives a role: BB/SBB/UBB/extra skill for everyone, the leader skill only for the leader and the friend
 const providers = (team, code) => team.filter((id, i) => id && roleOf(id, code, i === 0 || i === 5));
 
+// with more than one team: a list of them to add the unit to (the open one first), each with its members
+function chooseTeam(id) {
+  if (TEAMS.length < 2) return addToTeam(id);
+  const order = [TCUR, ...TEAMS.keys()].filter((t, i, a) => a.indexOf(t) === i);
+  modal(`<div class="about"><div class="big">Add ${esc(UMAP[id]?.n || "")} to…</div><div class="tlist">${order.map(t => { const T = TEAMS[t], free = T.filter(x => !x).length, has = T.includes(id);
+    return `<button class="tpick ${t === TCUR ? "on" : ""}" data-tp="${t}" ${has || !free ? "disabled" : ""}><b>${esc(teamName(t))}</b><span class="ti">${T.map(x => x && UMAP[x] ? `<img src="${uImg(x)}" alt="">` : "<i></i>").join("")}</span><small>${has ? "in it" : free ? `${free} free` : "full"}</small></button>`; }).join("")}</div>
+    <div class="btnrow" style="justify-content:center"><button class="gbtn dark mclose">Cancel</button></div></div>`);
+  $("mbox").querySelectorAll("[data-tp]").forEach(b => b.onclick = () => { TCUR = +b.dataset.tp; saveTeams(); $("modal").hidden = true; addToTeam(id); });
+}
 function addToTeam(id) {
   const t = TEAMS[TCUR];
-  if (t.includes(id)) return toast(`Already in Team ${TCUR + 1}`);
+  if (t.includes(id)) return toast(`Already in ${teamName(TCUR)}`);
   let s = t.findIndex((x, i) => !x && i !== 5);
   if (s < 0 && !t[5]) s = 5;
-  if (s < 0) return toast(`Team ${TCUR + 1} is full`);
-  t[s] = id; saveTeams(); toast(`Added to Team ${TCUR + 1} as ${SLOTS[s] === "Unit" ? "a unit" : SLOTS[s]}`);
+  if (s < 0) return toast(`${teamName(TCUR)} is full`);
+  t[s] = id; saveTeams(); toast(`Added to ${teamName(TCUR)} as ${SLOTS[s] === "Unit" ? "a unit" : SLOTS[s]}`);
 }
 // fill empty slots one by one with the unit that covers the most of what is still missing (only one element if chosen)
 let fillEl = store.get("bf.fillel", "");
@@ -1056,6 +1219,7 @@ function boostText(clauses) {
 const MAXLV = { 8: 150, 7: 120, 6: 100, 5: 80, 4: 60, 3: 40, 2: 30, 1: 15 };
 let TTYPE = store.get("bf.ttype", null) || TEAMS.map(() => Array(6).fill("lord"));
 let TSPH = store.get("bf.tsph", null) || TEAMS.map(() => Array.from({ length: 6 }, () => [null, null]));
+TEAMS.forEach((_, t) => { TTYPE[t] ??= Array(6).fill("lord"); TSPH[t] ??= Array.from({ length: 6 }, () => [null, null]); });  // teams added later
 // what counts in the numbers; like the game's squad screen by default: leader skill and extra skills, no friend
 let SQ = { imps: true, lead: true, friend: false, es: true, maxcost: "", ...store.get("bf.sq", {}) };
 const saveSquad = () => { store.set("bf.ttype", TTYPE); store.set("bf.tsph", TSPH); store.set("bf.sq", SQ); };
@@ -1096,7 +1260,7 @@ function skillFill(s) {
 }
 // the attack's damage modifier %; an HP-scaled one ("200% + 750% * HP") counted at full HP
 const fullMod = s => { if (!s?.mod) return 0; const m = s.hps && (s.fx || []).map(e => e.p.match(/(\d+)%\s*\+\s*(\d+)%/)).find(Boolean); return m ? +m[1] + +m[2] : s.mod; };
-const short = n => n >= 1e6 ? `${(n / 1e6).toFixed(n >= 1e7 ? 1 : 2)}M` : n >= 1e4 ? `${Math.round(n / 1e3)}K` : n.toLocaleString();
+const short = n => n >= 1e6 ? `${(n / 1e6).toFixed(n >= 1e7 ? 1 : 2)}M` : n >= 1e4 ? `${Math.round(n / 1e3)}K` : n.toLocaleString("en");
 function battleCheck(team, W, NUMS) {
   const skill = (i, kind) => (W[i]?.skills || []).find(s => s.kind === kind);
   // buffs of one kind don't stack in the game: the biggest one on the team's BB/SBB counts
@@ -1127,6 +1291,24 @@ function battleHtml(B) {
     <p class="small dim" style="margin:8px 0 0">Rough: BC from hits, crystals and leader skills isn't counted. Damage = ATK${B.atkBuff ? ` with the team's +${B.atkBuff}% ATK buff` : ""}${B.bbAtk ? ` and +${B.bbAtk}% BB ATK` : ""} × the skill's modifier, before enemy DEF, critical hits, sparks and elements.</p></div>`;
 }
 
+// the game's element wheel: an element deals 50% more damage to the one it beats and 50% less to the one that beats
+// it; Light and Dark beat each other
+const BEATS = { Fire: "Earth", Earth: "Thunder", Thunder: "Water", Water: "Fire", Light: "Dark", Dark: "Light" };
+function matchupHtml(team) {
+  const els = team.map(id => UMAP[id]?.e).filter(Boolean);
+  if (!els.length) return "";
+  const cols = ELS.map(E => { const hard = els.filter(e => BEATS[e] === E).length, weak = els.filter(e => BEATS[E] === e && BEATS[e] !== E).length, hurt = els.filter(e => BEATS[E] === e).length;
+    return { E, hard, weak, hurt, score: hard - weak - hurt }; });
+  const top = Math.max(...cols.map(c => c.score)), low = Math.min(...cols.map(c => c.score));
+  const pick = v => cols.filter(c => c.score === v).map(c => `${orb(c.E)}${c.E}`).join(", ");
+  const row = (label, k, cls) => `<div class="k">${label}</div>${cols.map(c => `<div class="${c[k] ? cls : "dim"}">${c[k] || "–"}</div>`).join("")}`;
+  return `<div class="sec"><h3 class="purple">Against each element</h3>
+    <div class="mu"><div></div>${cols.map(c => `<div class="${c.score === top && top > low ? "best" : c.score === low && top > low ? "worst" : ""}">${orb(c.E)}</div>`).join("")}
+      ${row("You hit hard", "hard", "okc")}${row("You hit weakly", "weak", "noc")}${row("Hits you hard", "hurt", "noc")}</div>
+    ${top > low ? `<p class="small mut" style="margin:8px 0 0">Best against <b>${pick(top)}</b> · hardest against <b>${pick(low)}</b>.</p>` : ""}
+    <p class="small dim" style="margin:6px 0 8px">How many of your ${els.length} unit${els.length > 1 ? "s" : ""} deal 50% more or less damage to enemies of each element, and how many take 50% more from them.</p>
+    <button class="chip on" id="muchart">${orb("Light")}Which beats which?</button></div>`;
+}
 async function renderTeam() {
   const v = $("v-team"), team = TEAMS[TCUR];
   const [D, I] = await Promise.all([load("details"), load("items")]);
@@ -1135,7 +1317,6 @@ async function renderTeam() {
   const cost = team.slice(0, 5).reduce((a, id) => a + (UMAP[id]?.c || 0), 0);
   const elems = ELS.map(e => [e, team.filter(id => UMAP[id]?.e === e).length]).filter(x => x[1]);
   const info = id => { const u = UMAP[id]; return `${u.r === 8 ? "Omni" : u.r + "★"} ${u.e || ""}`; };
-  const fmt = n => n.toLocaleString();
   const sphereChip = (i, n) => { const s = TSPH[TCUR][i][n], it = s && I[s];
     return `<button class="sphc ${it ? "" : "none"}" data-sph="${i}/${n}">${it ? `<img src="${iImg(s)}" alt="" onerror="this.style.visibility='hidden'"><span>${esc(it.name)}</span>` : `＋ Sphere ${n + 1}`}</button>`; };
   const NUMS = team.map((id, i) => id && UMAP[id] ? unitNumbers(i, team, W, D, I) : null);
@@ -1150,9 +1331,10 @@ async function renderTeam() {
       <div class="sca">${i > 0 && i < 5 ? `<button class="gbtn small" data-lead="${i}">Lead</button>` : ""}<button class="gbtn small dark" data-s="${i}">Change</button><button class="gbtn small red" data-x="${i}" aria-label="Remove">✕</button></div>
     </div>`; };
   v.innerHTML = `<div class="sec" style="padding:8px" data-jump="Field">
-      <div class="tabs2">${TEAMS.map((t, i) => `<button class="${i === TCUR ? "on" : ""}" data-t="${i}">Team ${i + 1}</button>`).join("")}</div>
+      <div class="tabs2 teams">${TEAMS.map((t, i) => `<button class="${i === TCUR ? "on" : ""}" data-t="${i}">${esc(teamName(i))}${i === TCUR ? " ✎" : ""}</button>`).join("")}${
+        TEAMS.length < MAXT ? `<button class="add" id="tnew" aria-label="New team">＋</button>` : ""}</div>
       <div class="formation">${team.map((id, i) => `<button class="slot" data-s="${i}" style="left:${SPOS[i][0]}%;top:${SPOS[i][1]}%;z-index:${SPOS[i][1]}" aria-label="${SLOTS[i]}">${id && UMAP[id]
-        ? `<img src="${sImg(id)}" alt="" onerror="this.onerror=null;this.src='${uImg(id)}'">` : `<span class="empty">+</span>`}${i === 0 ? `<span class="sl lead">Leader</span>` : i === 5 ? `<span class="sl friend">Friend</span>` : ""}</button>`).join("")}</div>
+        ? `<img src="${sImg(id)}" alt="" onerror="this.onerror=null;this.src='${uImg(id)}'">` : `<span class="pad"><b>+</b></span>`}${i === 0 ? `<span class="sl lead">Leader</span>` : i === 5 ? `<span class="sl friend">Friend</span>` : ""}</button>`).join("")}${team.some(Boolean) ? "" : `<div class="hint">Tap a + to add a unit</div>`}</div>
       <div class="btngrid"><button class="gbtn" id="tfill">Fill empty slots</button>
         <select id="tfillel" class="gsel" aria-label="Element for Fill"><option value="">Any element</option>${ELS.map(e => `<option ${e === fillEl ? "selected" : ""}>${e}</option>`).join("")}</select>
         <button class="gbtn blue" id="tshare" ${team.some(Boolean) ? "" : "disabled"}>Share picture</button><button class="gbtn dark" id="tclear">Clear team</button></div>
@@ -1167,13 +1349,20 @@ async function renderTeam() {
         Tap a sphere to choose it. ✱ = a boost with a condition (counted). Cost: friend not counted. ${elems.map(([e, n]) => `<span class="badge">${orb(e)}×${n}</span>`).join(" ")}</p></div>
     ${battleHtml(battleCheck(team, W, NUMS))}
     ${team[0] || team[5] ? `<div class="sec"><h3 class="blue">Leader skills</h3>${[0, 5].filter(i => team[i]).map(i => { const [n, d] = ls(team[i], W[i]); const b = boostText(statBoosts(lsText(team[i], W[i], D)));
-        return `<div class="sk"><div class="kn"><span class="tag ls">${i ? "Friend" : "Leader"}</span><span class="nm">${esc(n || UMAP[team[i]]?.n)}</span></div><p>${d ? esc(d) : `<span class="dim">No leader skill</span>`}</p>${b ? `<div class="pills"><span class="pill">Counted: ${esc(b)}</span></div>` : ""}</div>`; }).join("")}</div>` : ""}
+        return `<div class="sk"><div class="kn"><span class="tag ls">${i ? "Friend" : "Leader"}</span><span class="nm">${esc(n || UMAP[team[i]]?.n)}</span></div><p>${d ? hl(d) : `<span class="dim">No leader skill</span>`}</p>${b ? `<div class="pills"><span class="pill">Counted: ${esc(b)}</span></div>` : ""}</div>`; }).join("")}</div>` : ""}
     <div class="sec"><h3 class="green">What the team covers</h3><div class="cov">${COVER.map(c => { const p = providers(team, c);
         const best = p.map(id => powerOf(id, c)).filter(Boolean).sort((a, b) => b[0] - a[0])[0];
         return `<div><span class="cl ${p.length ? "ok" : "no"}">${p.length ? "✓" : "✗"} ${esc(TAGS.labels[c] || c)}${best ? `<small> ${fmtPower(c, best)}</small>` : ""}</span><span class="who">${p.map(id => `<img src="${uImg(id)}" alt="" data-u="${id}">`).join("")}</span>${p.length ? "" : `<button class="gbtn small blue" data-find="${c}">Find</button>`}</div>`; }).join("")}</div>
-      <p class="small dim" style="margin:8px 0 0">From the units' BB, SBB, UBB and extra skills; leader skills count for the leader and the friend.</p></div>`;
+      <p class="small dim" style="margin:8px 0 0">From the units' BB, SBB, UBB and extra skills; leader skills count for the leader and the friend.</p></div>
+    ${matchupHtml(team)}`;
+  if ($("muchart")) $("muchart").onclick = elementChart;
   jumpBar(v, [...v.querySelectorAll(":scope > .sec")]);
-  v.querySelectorAll("[data-t]").forEach(b => b.onclick = () => { TCUR = +b.dataset.t; saveTeams(); renderTeam(); });
+  v.querySelectorAll("[data-t]").forEach(b => b.onclick = () => { if (+b.dataset.t === TCUR) return teamMenu(); TCUR = +b.dataset.t; saveTeams(); renderTeam(); });
+  if ($("tnew")) $("tnew").onclick = () => {
+    const n = TEAMS.length; TEAMS[n] = Array(6).fill(null); TTYPE[n] = Array(6).fill("lord"); TSPH[n] = Array.from({ length: 6 }, () => [null, null]); TNAMES[n] = null;
+    TCUR = n; saveTeams(); saveSquad(); renderTeam(); toast(`${teamName(n)} added: tap its tab to name it`);
+  };
+  const tabs = v.querySelector(".tabs2"); tabs.scrollLeft = tabs.querySelector(".on").offsetLeft - 40;
   v.querySelectorAll("[data-s]").forEach(b => b.onclick = () => go(`#/pick/${b.dataset.s}`));
   v.querySelectorAll("[data-x]").forEach(b => b.onclick = () => { const i = +b.dataset.x; team[i] = null; resetSlot(i); saveTeams(); renderTeam(); });
   v.querySelectorAll("[data-u]").forEach(b => b.onclick = () => go(`#/unit/${b.dataset.u}`));
@@ -1199,6 +1388,28 @@ async function renderTeam() {
   };
   $("tshare").onclick = () => shareTeam(team, W);
   $("tclear").onclick = () => { TEAMS[TCUR] = Array(6).fill(null); for (let i = 0; i < 6; i++) resetSlot(i); saveTeams(); renderTeam(); };
+}
+
+// the open team's tab: rename, copy or delete the team
+function teamMenu() {
+  modal(`<div class="about"><div class="big">${esc(teamName(TCUR))}</div>
+    <input id="tname" maxlength="24" value="${esc(TNAMES[TCUR] || "")}" placeholder="Team ${TCUR + 1}" aria-label="Team name" autocomplete="off" style="width:100%;margin:10px 0 4px">
+    <div class="btnrow" style="justify-content:center"><button class="gbtn green" id="tsave">Save name</button><button class="gbtn blue" id="tcopy" ${TEAMS.length >= MAXT ? "disabled" : ""}>Copy team</button>${
+      TEAMS.length > 1 ? `<button class="gbtn red" id="tdel">Delete team</button>` : ""}<button class="gbtn dark mclose">Close</button></div></div>`);
+  const done = msg => { saveTeams(); saveSquad(); $("modal").hidden = true; renderTeam(); if (msg) toast(msg); };
+  $("tsave").onclick = () => { TNAMES[TCUR] = $("tname").value.trim() || null; done(); };
+  $("tname").onkeydown = e => { if (e.key === "Enter") $("tsave").click(); };
+  $("tcopy").onclick = () => {
+    const t = TCUR, n = TEAMS.length, name = `${teamName(t)} copy`.slice(0, 24);
+    TEAMS[n] = [...TEAMS[t]]; TTYPE[n] = [...TTYPE[t]]; TSPH[n] = TSPH[t].map(x => [...x]); TNAMES[n] = name; TCUR = n;
+    done(`Copied as ${name}`);
+  };
+  if ($("tdel")) $("tdel").onclick = e => {
+    const b = e.currentTarget; if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = "Tap again to delete"; return; }
+    const name = teamName(TCUR);
+    for (const a of [TEAMS, TTYPE, TSPH, TNAMES]) a.splice(TCUR, 1);
+    TCUR = Math.min(TCUR, TEAMS.length - 1); done(`${name} deleted`);
+  };
 }
 
 // the team as a picture to share: the squad on the battle field, the members and the leader skills
@@ -1238,7 +1449,7 @@ async function shareTeam(team, W) {
   for (const i of [0, 5]) if (ids[i]) { const [x, y] = feet(i); ot(i ? "Friend" : "Leader", x - 28, y + 14, 15, i ? "#7ad6ff" : col("--accent")); }
   g.fillStyle = col("--gold"); g.fillRect(0, FH, WD, 3);
   const cost = ids.slice(0, 5).reduce((a, id) => a + (UMAP[id]?.c || 0), 0);
-  ot(`Team ${TCUR + 1}`, 20, FH + 42, 28); ot(`Cost ${cost}`, WD - 150, FH + 42, 20, col("--orange"));
+  ot(teamName(TCUR), 20, FH + 42, 28, "#fff", WD - 200); ot(`Cost ${cost}`, WD - 150, FH + 42, 20, col("--orange"));
   const I = await load("items");
   members.forEach(([id, i], n) => {
     const u = UMAP[id], x = 20 + (n % 2) * 350, y = FH + 64 + Math.floor(n / 2) * 88, N = unitNumbers(i, ids, W, D, I);
@@ -1246,16 +1457,16 @@ async function shareTeam(team, W) {
     ot(u.n, x + 74, y + 20, 16, "#fff", 262);
     g.font = "12px Arial"; g.fillStyle = col("--dim");
     g.fillText(`${SLOTS[i]} · Lv.${N.lv} · ${u.r === 8 ? "Omni" : u.r + "★"} ${u.e || ""} · Cost ${u.c || "?"}`, x + 74, y + 40, 262);
-    ot(`HP ${N.s[0].toLocaleString()}  ATK ${N.s[1].toLocaleString()}`, x + 74, y + 58, 13, col("--accent"), 262);
-    ot(`DEF ${N.s[2].toLocaleString()}  REC ${N.s[3].toLocaleString()}`, x + 74, y + 75, 13, col("--accent"), 262);
+    ot(`HP ${N.s[0].toLocaleString("en")}  ATK ${N.s[1].toLocaleString("en")}`, x + 74, y + 58, 13, col("--accent"), 262);
+    ot(`DEF ${N.s[2].toLocaleString("en")}  REC ${N.s[3].toLocaleString("en")}`, x + 74, y + 75, 13, col("--accent"), 262);
   });
   let y = FH + 74 + rows * 88 + 10;
   for (const [label, name, desc] of lss) { ot(`${label} · ${name}`, 20, y, 17, col("--accent"), WD - 40); y = wrap(desc, 20, y + 24, WD - 40, 14, "#ece6d6") + 12; }
   ot("BF Companion", WD - 170, H - 14, 14, col("--dim"));
   const blob = await new Promise(r => cv.toBlob(r, "image/png"));
   const b64 = await new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result.split(",")[1]); r.readAsDataURL(blob); });
-  if (window.BFApp) BFApp.shareImage(b64, `BF Team ${TCUR + 1}.png`, true);
-  else { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `BF Team ${TCUR + 1}.png`; a.click(); }
+  if (window.BFApp) BFApp.shareImage(b64, `BF ${teamName(TCUR).replace(/[^\w -]+/g, "")}.png`, true);
+  else { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `BF ${teamName(TCUR).replace(/[^\w -]+/g, "")}.png`; a.click(); }
 }
 
 // choosing a sphere for a squad unit: the ones its extra skill wants first, then the biggest stat boosts for it
@@ -1294,6 +1505,8 @@ async function showSpherePick(slot, n) {
 // choosing a unit for a team slot
 let pickQ = "", pickMine = store.get("bf.pmine", false);
 async function showPick(slot, role) {
+  const nav = NAV, lead = slot === 0 || slot === 5, D = lead ? await load("details") : {};
+  if (nav !== NAV) return;  // left the page while it loaded
   setTitle(slot === 0 ? "Choose the leader" : slot === 5 ? "Choose the friend" : "Choose a unit", true); $("share").hidden = true;
   $("page").innerHTML = `<div class="bar2"><div class="searchrow"><input id="pq" type="search" placeholder="Search name, skill or role…" value="${esc(pickQ)}" autocomplete="off"></div>
       <div class="scroller"><button class="chip ${pickMine ? "on" : ""}" id="pmine">✓ My box</button>${role ? `<button class="chip on" id="prole">${esc(TAGS.labels[role] || role)} ✕</button>` : ""}</div></div>
@@ -1303,7 +1516,12 @@ async function showPick(slot, role) {
     if (q.length >= 3) await skillText();
     const list = UNITS.filter(u => (pickMine ? mine.has(u.id) : !u.f) && (!role || roleOf(u.id, role, slot === 0 || slot === 5)) && searchHit(u, q)).sort(role ? byPower(role) : SORTS.rarity);
     $("pcount").textContent = `${list.length} units${role ? ` with ${TAGS.labels[role]}, strongest first` : ""}`;
-    paged($("plist"), list, u => listRow(u, x => { if (TEAMS[TCUR][slot] !== x.id) resetSlot(slot); TEAMS[TCUR][slot] = x.id; saveTeams(); history.back(); }, role), "list");
+    const take = x => { if (TEAMS[TCUR][slot] !== x.id) resetSlot(slot); TEAMS[TCUR][slot] = x.id; saveTeams(); history.back(); };
+    // for the leader and the friend: each unit's leader skill, as the stat boosts it gives when it has them
+    const make = u => { const d = listRow(u, take, role), t = lead && lsText(u.id, null, D);
+      if (t) d.querySelector(".ls").insertAdjacentHTML("beforebegin", `<div class="lsl"><b>LS</b>${esc(boostText(statBoosts(t)) || t)}</div>`);
+      d.redraw = () => make(u); return d; };
+    paged($("plist"), list, make, "list");
   };
   $("pq").oninput = e => { clearTimeout(showPick.t); showPick.t = setTimeout(() => { pickQ = e.target.value; draw(); }, 200); };
   if ($("prole")) $("prole").onclick = () => location.replace(`#/pick/${slot}`);
@@ -1321,7 +1539,7 @@ function toggleCompare(id) {
   store.set("bf.cmp", CMP); updateCmpBar();
   toast(i >= 0 ? "Removed from compare" : CMP.length > 1 ? `Comparing ${CMP.length} units` : "Added: open another unit to compare");
 }
-function updateCmpBar() { const b = $("cmpbar"); b.hidden = !CMP.length || location.hash === "#/compare"; b.textContent = `⇄ Compare (${CMP.length})`; }
+function updateCmpBar() { const b = $("cmpbar"); b.hidden = !CMP.length || location.hash === "#/compare" || boxEdit; b.textContent = `⇄ Compare (${CMP.length})`; }
 $("cmpbar").onclick = () => go("#/compare");
 async function showCompare() {
   setTitle("Compare", true); $("share").hidden = true; updateCmpBar();
@@ -1350,7 +1568,7 @@ async function showCompare() {
 }
 
 // ---------------- navigation ----------------
-const TABS = { units: "Units", spheres: "Spheres", drops: "Drops", team: "Team", favs: "Favorites" };
+const TABS = { units: "Units", spheres: "Spheres", drops: "Drops", team: "Team", favs: "Favorites & box" };
 let tab = "units", tabsDrawn = new Set();
 function setTitle(t, sub) {
   $("title").textContent = t; document.body.classList.toggle("sub", !!sub);
@@ -1365,6 +1583,7 @@ let NAV = 0;
 async function route() {
   NAV++;
   const h = location.hash || "#/units";
+  if (boxEdit && h !== "#/units") setBoxEdit(false);
   let m;
   $("modal").hidden = true; updateCmpBar();
   if ((m = h.match(/^#\/unit\/(\d+)/))) return showUnit(m[1]);
@@ -1376,6 +1595,7 @@ async function route() {
   const t = (h.match(/^#\/(\w+)/) || [])[1];
   tab = TABS[t] ? t : "units";
   document.querySelectorAll(".view").forEach(v => v.classList.toggle("on", v.id === "v-" + tab));
+  refreshMarks($("v-" + tab));  // ★ and ✓ changed on a unit page
   document.querySelectorAll(".nav button").forEach(b => b.classList.toggle("on", b.dataset.tab === tab));
   $("favtab").classList.toggle("on", tab === "favs");
   setTitle(TABS[tab], false);
@@ -1385,6 +1605,13 @@ async function route() {
   requestAnimationFrame(() => window.scrollTo(0, scrollPos[tab] || 0));
 }
 addEventListener("scroll", () => { if (!document.body.classList.contains("sub")) scrollPos[tab] = scrollY; }, { passive: true });
+// ▲ back to the top of a long list or page
+function onScrollTop() { $("totop").hidden = scrollY < 1500; }
+addEventListener("scroll", onScrollTop, { passive: true });
+$("totop").onclick = () => window.scrollTo({ top: 0, behavior: "smooth" });
+// Enter in a search box closes the keyboard, so the results can be seen
+document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.matches?.("input[type=search]")) e.target.blur(); });
+$("ebdone").onclick = () => { setBoxEdit(false); toast(`${mine.size} unit${mine.size === 1 ? "" : "s"} in your box`); };
 addEventListener("hashchange", route);
 // tapping the tab you're on goes back to the top of its list
 document.querySelectorAll(".nav button").forEach(b => b.onclick = () =>
