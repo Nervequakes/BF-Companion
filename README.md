@@ -5,7 +5,7 @@ pocket, plus a team builder that shows your squad's numbers like the game's Mana
 
 No account, no ads, no internet needed: everything is inside the app.
 
-**[⬇ Download the latest APK](../../releases/latest)** · ✅ No permissions · ✅ No internet access · ✅ [Code you can read](app) · ✅ [Scanned on VirusTotal](https://www.virustotal.com/gui/file/4a0becfd3c7d33b522ca3ecc7b6105d0245334f8b0ad832bdbb7cdcc6cafebd6) · [Is it safe?](#is-it-safe)
+**[⬇ Download the latest APK](../../releases/latest)** · ✅ No permissions · ✅ No internet access · ✅ [Code you can read](app) · ✅ [Scanned on VirusTotal (4.9)](https://www.virustotal.com/gui/file/4a0becfd3c7d33b522ca3ecc7b6105d0245334f8b0ad832bdbb7cdcc6cafebd6) · [Is it safe?](#is-it-safe)
 
 <p align="center">
   <img src="screenshots/1-units.jpg" width="200" alt="Unit list">
@@ -84,8 +84,8 @@ Yes, and you don't have to take my word for it:
   - [`www/index.html`](app/www/index.html): the app itself. An APK is a zip file: unzip it and you'll find this
     exact file as `assets/www/index.html`. The rest of the APK is the game data, artwork and sprites it shows.
   - [`build_apk.bat`](app/build_apk.bat): how the APK is built with Google's Android tools.
-- **Checked by antivirus engines on VirusTotal:** [see the scan of this exact file](https://www.virustotal.com/gui/file/4a0becfd3c7d33b522ca3ecc7b6105d0245334f8b0ad832bdbb7cdcc6cafebd6),
-  with the result of every engine.
+- **Checked by antivirus engines on VirusTotal:** [see the scan of version 4.9](https://www.virustotal.com/gui/file/4a0becfd3c7d33b522ca3ecc7b6105d0245334f8b0ad832bdbb7cdcc6cafebd6),
+  with the result of every engine. Later versions only change the data inside; the code in [`app`](app) is the same.
 
 ## Where the data comes from
 
