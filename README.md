@@ -28,6 +28,9 @@ No account, no ads, no internet needed: everything is inside the app.
 - Leader Skill, BB, SBB, UBB, Extra Skill and Dual BB with BC cost, hits and the exact numbers.
 - Roles with how strong they are ("Mitigation 50%", "BB ATK 600%"), SP enhancements, evolution line and materials, lore.
 - Search by name, skill text or role, several words at once: `fire omni heal`, `def ignore`, `water mitigation`.
+  A typo still finds it: *Did you mean…?* shows the closest names.
+- **Similar units** on every unit page: the same element and roles, for when you don't have one.
+- **My box**: mark the units you have, filter the list to them, and build teams from your own units.
 - Sort by rarity, newest, stats, cost or the strongest unit for a role.
 
 **How to get them in Revived**
@@ -37,7 +40,8 @@ No account, no ads, no internet needed: everything is inside the app.
 
 **Spheres and items**
 - Every sphere and material, where it drops in Revived (with the drop chance per kill or per hit), clear rewards and shops.
-- **Crafting planner**: all base materials and Karma for any Synthesis recipe, for any amount.
+- **Crafting planner**: all base materials and Karma for any Synthesis recipe, for any amount, and **where to farm**
+  each material with its drop chance.
 - Best spheres for each unit, including the ones that switch on its extra skill.
 
 **Quest search**
@@ -47,10 +51,12 @@ No account, no ads, no internet needed: everything is inside the app.
 - 3 teams of 5 units + a friend, on a battle field with the animated sprites.
 - Squad numbers like the game: HP, ATK, DEF, REC with the unit type, spheres, leader skill, friend skill, extra skills and Imps.
 - **Battle check**: how much BC the team's SBBs fill, who can cast again right away, and rough BB/SBB/UBB damage.
-- What the team covers (mitigation, healing, BB fill, buffs…), *Fill empty slots* with units that cover what's missing.
+- What the team covers (mitigation, healing, BB fill, buffs…), *Fill empty slots* with units that cover what's missing,
+  from every unit or only from your box.
 - Share your team as a picture.
 
-**Also:** favorites, recently viewed, compare up to 3 units side by side, the element chart, swipe between units.
+**Also:** favorites, recently viewed, compare up to 3 units side by side, the element chart, swipe between units, and
+*What's new* in every version (tap the logo).
 
 ## Install
 
@@ -59,6 +65,8 @@ No account, no ads, no internet needed: everything is inside the app.
 3. Done. The app needs no permissions at all.
 
 Android 7.0 or newer. About 105 MB, because every unit's artwork and animated sprite is included.
+
+**Every version and what changed in it:** [Releases](../../releases). Older versions stay there to download.
 
 Android warns about "unknown apps" for **every** APK installed from outside the Play Store; that warning doesn't
 mean anything is wrong. If Google Play Protect offers to scan the app, let it.
