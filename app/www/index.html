@@ -81,6 +81,11 @@ main { padding-bottom: calc(var(--navh) + 20px); }
 .badges { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 3px; }
 .badge { display: inline-flex; align-items: center; gap: 3px; font-size: 10.5px; padding: 1px 6px; border-radius: 6px; background: rgba(0,0,0,.6); text-shadow: var(--ol); border: 1px solid rgba(0,0,0,.6); }
 .badge.pw { background: linear-gradient(#5aa8ff, #1e5fe0); border-color: #9ccaff; }
+.badge.wk { background: linear-gradient(#ff9ad5, #b0306f); border-color: #ffd0ea; cursor: pointer; }
+.top .crest { cursor: pointer; }
+.about p { margin: 6px 0; font-size: 13px; } .about .big { font: 18px Rodin, Arial, sans-serif; text-shadow: var(--ol); margin: 4px 0 2px; }
+.about .facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 10px 0; } .about .facts div { background: rgba(0,0,0,.35); border-radius: 8px; padding: 6px 2px; }
+.about .facts b { display: block; font: 16px Rodin, Arial, sans-serif; color: var(--accent); }
 .gu .pwtag { position: absolute; left: 0; top: calc(100% - 52px); font-family: Rodin, Arial, sans-serif; font-size: 10px; padding: 0 4px; border-radius: 4px; background: linear-gradient(#5aa8ff, #1e5fe0); text-shadow: var(--ol); white-space: nowrap; }
 .role b { color: var(--accent); font-weight: normal; }
 .badge img { width: 16px; height: 16px; } .badge .sti { width: 14px; height: 14px; margin-left: -1px; } .badge .omi { width: 17px; height: 17px; margin: -2px 1px -2px -3px; }
@@ -291,7 +296,7 @@ select.gsel { height: 38px; font-size: 12.5px; padding: 0 10px; }
 <div id="splash"><img src="/static/title.jpg" alt=""><div class="sl">Loading…</div></div>
 <header class="top">
   <button class="back" id="back" aria-label="Back">‹</button>
-  <img class="crest" src="/static/logo.png" alt="">
+  <img class="crest" id="about" src="/static/logo.png" alt="About BF Companion" role="button" tabindex="0">
   <h1 id="title">Units</h1>
   <button class="iconbtn" id="favtab" title="Favorites" aria-label="Favorites"><img src="/static/star_fav.png" alt=""></button>
   <button class="iconbtn" id="viewmode" title="Grid or list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></button>
@@ -361,6 +366,21 @@ function toast(m) { $("toast").textContent = m; $("toast").classList.add("show")
 const loadImg = src => new Promise(res => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; });
 function modal(html) { $("mbox").innerHTML = html; $("modal").hidden = false; }
 $("modal").onclick = e => { if (e.target.id === "modal" || e.target.closest(".mclose")) $("modal").hidden = true; };
+// tap the logo: version, how fresh the data is, where it comes from, where new versions are
+async function showAbout() {
+  const [V, S, U, I] = await Promise.all([load("version"), load("usrc"), load("units"), load("items")]);
+  const day = t => new Date(t).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+  const url = "https://github.com/Nervequakes/BF-Companion/releases";
+  modal(`<div class="about"><img src="/static/logo.png" alt="" style="height:64px"><div class="big">BF Companion</div>
+    <p class="dim">${V.version ? `Version ${esc(V.version)}${V.built ? ` · built ${day(V.built)}` : ""}` : "Offline guide for Brave Frontier Revived"}</p>
+    <div class="facts"><div><b>${Object.keys(U).length.toLocaleString()}</b>units</div><div><b>${Object.values(I).filter(s => s.name).length.toLocaleString()}</b>spheres & items</div><div><b>${Object.keys(S.g || {}).length}</b>summon gates</div></div>
+    ${S.built ? `<p>Revived's drop, capture and summon data from <b>${day(S.built * 1000)}</b>.</p>` : ""}
+    <p class="dim small">Data from the game's own files, <b>bfrevive.net</b> and the Brave Frontier Wiki. No internet, no account, nothing collected. Fan-made: not affiliated with gumi or the BF Revive team.</p>
+    <p class="small">New versions: <b>github.com/Nervequakes/BF-Companion</b></p>
+    <div class="btnrow" style="justify-content:center"><button class="gbtn blue" id="copylink">Copy link</button><button class="gbtn mclose">Close</button></div></div>`);
+  $("copylink").onclick = () => { window.BFApp ? BFApp.copyText(url) : navigator.clipboard?.writeText(url); toast("Link copied: open it in your browser"); };
+}
+$("about").onclick = showAbout;
 const elementChart = () => modal(`<img src="/static/elements.png" alt="Element correlation"><div class="btnrow" style="justify-content:center"><button class="gbtn mclose">Close</button></div>`);
 
 try { localStorage.removeItem("bf.box"); } catch {}  // a box imported in version 4.0–4.3 (the import is gone)
@@ -400,8 +420,10 @@ function remember(t, id) { RECENT = [[t, id], ...RECENT.filter(([a, b]) => !(a =
 function saveU() { store.set("bf.units", { ...uState, els: [...uState.els], rar: [...uState.rar], roles: [...uState.roles], get: [...uState.get] }); }
 // ways to get a unit in Revived right now (bfrevive.net, usrc.json): c = capture, g = summon gate, r = clear reward, s = event shop
 let USRC = null;
-const GETS = [["g", "Summon"], ["c", "Capture"], ["rs", "Reward / shop"]];
-const hasSrc = id => { const s = USRC?.u?.[id]; return !!s && [...uState.get].some(k => k === "rs" ? s.r || s.s : s[k]); };
+const GETS = [["w", "This week"], ["g", "Summon"], ["c", "Capture"], ["rs", "Reward / shop"]];
+// the featured summon gate a unit is in this week (bit 1 of the gate's flags), if any: [gate id, % per pull]
+const weekGate = id => (USRC?.u?.[id]?.g || []).find(([g]) => USRC.g[g]?.[1] & 1);
+const hasSrc = id => { const s = USRC?.u?.[id]; return !!s && [...uState.get].some(k => k === "w" ? weekGate(id) : k === "rs" ? s.r || s.s : s[k]); };
 
 function unitBadges(u) {
   return `${u.r === 8 ? `<span class="badge star">${OMNI}OMNI</span>` : `<span class="badge star">${u.r}${STAR}</span>`}${u.e ? `<span class="badge">${orb(u.e)}${u.e}</span>` : ""}${u.c ? `<span class="badge cost">COST ${u.c}</span>` : ""}`;
@@ -461,6 +483,41 @@ function searchHit(u, q) {
   if (roles.length + words.length < 2) return false;
   return roles.every(c => roleOf(u.id, c, true)) && words.every(t => isAttr(t) ? attrHit(u, t) : name.includes(t) || phraseHit(u, t));
 }
+// "did you mean": names close to what was typed, for searches with a typo ("vargus", "zegstai")
+// optimal string alignment distance (a swap of two letters counts once), giving up past `max`
+function osa(a, b, max) {
+  if (Math.abs(a.length - b.length) > max) return max + 1;
+  let prev2 = null, prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i]; let low = i;
+    for (let j = 1; j <= b.length; j++) {
+      let v = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) v = Math.min(v, prev2[j - 2] + 1);
+      cur.push(v); low = Math.min(low, v);
+    }
+    if (low > max) return max + 1;
+    prev2 = prev; prev = cur;
+  }
+  return prev[b.length];
+}
+const nameWords = s => s.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").split(/[^a-z0-9]+/).filter(Boolean);
+// every typed word must be close to a word of the name (or its start): 1 typo up to 6 letters, 2 above
+function closeNames(q, items, name, rank = () => 0) {
+  const typed = nameWords(q); if (!typed.length || typed.join("").length < 3) return [];
+  const hits = [];
+  for (const it of items) {
+    const words = nameWords(name(it)); let total = 0;
+    for (const t of typed) {
+      const allow = t.length <= 3 ? 0 : t.length <= 6 ? 1 : 2;
+      let best = allow + 1;
+      for (const w of words) { best = Math.min(best, osa(t, w, allow), w.length > t.length ? osa(t, w.slice(0, t.length), allow) : best); if (!best) break; }
+      if (best > allow) { total = -1; break; }
+      total += best;
+    }
+    if (total >= 0) hits.push([total, rank(it), it]);
+  }
+  return hits.sort((a, b) => a[0] - b[0] || b[1] - a[1]).map(h => h[2]);
+}
 function filteredUnits() {
   const q = uState.q.trim().toLowerCase(), rars = RARITY.filter(r => uState.rar.has(r[0]));
   const list = UNITS.filter(u => (!u.e || uState.els.has(u.e)) && (q || !rars.length || rars.some(r => r[2](u))) && (q || !u.f)
@@ -480,7 +537,12 @@ async function renderUnits() {
   NAV_LIST = list.map(u => u.id);
   $("ucount").textContent = `${list.length} units${uState.q ? ` matching “${uState.q}”${bySkill ? ` (${bySkill} by skill or role)` : ""}` : ""}${
     uState.sort === "power" ? role ? ` · strongest ${TAGS.labels[role]} first` : " · pick a role to sort by strength" : ""}`;
-  if (!list.length) return $("ulist").innerHTML = `<div class="empty"><b>No units match</b>Try another name or turn filters back on.</div>`;
+  if (!list.length) {
+    const close = q ? closeNames(q, UNITS, u => u.n, u => u.r).slice(0, 12) : [];
+    $("ulist").innerHTML = `<div class="empty"><b>No units match</b>${close.length ? "Did you mean one of these? (any element or rarity)" : "Try another name or turn filters back on."}</div>`;
+    if (close.length) { NAV_LIST = close.map(u => u.id); const g = document.createElement("div"); g.className = "grid"; g.append(...close.map(u => gridCell(u))); $("ulist").append(g); }
+    return;
+  }
   paged($("ulist"), list, viewMode === "grid" ? u => gridCell(u, null, role) : u => listRow(u, null, role), viewMode === "grid" ? "grid" : "list");
 }
 const chip = (html, on) => { const b = document.createElement("button"); b.className = "chip" + (on ? " on" : ""); b.innerHTML = html; return b; };
@@ -612,7 +674,9 @@ function unitSrcHtml(S, id) {
 }
 // every unit a summon gate can give: the rarest first, then the best chance
 async function showGate(g) {
-  const S = await load("usrc"), G = S.g?.[g]; if (!G) return showMissing();
+  const nav = NAV, S = await load("usrc"), G = S.g?.[g];
+  if (nav !== NAV) return;  // left the page while it loaded
+  if (!G) return showMissing();
   setTitle(G[0], true);
   const list = Object.entries(S.u).map(([id, s]) => [UMAP[id], s.g?.find(x => x[0] == g)?.[1]]).filter(x => x[0] && x[1])
     .sort((a, b) => b[0].r - a[0].r || b[1] - a[1] || a[0].n.localeCompare(b[0].n));
@@ -634,11 +698,12 @@ async function evoChain(id) {
   return chain;
 }
 async function showUnit(id) {
-  const u = UMAP[id]; if (!u) return showMissing();
+  const u = UMAP[id], nav = NAV; if (!u) return showMissing();
   setTitle(u.n, true); $("share").hidden = false; $("share").onclick = () => shareUnit(id);
   const page = $("page");
   remember("u", id);
   const [art, spr] = await Promise.all([loadImg(aImg(id)), loadImg(sImg(id))]);
+  if (nav !== NAV) return;  // left the page while it loaded
   // previous / next unit of the list it was opened from
   const at = NAV_LIST.indexOf(id), prev = at > 0 ? NAV_LIST[at - 1] : null, next = at >= 0 ? NAV_LIST[at + 1] : null;
   // no artwork: the hero shows the animated sprite instead of the small icon
@@ -659,6 +724,7 @@ async function showUnit(id) {
   if (next) $("unext").onclick = () => location.replace(`#/unit/${next}`);
   window.scrollTo(0, 0);
   const [w, D, I] = await Promise.all([wiki(id), load("details"), load("items")]);
+  if (nav !== NAV) return;  // left the page while it loaded
   const d = D[id] || {};
   $("hmeta").innerHTML = [w.maxlv ? `<span class="badge">Max Lv ${w.maxlv}</span>` : "", w.gender ? `<span class="badge">${SEX[w.gender] ? `<img src="/static/sex_${SEX[w.gender][0]}.png" alt="">${SEX[w.gender][1]}` : `<img src="/static/sex_o.png" alt="">${esc(w.gender)}`}</span>` : "",
     w.hits ? `<span class="badge">${w.hits} hits</span>` : ""].join("");
@@ -680,12 +746,15 @@ async function showUnit(id) {
     if (d.es_partners?.length) spheres = `<p class="dim small" style="margin:0 0 8px">Extra skill bonus with <b>${d.es_partners.map(esc).join(", ")}</b> in the squad.</p>` + spheres;
   }
   const chain = await evoChain(id);
+  if (nav !== NAV) return;  // left the page while it loaded
   const mats = (w.evo?.mats || []).map(n => { const m = UNITS.find(x => x.n === n.replace(/\s*\(.*\)$/, "")); return m ? unitMini(m.id) : `<span class="pill">${esc(n)}</span>`; }).join("");
   const sp = w.sp?.length ? w.sp.map(c => `<div class="sp"><div class="cat">${esc(c.cat)}</div>${c.opts.map(o => `<div class="spo"><span class="c">${o.sp} SP</span><div>${esc(o.desc)}${o.note ? `<div class="dim small">${esc(o.note)}</div>` : ""}</div></div>`).join("")}</div>`).join("") : "";
   const quotes = [["Summon", w.summon], ["Fusion", w.fusion], ["Evolution", w.evolution]].filter(q => q[1]);
   const roles = rolePills(id);
   USRC = await load("usrc");
-  const src = unitSrcHtml(USRC, id);
+  if (nav !== NAV) return;  // left the page while it loaded
+  const src = unitSrcHtml(USRC, id), wk = weekGate(id);
+  if (wk) { $("hmeta").insertAdjacentHTML("afterbegin", `<span class="badge wk" data-gate="${wk[0]}">This week: ${esc(USRC.g[wk[0]][0])} ›</span>`); $("hmeta").querySelector(".wk").onclick = () => go(`#/gate/${wk[0]}`); }
   $("ubody").innerHTML = `
     ${spr ? `<div class="sec"><h3 class="green">In battle</h3><div class="stage"><img class="spr" id="spr" src="${sImg(id)}" alt=""></div></div>` : ""}
     <div class="sec"><h3>Stats</h3>${statTable(u, w)}</div>
@@ -722,7 +791,9 @@ async function renderSpheres() {
   }
   const pick = { All: s => s.type, Craftable: s => R[s.id], Materials: s => !s.type }[sType] || (s => s.type === sType);
   const list = all.filter(s => (!q || s.name.toLowerCase().includes(q)) && (q || pick(s))).sort((a, b) => (b.rarity || 0) - (a.rarity || 0) || a.name.localeCompare(b.name));
-  $("scount").textContent = `${list.length} ${q ? "results" : sType === "Materials" ? "materials" : sType === "Craftable" ? "items you can craft in Synthesis" : "spheres"}`;
+  if (q && !list.length) list.push(...closeNames(q, all, s => s.name, s => s.rarity || 0).slice(0, 12));
+  $("scount").textContent = q && list.length && !list.some(s => s.name.toLowerCase().includes(q)) ? `No exact match for “${$("sq").value.trim()}”. Did you mean:`
+    : `${list.length} ${q ? "results" : sType === "Materials" ? "materials" : sType === "Craftable" ? "items you can craft in Synthesis" : "spheres"}`;
   paged($("slist"), list, s => { const d = document.createElement("div"); d.className = "item"; d.onclick = () => go(`#/item/${s.id}`);
     d.innerHTML = `<img loading="lazy" src="${iImg(s.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1"><div class="t">${esc(s.name)} <span class="dim small">${s.rarity ? `${s.rarity}${STAR}` : ""}</span>${R[s.id] ? `<span class="craft">craftable</span>` : ""}</div><div class="s">${esc(s.type ? s.type + " · " : "")}${esc(s.desc)}</div></div>`;
     return d; }, "");
@@ -753,11 +824,15 @@ function drawPlan(id, qty, I, R) {
 }
 
 async function showItem(id) {
-  const [I, R] = await Promise.all([load("items"), load("recipes")]), s = I[id]; if (!s) return showMissing();
+  const nav = NAV, [I, R] = await Promise.all([load("items"), load("recipes")]), s = I[id];
+  if (nav !== NAV) return;  // left the page while it loaded
+  if (!s) return showMissing();
   setTitle(s.name, true); $("share").hidden = true; remember("i", id);
   const usedIn = Object.keys(R).filter(r => R[r][1].some(([m]) => m === id) && I[r]);
   // units whose extra skill uses this sphere
-  const D = await load("details"), users = Object.entries(D).filter(([, d]) => (d.es_spheres || []).includes(id)).map(([u]) => u).filter(u => UMAP[u]);
+  const D = await load("details");
+  if (nav !== NAV) return;  // left the page while it loaded
+  const users = Object.entries(D).filter(([, d]) => (d.es_spheres || []).includes(id)).map(([u]) => u).filter(u => UMAP[u]);
   $("page").innerHTML = `<div class="sec" style="display:flex;gap:12px;align-items:center"><img src="${iImg(id)}" alt="" style="width:72px;height:72px;object-fit:contain" onerror="this.style.visibility='hidden'">
       <div><h2 style="margin:0;font-size:20px;text-shadow:var(--ol)">${esc(s.name)}</h2><div class="badges">${s.type ? `<span class="badge">${esc(s.type)} sphere</span>` : `<span class="badge">Item</span>`}${s.rarity ? `<span class="badge star">${s.rarity}${STAR}</span>` : ""}</div></div></div>
     ${s.desc ? `<div class="sec"><h3 class="blue">Effect</h3><div class="lore">${esc(s.desc)}</div></div>` : ""}
@@ -1149,7 +1224,8 @@ async function shareTeam(team, W) {
 // choosing a sphere for a squad unit: the ones its extra skill wants first, then the biggest stat boosts for it
 let sphQ = "";
 async function showSpherePick(slot, n) {
-  const [I, D] = await Promise.all([load("items"), load("details")]), id = TEAMS[TCUR][slot], u = UMAP[id];
+  const nav = NAV, [I, D] = await Promise.all([load("items"), load("details")]), id = TEAMS[TCUR][slot], u = UMAP[id];
+  if (nav !== NAV) return;  // left the page while it loaded
   if (!u) return go("#/team");
   setTitle(`Sphere ${n + 1} · ${u.n}`, true); $("share").hidden = true;
   const el = (u.e || "").toLowerCase();
@@ -1213,7 +1289,8 @@ async function showCompare() {
   setTitle("Compare", true); $("share").hidden = true; updateCmpBar();
   const us = CMP.map(id => UMAP[id]).filter(Boolean);
   if (!us.length) return $("page").innerHTML = `<div class="empty"><b>Nothing to compare</b>Open a unit and tap ⇄ Compare (up to 3 units).</div>`;
-  const [D, W] = await Promise.all([load("details"), Promise.all(us.map(u => wiki(u.id)))]);
+  const nav = NAV, [D, W] = await Promise.all([load("details"), Promise.all(us.map(u => wiki(u.id)))]);
+  if (nav !== NAV) return;  // left the page while it loaded
   const skill = (i, kind) => {
     const d = D[us[i].id] || {}, s = (W[i].skills || []).find(s => s.kind === kind);
     const game = kind === "Leader Skill" ? d.leader?.desc : kind === "Extra Skill" ? d.extra : (d.skills || []).find(s => s.label === kind)?.desc;
@@ -1245,7 +1322,10 @@ function setTitle(t, sub) {
 function showMissing() { $("page").innerHTML = `<div class="empty"><b>Not found</b></div>`; }
 function go(hash) { if (location.hash !== hash) location.hash = hash; else route(); }
 const scrollPos = {};
+// counts page changes: a page that finishes loading after you've moved on doesn't draw over the new one
+let NAV = 0;
 async function route() {
+  NAV++;
   const h = location.hash || "#/units";
   let m;
   $("modal").hidden = true; updateCmpBar();

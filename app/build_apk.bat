@@ -18,6 +18,8 @@ copy /y ..\static\icon-192.png res\mipmap-xxhdpi\ic_launcher.png >nul
 "%BT%\aapt2" compile --dir res -o build\res.zip || exit /b 1
 rem assets\www holds the whole unit guide (run ..\export_bundle.py first)
 if not exist assets\www\index.html (echo assets\www is missing: run python export_bundle.py first & exit /b 1)
+rem the app's version and build day, for its About sheet (from this manifest)
+python -c "import re, json, datetime; m = open('AndroidManifest.xml', encoding='utf-8').read(); json.dump({'version': re.search(r'versionName=.([^\x22]+)', m)[1], 'built': datetime.date.today().isoformat()}, open('assets/www/data/version.json', 'w'))" || exit /b 1
 "%BT%\aapt2" link -o build\base.apk -I "%JAR%" --manifest AndroidManifest.xml --java build\gen -A assets --auto-add-overlay build\res.zip || exit /b 1
 javac -g:none -source 11 -target 11 -classpath "%JAR%" -d build\classes build\gen\sg\bf\companion\R.java src\sg\bf\companion\MainActivity.java || exit /b 1
 jar cf build\classes.jar -C build\classes . || exit /b 1
