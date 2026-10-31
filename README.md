@@ -87,26 +87,6 @@ Yes, and you don't have to take my word for it:
 - **Checked by antivirus engines on VirusTotal:** [see the scan of this exact file](https://www.virustotal.com/gui/file/4a0becfd3c7d33b522ca3ecc7b6105d0245334f8b0ad832bdbb7cdcc6cafebd6),
   with the result of every engine.
 
-### Check that your download is the real one
-
-The APK of version 4.9 has this SHA-256 checksum:
-
-```
-4a0becfd3c7d33b522ca3ecc7b6105d0245334f8b0ad832bdbb7cdcc6cafebd6
-```
-
-On Windows: `certutil -hashfile BF-Companion.apk SHA256`. On Mac or Linux: `shasum -a 256 BF-Companion.apk`.
-If the result is different, the file isn't the one published here: don't install it.
-
-Every version is signed with the same key. Android refuses to install an update over the app when the signature
-doesn't match, so a fake "update" from someone else can't replace yours. The signing certificate's SHA-256 is:
-
-```
-DB:D6:69:F3:5B:A6:49:2B:CF:20:98:36:4B:8A:35:A9:79:A0:42:59:B5:47:41:4F:6A:F7:59:C2:B8:AD:81:F3
-```
-
-Only download BF Companion from this page's [Releases](../../releases).
-
 ## Where the data comes from
 
 - **The game's own files**: unit, skill, sphere and item data, artwork, sprites and icons.
