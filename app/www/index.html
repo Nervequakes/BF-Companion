@@ -223,6 +223,7 @@ details > summary::before { content: "▸ "; } details[open] > summary::before {
 .ichip small { color: #9ff09f; font-family: Rodin, Arial, sans-serif; margin-left: 2px; }
 .qlist { list-style: none; margin: 0; padding: 0; } .qlist li { padding: 1px 0; } .qlist b { font-weight: normal; color: #fff; }
 .src { font-size: 10px; color: #9aa4bf; margin: 1px 0 3px; } .rv { font-size: 10px; color: #7ad67a; margin-left: 6px; white-space: nowrap; }
+.nog { margin-left: 6px; font-size: 9.5px; padding: 0 6px; border-radius: 999px; border: 1px solid #6b6f80; color: #b9bccb; vertical-align: 2px; white-space: nowrap; }
 .mlist { list-style: none; margin: 6px 0 0; padding: 0 0 0 10px; border-left: 2px solid var(--gold3); } .mlist > li { padding: 4px 0 4px 8px; } .mlist b { color: var(--accent); font-weight: 600; }
 .mlist .get > li { border-top: 0; padding: 2px 0; }
 .place { padding: 10px 0; border-top: 1px dashed var(--gold3); } .place b { display: block; margin-bottom: 6px; font-family: Rodin, Arial, sans-serif; text-shadow: var(--ol); font-size: 13px; }
@@ -782,16 +783,21 @@ const dropRow = d => `<li><b>${esc(d.p)}</b><span class="fxm"><span class="chanc
 const dropsHtml = g => `<div class="src">✓ Revived's own drop table (bfrevive.net) · best chance first</div><ul class="qlist drops">${g.drops.slice(0, 6).map(dropRow).join("")}</ul>${
   g.drops.length > 6 ? `<details><summary>${g.drops.length - 6} more quest${g.drops.length > 7 ? "s" : ""}</summary><ul class="qlist drops">${g.drops.slice(6).map(dropRow).join("")}</ul></details>` : ""}${
   g.total > g.drops.length ? `<div class="src">…and ${g.total - g.drops.length} more with lower chances</div>` : ""}`;
-const getLine = g => `<li><span class="gtag ${slug(g.kind)}">${esc(g.kind)}</span><div>${
-  g.drops ? dropsHtml(g)
-  : g.places ? `<div class="src">${esc(g.note || "✓ Revived quest names · drops from the wiki")}</div><ul class="qlist">${g.places.map(p => `<li><b>${esc(p.path)}</b>${p.note ? `<span class="dim"> · ${esc(p.note)}</span>` : ""}</li>`).join("")}</ul>`
-  : g.lines ? `${g.kind === "Wiki" ? `<div class="src">Wiki (global game), not found in Revived</div>` : ""}<ul class="qlist">${g.lines.map(([l, t]) => `<li style="padding-left:${(l - 1) * 12}px">${esc(t)}</li>`).join("")}</ul>` : esc(g.text)}${
+const getLine = g => `<li><span class="gtag ${slug(g.kind)}">${esc(g.kind)}</span><div>${g.drops ? dropsHtml(g) : esc(g.text)}${
   g.mats ? `<ul class="mlist">${g.mats.map(m => `<li><b>${m.count}× ${esc(m.name)}</b>${revGet(m).length ? `<ul class="get">${revGet(m).map(getLine).join("")}</ul>` : ""}</li>`).join("")}</ul>` : ""}</div></li>`;
-// the wiki's ways (global game) only for an item Revived's own data has no way for
-const revGet = s => { const g = s?.get || []; return g.some(x => x.kind !== "Wiki") ? g.filter(x => x.kind !== "Wiki") : g; };
-const getHtml = s => revGet(s).length ? `<ul class="get">${revGet(s).map(getLine).join("")}</ul>` : `<p class="dim small">No current way to get it in the game data, probably from a past event.</p>`;
+// the ways Revived has to get an item: its server's quest drops, clear rewards and shops (bfrevive.net's item finder),
+// its raid tables, and Synthesis when every material can be had (revived_get.py drops the rest: the wiki's places are
+// the global game's, and the game files' old rewards made items look obtainable that aren't)
+const REVIVED = new Set(["Drops", "Clear reward", "Shop", "Raid", "Craft"]);
+const revGet = s => (s?.get || []).filter(x => REVIVED.has(x.kind));
+const NOGET = "No way to get it in Revived right now";
+const nogTag = s => s?.ok === 0 ? `<span class="nog">not in Revived now</span>` : "";
+// a raid material BF Revive is still looking for (only gumi's server knew where it dropped)
+const huntNote = s => s?.hunt ? ` BF Revive is still looking for where it dropped (bfrevive.net/bounty, ${esc(s.hunt)}).` : "";
+const getHtml = s => revGet(s).length ? `<ul class="get">${revGet(s).map(getLine).join("")}</ul>`
+  : `<p class="dim small">${NOGET}: Revived has no quest drop, clear reward, shop, raid drop or Synthesis recipe for it.${huntNote(s)}</p>`;
 const sphereCard = s => `<div class="item" style="margin:0 0 8px;cursor:default;align-items:flex-start"><img src="${iImg(s.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1">
-  <div class="t">${esc(s.name)} <span class="dim small">${s.type ? `${s.type} sphere` : "item"}${s.rarity ? ` · ${s.rarity}${STAR}` : ""}</span></div>
+  <div class="t">${esc(s.name)} <span class="dim small">${s.type ? `${s.type} sphere` : "item"}${s.rarity ? ` · ${s.rarity}${STAR}` : ""}</span>${nogTag(s)}</div>
   <div class="small" style="color:#ece6d6;margin:3px 0">${hl(s.desc)}</div><details><summary>Where to get it</summary>${getHtml(s)}</details></div></div>`;
 const unitMini = (id, cur) => { const u = UMAP[id]; return u ? `<div class="eu ${cur ? "cur" : ""}" onclick="go('#/unit/${id}')"><img src="${uImg(id)}" alt="" onerror="this.style.visibility='hidden'"><div class="gname">${esc(u.n)}</div></div>` : ""; };
 
@@ -904,7 +910,7 @@ async function showUnit(id) {
     const es = (d.es_spheres || []).map(i => I[i]).filter(Boolean);
     if (es.length && !d.es_generic) spheres += `<p class="dim small" style="margin:0 0 8px">These switch on the unit's extra skill:</p>` + es.map(sphereCard).join("");
     for (const t of d.es_types || []) {
-      const opts = t.ids.map(i => I[i]).filter(Boolean); if (!opts.length) continue;
+      const opts = t.ids.map(i => I[i]).filter(Boolean).sort((a, b) => (b.ok ?? 1) - (a.ok ?? 1)); if (!opts.length) continue;  // obtainable first
       spheres += `<p class="dim small" style="margin:8px 0">${d.es_generic ? "No sphere-specific bonus. Strong all-round picks:" : `Also works with any <b>${esc(t.type)}</b> sphere, for example:`}</p>` + opts.map(sphereCard).join("");
     }
     if (d.es_partners?.length) spheres = `<p class="dim small" style="margin:0 0 8px">Extra skill bonus with <b>${d.es_partners.map(esc).join(", ")}</b> in the squad.</p>` + spheres;
@@ -971,13 +977,14 @@ async function renderSpheres() {
     b.onclick = () => { sType = t; store.set("bf.stype", t); [...$("stype").children].forEach(c => c.classList.toggle("on", c === b)); renderSpheres(); };
     $("stype").append(b);
   }
-  const pick = { All: s => s.type, Craftable: s => R[s.id], Materials: s => !s.type }[sType] || (s => s.type === sType);
+  const craftable = s => s.cr ?? R[s.id];  // its recipe's materials can all be had
+  const pick = { All: s => s.type, Craftable: craftable, Materials: s => !s.type }[sType] || (s => s.type === sType);
   const list = all.filter(s => (!q || s.name.toLowerCase().includes(q)) && (q || pick(s))).sort((a, b) => (b.rarity || 0) - (a.rarity || 0) || a.name.localeCompare(b.name));
   if (q && !list.length) list.push(...closeNames(q, all, s => s.name, s => s.rarity || 0).slice(0, 12));
   $("scount").textContent = q && list.length && !list.some(s => s.name.toLowerCase().includes(q)) ? `No exact match for “${$("sq").value.trim()}”. Did you mean:`
     : `${list.length} ${q ? "results" : sType === "Materials" ? "materials" : sType === "Craftable" ? "items you can craft in Synthesis" : "spheres"}`;
   paged($("slist"), list, s => { const d = document.createElement("div"); d.className = "item"; d.onclick = () => go(`#/item/${s.id}`);
-    d.innerHTML = `<img loading="lazy" decoding="async" src="${iImg(s.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1"><div class="t">${esc(s.name)} <span class="dim small">${s.rarity ? `${s.rarity}${STAR}` : ""}</span>${R[s.id] ? `<span class="craft">craftable</span>` : ""}</div><div class="s">${esc(s.type ? s.type + " · " : "")}${esc(s.desc)}</div></div>`;
+    d.innerHTML = `<img loading="lazy" decoding="async" src="${iImg(s.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1"><div class="t">${esc(s.name)} <span class="dim small">${s.rarity ? `${s.rarity}${STAR}` : ""}</span>${craftable(s) ? `<span class="craft">craftable</span>` : nogTag(s)}</div><div class="s">${esc(s.type ? s.type + " · " : "")}${esc(s.desc)}</div></div>`;
     return d; }, "");
 }
 // ---------------- crafting planner (the game's Synthesis recipes: item -> [karma, [[material, count], ...]]) ----------------
@@ -999,8 +1006,8 @@ const craftTree = (I, nd, top) => `<li><span class="ci" data-i="${nd.id}"><img s
 // the best way to get a base material: its best drop in Revived (chance per kill or per hit), else how it's obtained
 function farmLine(I, m, n) {
   const it = I[m], d = it?.get?.find(g => g.drops)?.drops?.[0], g = revGet(it)[0];
-  const how = d ? `${d.p} · per ${d.w === "hit" ? "hit" : "kill"}${d.b ? " · boss" : ""}` : g ? `${g.kind}${g.text ? `: ${g.text}` : ""}` : "No current way to get it";
-  return `<li data-i="${m}"><b>${n}× ${esc(itemName(I, m))}</b>${d ? ` <span class="chance">${d.c}%</span>` : ""}<div class="small dim">${esc(how)}</div></li>`;
+  const how = d ? `${d.p} · per ${d.w === "hit" ? "hit" : "kill"}${d.b ? " · boss" : ""}` : g ? `${g.kind}${g.text ? `: ${g.text}` : ""}` : NOGET;
+  return `<li data-i="${m}"><b>${n}× ${esc(itemName(I, m))}</b>${d ? ` <span class="chance">${d.c}%</span>` : ""}<div class="small dim">${esc(how)}${it?.hunt ? ` (BF Revive bounty ${esc(it.hunt)})` : ""}</div></li>`;
 }
 function drawPlan(id, qty, I, R) {
   const p = craftPlan(id, qty, R);
@@ -1023,10 +1030,11 @@ async function showItem(id) {
   if (nav !== NAV) return;  // left the page while it loaded
   const users = Object.entries(D).filter(([, d]) => (d.es_spheres || []).includes(id)).map(([u]) => u).filter(u => UMAP[u]);
   $("page").innerHTML = `<div class="sec" style="display:flex;gap:12px;align-items:center"><img src="${iImg(id)}" alt="" style="width:72px;height:72px;object-fit:contain" onerror="this.style.visibility='hidden'">
-      <div><h2 style="margin:0;font-size:20px;text-shadow:var(--ol)">${esc(s.name)}</h2><div class="badges">${s.type ? `<span class="badge">${esc(s.type)} sphere</span>` : `<span class="badge">Item</span>`}${s.rarity ? `<span class="badge star">${s.rarity}${STAR}</span>` : ""}</div></div></div>
+      <div><h2 style="margin:0;font-size:20px;text-shadow:var(--ol)">${esc(s.name)}</h2><div class="badges">${s.type ? `<span class="badge">${esc(s.type)} sphere</span>` : `<span class="badge">Item</span>`}${s.rarity ? `<span class="badge star">${s.rarity}${STAR}</span>` : ""}${nogTag(s)}</div></div></div>
     ${s.desc ? `<div class="sec"><h3 class="blue">Effect</h3><div class="lore">${hl(s.desc)}</div></div>` : ""}
     <div class="sec"><h3 class="green">Where to get it</h3>${getHtml(s)}</div>
-    ${R[id] ? `<div class="sec"><h3>Crafting plan</h3><div class="qty"><button class="gbtn small dark" id="cminus" aria-label="Fewer">−</button><b id="cq">1</b><button class="gbtn small dark" id="cplus" aria-label="More">+</button><span class="small dim">to craft</span></div><div id="cplan"></div></div>` : ""}
+    ${R[id] ? `<div class="sec"><h3>Crafting plan</h3><div class="qty"><button class="gbtn small dark" id="cminus" aria-label="Fewer">−</button><b id="cq">1</b><button class="gbtn small dark" id="cplus" aria-label="More">+</button><span class="small dim">to craft</span></div>${
+      s.cr === 0 ? `<p class="small" style="margin:0 0 8px;color:var(--warn)">Synthesis can't make it right now: some materials have no way to get in Revived (below).</p>` : ""}<div id="cplan"></div></div>` : ""}
     ${usedIn.length ? `<div class="sec"><h3 class="blue">Used to craft</h3><div class="need">${usedIn.map(r => `<div class="ni" data-i="${r}"><img src="${iImg(r)}" alt="" onerror="this.style.visibility='hidden'"><b>×${R[r][1].find(([m]) => m === id)[1]}</b><span>${esc(I[r].name)}</span></div>`).join("")}</div></div>` : ""}
     ${users.length ? `<div class="sec"><h3 class="purple">Best on</h3><div class="mats">${users.map(u => unitMini(u)).join("")}</div></div>` : ""}`;
   $("page").querySelectorAll(".sec > .need [data-i]").forEach(el => el.onclick = () => go(`#/item/${el.dataset.i}`));
@@ -1041,7 +1049,7 @@ async function showItem(id) {
 
 // ---------------- drops ----------------
 // before typing: your last searches and a few examples, as chips
-const DROP_EXAMPLES = ["Blue Claw", "Kagan Desert", "Excelsior Lead", "Empty Sphere", "RC7"];
+const DROP_EXAMPLES = ["Blue Claw", "Kagan Desert", "Excelsior Lead", "Holy Blade", "Mistral"];
 let dropRecent = store.get("bf.dq", []);
 function dropChips() {
   const chips = (title, list) => list.length ? `<div class="sec"><h3 class="blue">${title}</h3><div class="chipwrap">${list.map(t => `<button class="chip on" data-q="${esc(t)}">${esc(t)}</button>`).join("")}</div></div>` : "";
@@ -1074,8 +1082,8 @@ async function renderDrops() {
   for (const [low, p, id, cap] of S.where) if (low.includes(q)) { const at = caught.get(p) || caught.set(p, new Map()).get(p); at.set(id, Math.max(at.get(id) || 0, cap)); }
   const capPlaces = [...caught].sort((a, b) => b[1].size - a[1].size || a[0].localeCompare(b[0])).slice(0, 30);
   $("dres").innerHTML = (units.length ? `<div class="sec"><h3 class="blue">Units</h3><div class="recent">${units.map(u => unitMini(u.id)).join("")}</div><p class="small dim" style="margin:4px 0 0">Open a unit for its summon gates, capture spots and rewards.</p></div>` : "")
-    + (items.length ? `<div class="sec"><h3 class="purple">Items</h3>${items.map(s => `<div class="item" style="margin:0 0 8px" onclick="go('#/item/${s.id}')"><img src="${iImg(s.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1"><div class="t">${esc(s.name)}</div><div class="s">${esc(s.desc)}</div></div></div>`).join("")}</div>` : "")
-    + (ranked.length ? `<div class="sec"><h3 class="green">Drops in</h3>${ranked.map(([p, ns]) => `<div class="place"><b>${esc(p.replace(/ > /g, " › "))}${revived.has(p) ? `<span class="rv">✓ in Revived</span>` : ""}</b>${
+    + (items.length ? `<div class="sec"><h3 class="purple">Items</h3>${items.map(s => `<div class="item" style="margin:0 0 8px" onclick="go('#/item/${s.id}')"><img src="${iImg(s.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1"><div class="t">${esc(s.name)}${nogTag(s)}</div><div class="s">${esc(s.desc)}</div></div></div>`).join("")}</div>` : "")
+    + (ranked.length ? `<div class="sec"><h3 class="green">Drops in</h3><div class="src">✓ Revived's own drop table (bfrevive.net)</div>${ranked.map(([p, ns]) => `<div class="place"><b>${esc(p.replace(/ > /g, " › "))}</b>${
         [...ns].sort((a, b) => (b[1] || 0) - (a[1] || 0) || a[0].localeCompare(b[0])).map(([n, c]) => { const i = Dr.ids[n];
         return `<span class="ichip" ${i ? `onclick="go('#/item/${i}')"` : ""}>${i ? `<img src="${iImg(i)}" alt="" onerror="this.remove()">` : ""}${esc(n)}${c ? `<small>${c}%</small>` : ""}</span>`; }).join("")}</div>`).join("")}</div>` : "")
     + (capPlaces.length ? `<div class="sec"><h3 class="green">Capture here</h3>${capPlaces.map(([p, us]) => `<div class="place"><b>${esc(p)}</b>${
@@ -1183,7 +1191,8 @@ function addToTeam(id) {
 // fill empty slots one by one with the unit that covers the most of what is still missing (only one element if chosen)
 let fillEl = store.get("bf.fillel", "");
 function autoFill(team, el) {
-  const pool = UNITS.filter(u => (SQ.mineOnly ? mine.has(u.id) : u.r >= 7 && !u.f) && (!el || u.e === el));
+  // units without skills (the custom ones, Summoner, Rainbow Crystal…) don't help a team
+  const pool = UNITS.filter(u => (SQ.mineOnly ? mine.has(u.id) : u.r >= 7 && !u.f) && (!el || u.e === el) && TAGS.units[u.id] && !/\(custom\)/i.test(u.n));
   let added = 0;
   for (let s = 0; s < 6; s++) {
     if (team[s]) continue;

@@ -42,13 +42,14 @@ No account, no ads, no internet needed: everything is inside the app.
 - A page for every summon gate, and a *Get it* filter (This week, Summon, Capture, Reward / shop).
 
 **Spheres and items**
-- Every sphere and material, where it drops in Revived (with the drop chance per kill or per hit), clear rewards and shops.
+- Every sphere and material with Revived's own ways to get it: drops (chance per kill or per hit), clear rewards, shops,
+  raid drops and Synthesis. Something Revived doesn't give says so, and *craftable* means every material can be had.
 - **Crafting planner**: all base materials and Karma for any Synthesis recipe, for any amount, and **where to farm**
   each material with its drop chance.
 - Best spheres for each unit, including the ones that switch on its extra skill.
 
 **Quest search**
-- Type an item to see where it drops, or a quest, area or raid to see what drops there and which units you can capture.
+- Type an item to see where it drops in Revived, or a quest or area to see what drops there and which units you can capture.
 
 **Team builder**
 - Up to 10 named teams of 5 units + a friend, on a battle field with the animated sprites.
