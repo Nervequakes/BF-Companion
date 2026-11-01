@@ -164,6 +164,8 @@ main { padding-bottom: calc(var(--navh) + 20px); }
 .item .er .sti { width: 15px; height: 15px; vertical-align: -2px; } .item .er .omi { width: 30px; height: 30px; display: block; margin: 0 auto; }
 .item .eff { color: #ece6d6; font-size: 12px; margin-top: 2px; }
 .item .craft.got { background: linear-gradient(#7ad67a, #2a8f3a); }
+.ecatch { margin: 8px 0 2px; padding: 7px 9px; border-radius: 7px; background: rgba(0,0,0,.4); border-left: 3px solid var(--accent); font-size: 12.5px; color: #ece6d6; }
+.ecatch ul { margin: 5px 0 3px; padding-left: 16px; } .ecatch li { margin: 2px 0; } .ecatch b { font-weight: normal; font-family: Rodin, Arial, sans-serif; color: var(--accent); }
 .item .eget { margin-top: 6px; font-size: 12px; color: var(--dim); } .item .eget > div { margin: 3px 0; } .item .eget b { color: #ece6d6; font-weight: normal; }
 .item .craft { margin-left: 6px; font-size: 9.5px; padding: 0 6px; border-radius: 999px; background: linear-gradient(#5aa8ff, #1e5fe0); text-shadow: var(--ol); vertical-align: 2px; }
 .recent { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 4px; clear: both; } .recent::-webkit-scrollbar { display: none; }
@@ -437,6 +439,8 @@ const ELS = ["Fire", "Water", "Earth", "Thunder", "Light", "Dark"];
 const orb = e => e ? `<img src="/static/orb_${e}.png" alt="">` : "";
 // the game's own stars: rarity (orange) and favorite (yellow)
 const STAR = `<img class="sti" src="/static/star.png" alt="★">`, FAVSTAR = `<img class="sti" src="/static/star_fav.png" alt="★">`;
+// the game's purple star: an Elgif's rarity, and the stars on an Imbued Tablet Elgif
+const ESTAR = `<img class="sti" src="/static/star_elgif.png" alt="★">`, starFor = u => u.id === "50792" ? ESTAR : STAR;
 const OMNI = `<img class="sti omi" src="/static/omni.png" alt="">`;  // the game's Omni rarity mark
 const SEX = { M: ["m", "Male"], F: ["f", "Female"] };
 const uImg = id => `/thumbs/u/${id}.webp`, iImg = id => `/thumbs/i/${id}.webp`, aImg = id => `/thumbs/a/${id}.webp`;
@@ -523,7 +527,7 @@ const weekGate = id => (USRC?.u?.[id]?.g || []).find(([g]) => USRC.g[g]?.[1] & 1
 const hasSrc = id => { const s = USRC?.u?.[id]; return !!s && [...uState.get].some(k => k === "w" ? weekGate(id) : k === "rs" ? s.r || s.s : s[k]); };
 
 function unitBadges(u) {
-  return `${u.r === 8 ? `<span class="badge star">${OMNI}OMNI</span>` : `<span class="badge star">${u.r}${STAR}</span>`}${u.e ? `<span class="badge">${orb(u.e)}${u.e}</span>` : ""}${u.c ? `<span class="badge cost">COST ${u.c}</span>` : ""}`;
+  return `${u.r === 8 ? `<span class="badge star">${OMNI}OMNI</span>` : `<span class="badge star">${u.r}${starFor(u)}</span>`}${u.e ? `<span class="badge">${orb(u.e)}${u.e}</span>` : ""}${u.c ? `<span class="badge cost">COST ${u.c}</span>` : ""}`;
 }
 // a unit drawn in a list keeps how to draw itself again, so its ★ and ✓ can change without drawing the whole list
 const markSig = id => `${favs.has(id)}/${mine.has(id)}`;
@@ -893,7 +897,7 @@ async function showUnit(id) {
       <img class="art ${art ? "" : "icon"}" src="${art ? aImg(id) : spr ? sImg(id) : uImg(id)}" alt="" ${!art && spr ? `style="image-rendering:pixelated;height:${Math.min(150, spr.naturalHeight * 1.5)}px"` : ""}>
       <button class="favbtn ${favs.has(id) ? "on" : ""}" id="favbtn" aria-label="Favorite"><img src="/static/star_fav.png" alt=""></button>
       ${at >= 0 && NAV_LIST.length > 1 ? `<div class="navarrows"><button id="uprev" ${prev ? "" : "disabled"} aria-label="Previous unit">‹</button><span>${at + 1}/${NAV_LIST.length}</span><button id="unext" ${next ? "" : "disabled"} aria-label="Next unit">›</button></div>` : ""}
-      <div class="info"><h2>${esc(u.n)}</h2><div class="stars">${u.r === 8 ? `<img class="omni" src="/static/omni.png" alt=""><span class="omnit">OMNI</span>` : `<img src="/static/star.png" alt="★">`.repeat(u.r)}</div>
+      <div class="info"><h2>${esc(u.n)}</h2><div class="stars">${u.r === 8 ? `<img class="omni" src="/static/omni.png" alt=""><span class="omnit">OMNI</span>` : `<img src="/static/${starFor(u) === ESTAR ? "star_elgif" : "star"}.png" alt="★">`.repeat(u.r)}</div>
         <div class="meta">${u.e ? `<span class="badge" id="elbadge">${orb(u.e)}${u.e}</span>` : ""}${u.c ? `<span class="badge cost">COST ${u.c}</span>` : ""}<span id="hmeta"></span></div></div></div>
     <div class="acts"><button class="gbtn" id="toteam">＋ Team</button><button class="gbtn blue ${CMP.includes(id) ? "on" : ""}" id="tocmp">⇄ Compare</button><button class="gbtn ${mine.has(id) ? "green" : "dark"}" id="tomine">${mine.has(id) ? "✓ In my box" : "＋ My box"}</button></div>
     <div id="ubody"><div class="empty">Loading…</div></div>`;
@@ -1011,7 +1015,7 @@ async function renderSpheres() {
 }
 // Elgifs: extra skills a unit learns when an Imbued Tablet Elgif carrying one is fused into it (the game's own list)
 const ELGIF = "50792", EMGIF = "60812";
-const elgifRarity = r => r === 8 ? `${OMNI}Omni` : `${r}${STAR}`;
+const elgifRarity = r => r === 8 ? `${OMNI}Omni` : `${r}${ESTAR}`;
 const elgifWhy = () => `<details class="why"><summary>What are Elgifs?</summary><ul>
   <li>An Elgif is an <b>extra skill</b> on a tablet. Fuse an ${unitLink(ELGIF)} into a unit and the unit learns the skill that tablet carries. Its stars show the skill's rarity.</li>
   <li>It works on any unit except fusion, evolution and sellable units. On a 7★ unit it's a second extra skill, in pink.</li>
@@ -1026,6 +1030,20 @@ const ESRC = ["Frontier Hunter", "Frontier Gate", "Frontier Rift", "Frontier Spi
 const elgifWays = (e, S) => [...(e.g || []).map(([m]) => ["Clear reward", srcQuest(S, m)]), ...(e.p || []).map(([mode, at, how]) => [mode, `${at} ${how}`.trim()]),
   ...(e.a || []).map(([t]) => ["Achievement", t])];
 const cmpNum = (a, b) => a.localeCompare(b, undefined, { numeric: true });  // "Hunter Rank 46" before "Hunter Rank 110"
+// Revived since 1 Nov 2026: an Elgif caught in these dungeons carries one of that dungeon's own extra skills, rarer ones
+// on higher levels. The server picks it, so which skills isn't in the game's data: list where, with the capture chance
+const ECATCH = ["Forbidden Tablets", "Guardians of Lore", "Omni Arcanum"];
+const elgifCatchHtml = S => {
+  const by = new Map(ECATCH.map(d => [d, []]));
+  for (const [m, cap] of S?.u?.[ELGIF]?.c || []) {
+    const name = S.m[m]?.[0] || "", d = ECATCH.find(x => name.startsWith(x));
+    if (d) by.get(d).push([name.slice(d.length).trim() || name, cap]);
+  }
+  const rows = [...by].filter(([, v]) => v.length);
+  return rows.length ? `<div class="ecatch"><b>Catch one with a set skill:</b> since 1 Nov 2026 an ${unitLink(ELGIF)} caught in these dungeons carries one of that dungeon's own extra skills, rarer ones on higher levels. The game doesn't say which skills each dungeon has.<ul>${
+    rows.map(([d, v]) => `<li><b>${esc(d)}</b> ${v.sort((a, b) => cmpNum(a[0], b[0])).map(([lv, c]) => `${esc(lv)} <span class="chance">${c}%</span>`).join(" · ")}</li>`).join("")
+    }</ul><span class="dim small">Capture chance, from Revived's live game data.</span></div>` : "";
+};
 async function renderElgifs() {
   const [E, S] = await Promise.all([load("elgifs"), load("usrc")]), all = Array.isArray(E) ? E : [], q = $("eq").value.trim().toLowerCase();
   USRC = S;
@@ -1047,7 +1065,8 @@ async function renderElgifs() {
     const key = e => ways.get(e).filter(([w]) => w === eType).map(([, t]) => t).sort(cmpNum)[0] || "";
     list.sort((a, b) => cmpNum(key(a), key(b)));
   }
-  $("ecount").innerHTML = `${list.length} Elgif${list.length === 1 ? "" : "s"}${q ? ` matching “${esc($("eq").value.trim())}”` : one ? ` from ${esc(eType)}, in order` : ", the rarest first"}${elgifWhy()}`;
+  $("ecount").innerHTML = `${list.length} Elgif${list.length === 1 ? "" : "s"}${q ? ` matching “${esc($("eq").value.trim())}”` : one ? ` from ${esc(eType)}, in order` : ", the rarest first"}${elgifWhy()}${
+    q || one ? "" : elgifCatchHtml(S)}`;
   $("ecount").querySelectorAll("[data-unit]").forEach(b => b.onclick = () => go(`#/unit/${b.dataset.unit}`));
   paged($("elist"), list, e => { const d = document.createElement("div"); d.className = "item"; d.style.cursor = "default";
     d.innerHTML = `<div class="er">${elgifRarity(e.r)}</div><div style="min-width:0;flex:1"><div class="t">${esc(e.name)}${elgifGets(e) ? `<span class="craft got">in Revived</span>` : ""}</div><div class="eff">${hl(e.desc)}</div>${
