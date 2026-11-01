@@ -7,6 +7,8 @@ No account, no ads, no internet needed: everything is inside the app.
 
 **[⬇ Download the latest APK](../../releases/latest)** · ✅ No permissions · ✅ No internet access · ✅ [Code you can read](app) · ✅ [Scanned on VirusTotal (4.9)](https://www.virustotal.com/gui/file/4a0becfd3c7d33b522ca3ecc7b6105d0245334f8b0ad832bdbb7cdcc6cafebd6) · [Is it safe?](#is-it-safe)
 
+Slow download from GitHub? Get the APK from the **[Google Drive mirror](https://drive.google.com/drive/folders/1eP1maVEzUtuCekEo6VnpD6Nqkw8au1T3)** (Google says it can't scan files this big for viruses: tap *Download anyway*).
+
 <p align="center">
   <img src="screenshots/1-units.jpg" width="200" alt="Unit list">
   <img src="screenshots/2-unit.jpg" width="200" alt="Unit page with the animated battle sprite">
@@ -66,7 +68,8 @@ No account, no ads, no internet needed: everything is inside the app.
 
 ## Install
 
-1. Download `BF-Companion.apk` from the [latest release](../../releases/latest) on your phone.
+1. Download `BF-Companion.apk` from the [latest release](../../releases/latest) on your phone (or from the
+   [Google Drive mirror](https://drive.google.com/drive/folders/1eP1maVEzUtuCekEo6VnpD6Nqkw8au1T3) if GitHub is slow).
 2. Open it and allow installing apps from your browser or file manager when Android asks.
 3. Done. The app needs no permissions at all.
 
