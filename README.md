@@ -7,7 +7,7 @@ No account, no ads, no internet needed: everything is inside the app.
 
 **[⬇ Download the latest APK](../../releases/latest)** · ✅ No permissions · ✅ No internet access · ✅ [Code you can read](app) · ✅ [Scanned on VirusTotal (4.9)](https://www.virustotal.com/gui/file/4a0becfd3c7d33b522ca3ecc7b6105d0245334f8b0ad832bdbb7cdcc6cafebd6) · [Is it safe?](#is-it-safe)
 
-Slow download from GitHub? Get the APK from the **[Google Drive mirror](https://drive.google.com/drive/folders/1eP1maVEzUtuCekEo6VnpD6Nqkw8au1T3)** (Google says it can't scan files this big for viruses: tap *Download anyway*).
+Slow download from GitHub? Get the APK from the **[Google Drive mirror](https://drive.google.com/file/d/1uFvBd24L8b5KQAOG_Wnh-q1i7tvH-koN/view)** (Google says it can't scan files this big for viruses: tap *Download anyway*).
 
 <p align="center">
   <img src="screenshots/1-units.jpg" width="200" alt="Unit list">
@@ -29,6 +29,7 @@ Slow download from GitHub? Get the APK from the **[Google Drive mirror](https://
 - Stats for every type (Lord, Anima, Breaker, Guardian, Oracle) of every unit, Imps, max level.
 - Leader Skill, BB, SBB, UBB, Extra Skill and Dual BB with BC cost, hits and the exact numbers.
 - Roles with how strong they are ("Mitigation 50%", "BB ATK 600%"), SP enhancements, evolution line and materials, lore.
+- All in English: units from the Japanese game show the game's own English, and a fan translation where it has none.
 - Search by name, skill text or role, several words at once: `fire omni heal`, `def ignore`, `water mitigation`.
   A typo still finds it: *Did you mean…?* shows the closest names.
 - **Similar units** on every unit page: the same element and roles, for when you don't have one.
@@ -46,11 +47,13 @@ Slow download from GitHub? Get the APK from the **[Google Drive mirror](https://
 **Elgifs**
 - All 541 Elgifs (the extra skills an Imbued Tablet Elgif gives a unit) from the game's own files, with rarity and effect.
 - The ones Revived gives, with how: Frontier Hunter ranks, Frontier Gate and Eternal Crusade floors or points, Frontier Rift
-  and Frontier Spire milestones, Grand Quest episodes, quest first clears and achievements. Search by name, effect or where.
+  and Frontier Spire milestones, Grand Quest episodes, quest first clears and achievements. Search by name, effect or where,
+  or filter by each way to get them.
 
 **Spheres and items**
 - Every sphere and material with Revived's own ways to get it: drops (chance per kill or per hit), clear rewards, shops,
-  raid drops and Synthesis. Something Revived doesn't give says so, and *craftable* means every material can be had.
+  raid drops, Arena rank rewards, achievements and Synthesis. Something Revived doesn't give says so, and *craftable*
+  means every material can be had.
 - **Crafting planner**: all base materials and Karma for any Synthesis recipe, for any amount, and **where to farm**
   each material with its drop chance.
 - Best spheres for each unit, including the ones that switch on its extra skill.
@@ -74,11 +77,11 @@ Slow download from GitHub? Get the APK from the **[Google Drive mirror](https://
 ## Install
 
 1. Download `BF-Companion.apk` from the [latest release](../../releases/latest) on your phone (or from the
-   [Google Drive mirror](https://drive.google.com/drive/folders/1eP1maVEzUtuCekEo6VnpD6Nqkw8au1T3) if GitHub is slow).
+   [Google Drive mirror](https://drive.google.com/file/d/1uFvBd24L8b5KQAOG_Wnh-q1i7tvH-koN/view) if GitHub is slow).
 2. Open it and allow installing apps from your browser or file manager when Android asks.
 3. Done. The app needs no permissions at all.
 
-Android 7.0 or newer. About 105 MB, because every unit's artwork and animated sprite is included.
+Android 7.0 or newer. About 110 MB, because every unit's artwork and animated sprite is included.
 
 **Every version and what changed in it:** [Releases](../../releases). Older versions stay there to download.
 

@@ -57,6 +57,13 @@ main { padding-bottom: calc(var(--navh) + 20px); }
 .bar2 { position: sticky; top: 57px; z-index: 10; padding: 8px 12px; background: linear-gradient(rgba(11,10,20,.96), rgba(11,10,20,.86)); border-bottom: 1px solid var(--gold3); }
 .searchrow { display: flex; gap: 8px; } .searchrow input { flex: 1; min-width: 0; }
 .scroller { display: flex; gap: 6px; overflow-x: auto; padding: 8px 0 2px; scrollbar-width: none; } .scroller::-webkit-scrollbar { display: none; }
+.scroller.wrap { flex-wrap: wrap; overflow: visible; padding: 10px 12px 0; }  /* every chip on screen: no sideways row that cuts off */
+/* a sideways row: a fade on the side where more chips are hidden (phones show no scrollbar), a slim one with a mouse */
+.scroller.more { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 30px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 30px), transparent); }
+.scroller.less { -webkit-mask-image: linear-gradient(to right, transparent, #000 30px); mask-image: linear-gradient(to right, transparent, #000 30px); }
+.scroller.less.more { -webkit-mask-image: linear-gradient(to right, transparent, #000 30px, #000 calc(100% - 30px), transparent); mask-image: linear-gradient(to right, transparent, #000 30px, #000 calc(100% - 30px), transparent); }
+@media (pointer: fine) { .scroller:not(.wrap) { scrollbar-width: thin; scrollbar-color: var(--gold3) transparent; padding-bottom: 6px; }
+  .scroller:not(.wrap)::-webkit-scrollbar { display: block; height: 6px; } .scroller:not(.wrap)::-webkit-scrollbar-thumb { background: var(--gold3); border-radius: 3px; } }
 .chip { flex: none; display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: 999px; font-size: 12.5px; text-shadow: var(--ol);
   border: 2px solid var(--gold2); background: linear-gradient(#0a1020, #121a36); box-shadow: inset 0 0 0 1px #000; opacity: .55; }
 .chip img { width: 22px; height: 22px; filter: drop-shadow(0 1px 1px #000); } .chip .sti { width: 17px; height: 17px; margin-left: -3px; } .chip.on { opacity: 1; border-color: var(--gold); background: linear-gradient(#20305c, #0f1733); }
@@ -217,7 +224,7 @@ details > summary::before { content: "▸ "; } details[open] > summary::before {
 .gtag { flex: none; font-size: 10px; padding: 2px 7px; border-radius: 5px; text-shadow: var(--ol); border: 1px solid rgba(255,255,255,.35); margin-top: 1px; background: linear-gradient(#6d7a99, #3a4663); font-family: Rodin, Arial, sans-serif; }
 .gtag.craft { background: linear-gradient(#5aa8ff, #1e5fe0); } .gtag.raid { background: linear-gradient(#ff9a3c, #c73a0e); } .gtag.quests { background: linear-gradient(#7ad67a, #2a8f3a); }
 .gtag.achievement, .gtag.questreward, .gtag.grandquestreward, .gtag.clearreward { background: linear-gradient(#ffe38a, #c98a16); } .gtag.exchange, .gtag.shop { background: linear-gradient(#d7a6ff, #7a3fc4); }
-.gtag.drops, .gtag.capture { background: linear-gradient(#7ad67a, #2a8f3a); } .gtag.summon { background: linear-gradient(#ff9ad5, #b0306f); } .gtag.eventshop { background: linear-gradient(#d7a6ff, #7a3fc4); } .gtag.frontier { background: linear-gradient(#7fd3ff, #1f6fb0); }
+.gtag.drops, .gtag.capture { background: linear-gradient(#7ad67a, #2a8f3a); } .gtag.summon { background: linear-gradient(#ff9ad5, #b0306f); } .gtag.eventshop { background: linear-gradient(#d7a6ff, #7a3fc4); } .gtag.frontier { background: linear-gradient(#7fd3ff, #1f6fb0); } .gtag.arena { background: linear-gradient(#ff8a7a, #b8322e); }
 .glink { cursor: pointer; } .glink b::after { content: " ›"; color: var(--gold); }
 .gate { display: flex; align-items: center; gap: 8px; padding: 9px 4px; border-top: 1px solid rgba(255,255,255,.07); cursor: pointer; } .gate b { flex: 1; font-weight: normal; }
 .gate .n { font-size: 11px; color: var(--dim); white-space: nowrap; }
@@ -389,7 +396,7 @@ body.boxedit .totop { bottom: calc(var(--navh) + 78px); } body.boxedit .toast { 
     <div id="ulist"></div>
   </section>
   <section class="view" id="v-elgifs">
-    <div class="bar2"><div class="searchrow"><input id="eq" type="search" placeholder="Search Elgifs: name, effect or where…" autocomplete="off"></div><div class="scroller" id="echips"></div></div>
+    <div class="bar2"><div class="searchrow"><input id="eq" type="search" placeholder="Search Elgifs: name, effect or where…" autocomplete="off"></div></div><div class="scroller wrap" id="echips"></div>
     <div class="count" id="ecount"></div><div id="elist" style="padding-top:10px"></div>
   </section>
   <section class="view" id="v-spheres">
@@ -799,14 +806,14 @@ const getLine = g => `<li><span class="gtag ${slug(g.kind)}">${esc(g.kind)}</spa
 // the ways Revived has to get an item: its server's quest drops, clear rewards and shops (bfrevive.net's item finder),
 // its raid tables, and Synthesis when every material can be had (revived_get.py drops the rest: the wiki's places are
 // the global game's, and the game files' old rewards made items look obtainable that aren't)
-const REVIVED = new Set(["Drops", "Clear reward", "Shop", "Raid", "Craft"]);
+const REVIVED = new Set(["Drops", "Clear reward", "Shop", "Raid", "Arena", "Achievement", "Craft"]);  // Arena: rank-up rewards; achievements: the running ones
 const revGet = s => (s?.get || []).filter(x => REVIVED.has(x.kind));
 const NOGET = "No way to get it in Revived right now";
 const nogTag = s => s?.ok === 0 ? `<span class="nog">not in Revived now</span>` : "";
 // a raid material BF Revive is still looking for (only gumi's server knew where it dropped)
 const huntNote = s => s?.hunt ? ` BF Revive is still looking for where it dropped (bfrevive.net/bounty, ${esc(s.hunt)}).` : "";
 const getHtml = s => revGet(s).length ? `<ul class="get">${revGet(s).map(getLine).join("")}</ul>`
-  : `<p class="dim small">${NOGET}: Revived has no quest drop, clear reward, shop, raid drop or Synthesis recipe for it.${huntNote(s)}</p>`;
+  : `<p class="dim small">${NOGET}: Revived has no quest drop, clear reward, shop, raid drop, Arena rank reward, achievement or Synthesis recipe for it.${huntNote(s)}</p>`;
 const sphereCard = s => `<div class="item" style="margin:0 0 8px;cursor:default;align-items:flex-start"><img src="${iImg(s.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1">
   <div class="t">${esc(s.name)} <span class="dim small">${s.type ? `${s.type} sphere` : "item"}${s.rarity ? ` · ${s.rarity}${STAR}` : ""}</span>${nogTag(s)}</div>
   <div class="small" style="color:#ece6d6;margin:3px 0">${hl(s.desc)}</div><details><summary>Where to get it</summary>${getHtml(s)}</details></div></div>`;
@@ -973,10 +980,10 @@ async function showUnit(id) {
   // a sticky row of the page's sections to jump to (the unit pages are long)
   jumpBar($("ubody"), [...$("ubody").querySelectorAll(":scope > .sec")].filter(s => s.querySelector(":scope > h3")));
   if ($("toelgifs")) $("toelgifs").onclick = () => go("#/elgifs");
-  // pixel art scales best by whole numbers: as big as fits (at most 3x)
+  // every unit at the same zoom, as in the game (whole numbers keep pixel art sharp); only one too big for the stage shrinks
   if (spr && $("spr")) {
-    const room = Math.min(($("spr").parentElement.clientWidth - 16) / spr.naturalWidth, 220 / spr.naturalHeight);
-    const k = room >= 1 ? Math.min(3, Math.floor(room)) : room;
+    const stage = $("spr").parentElement.clientWidth, zoom = stage >= 560 ? 3 : 2;
+    const k = Math.min(zoom, (stage - 16) / spr.naturalWidth, (zoom === 3 ? 330 : 240) / spr.naturalHeight);
     $("spr").style.width = `${Math.round(spr.naturalWidth * k)}px`;
   }
 }
@@ -1012,19 +1019,35 @@ const elgifWhy = () => `<details class="why"><summary>What are Elgifs?</summary>
   <li>A ${unitLink(EMGIF)} takes it out again: it comes back as an Elgif in your Gift Box.</li>
   <li>Revived gives the tablets as captures, quest rewards, achievements and shop items: open the tablet unit to see where. When the game's data says which Elgif a reward gives, that Elgif shows it (<b>in Revived</b>): a quest's first clear, a Grand Quest episode, a Frontier Hunter rank, a Frontier Gate, Frontier Rift or Frontier Spire milestone, or an achievement.</li>
   <li>Frontier Hunter, Frontier Gate (with Eternal Crusade), Frontier Rift and Frontier Spire are in Imperial Capital Randall › Akras Summoners' Hall Survey Office. A program's View Rewards lists its milestones (floors cleared, or Esteem points); Frontier Hunter gives a reward at each Hunter Rank. The Grand Quest is in the Vortex (Grand).</li></ul></details>`;
-let eType = store.get("bf.etype", "All");  // "All", or "Get": only the Elgifs Revived gives
+let eType = store.get("bf.etype", "All");  // "All", "Get" (only the Elgifs Revived gives), or one way to get them (ESRC)
 const elgifGets = e => !!(e.g?.length || e.p?.length || e.a?.length);  // a quest's first clear, a Frontier mode or Grand Quest reward, or an achievement
+// the ways to get an Elgif as [kind, text] lines: a filter chip per kind, and the search reads them too
+const ESRC = ["Frontier Hunter", "Frontier Gate", "Frontier Rift", "Frontier Spire", "Grand Quest", "Clear reward", "Achievement"];
+const elgifWays = (e, S) => [...(e.g || []).map(([m]) => ["Clear reward", srcQuest(S, m)]), ...(e.p || []).map(([mode, at, how]) => [mode, `${at} ${how}`.trim()]),
+  ...(e.a || []).map(([t]) => ["Achievement", t])];
+const cmpNum = (a, b) => a.localeCompare(b, undefined, { numeric: true });  // "Hunter Rank 46" before "Hunter Rank 110"
 async function renderElgifs() {
   const [E, S] = await Promise.all([load("elgifs"), load("usrc")]), all = Array.isArray(E) ? E : [], q = $("eq").value.trim().toLowerCase();
   USRC = S;
-  if (!$("echips").children.length) for (const [k, l] of [["All", `All (${all.length})`], ["Get", `Can get in Revived (${all.filter(elgifGets).length})`]]) {
-    const b = chip(esc(l), k === eType);
-    b.onclick = () => { eType = k; store.set("bf.etype", k); [...$("echips").children].forEach(c => c.classList.toggle("on", c === b)); renderElgifs(); };
-    $("echips").append(b);
+  const ways = new Map(all.map(e => [e, elgifWays(e, S)])), has = (e, k) => ways.get(e).some(([w]) => w === k);
+  if (!$("echips").children.length) {
+    const kinds = [["All", `All (${all.length})`], ["Get", `Can get in Revived (${all.filter(elgifGets).length})`],
+      ...ESRC.map(k => [k, all.filter(e => has(e, k)).length]).filter(([, n]) => n).map(([k, n]) => [k, `${k} (${n})`])];
+    if (!kinds.some(([k]) => k === eType)) eType = "All";
+    for (const [k, l] of kinds) {
+      const b = chip(esc(l), k === eType);
+      b.onclick = () => { eType = k; store.set("bf.etype", k); [...$("echips").children].forEach(c => c.classList.toggle("on", c === b)); renderElgifs(); };
+      $("echips").append(b);
+    }
   }
-  const where = e => [...(e.g || []).map(([m]) => srcQuest(S, m)), ...(e.p || []).flat(), ...(e.a || []).map(([t]) => t)].join(" ");
-  const list = all.filter(e => (eType !== "Get" || elgifGets(e)) && (!q || `${e.name} ${e.desc} ${where(e)}`.toLowerCase().includes(q)));
-  $("ecount").innerHTML = `${list.length} Elgif${list.length === 1 ? "" : "s"}${q ? ` matching “${esc($("eq").value.trim())}”` : ", the rarest first"}${elgifWhy()}`;
+  const list = all.filter(e => (eType === "All" || (eType === "Get" ? elgifGets(e) : has(e, eType)))
+    && (!q || `${e.name} ${e.desc} ${ways.get(e).flat().join(" ")}`.toLowerCase().includes(q)));
+  const one = ESRC.includes(eType);
+  if (one) {  // one way to get them: in its own order (Hunter Rank 46 to 220, floors, sectors, episodes)
+    const key = e => ways.get(e).filter(([w]) => w === eType).map(([, t]) => t).sort(cmpNum)[0] || "";
+    list.sort((a, b) => cmpNum(key(a), key(b)));
+  }
+  $("ecount").innerHTML = `${list.length} Elgif${list.length === 1 ? "" : "s"}${q ? ` matching “${esc($("eq").value.trim())}”` : one ? ` from ${esc(eType)}, in order` : ", the rarest first"}${elgifWhy()}`;
   $("ecount").querySelectorAll("[data-unit]").forEach(b => b.onclick = () => go(`#/unit/${b.dataset.unit}`));
   paged($("elist"), list, e => { const d = document.createElement("div"); d.className = "item"; d.style.cursor = "default";
     d.innerHTML = `<div class="er">${elgifRarity(e.r)}</div><div style="min-width:0;flex:1"><div class="t">${esc(e.name)}${elgifGets(e) ? `<span class="craft got">in Revived</span>` : ""}</div><div class="eff">${hl(e.desc)}</div>${
@@ -1694,6 +1717,18 @@ addEventListener("hashchange", route);
 // tapping the tab you're on goes back to the top of its list
 document.querySelectorAll(".nav button").forEach(b => b.onclick = () =>
   b.dataset.tab === tab && !document.body.classList.contains("sub") ? window.scrollTo({ top: 0, behavior: "smooth" }) : go(`#/${b.dataset.tab}`));
+// sideways chip rows: a fade on the side where more chips are hidden, and the mouse wheel scrolls them sideways
+const scrollHint = el => { const max = el.scrollWidth - el.clientWidth;
+  el.classList.toggle("less", el.scrollLeft > 2); el.classList.toggle("more", max > 2 && el.scrollLeft < max - 2); };
+const scrollHints = () => document.querySelectorAll(".scroller:not(.wrap)").forEach(scrollHint);
+document.addEventListener("scroll", e => e.target.classList?.contains("scroller") && scrollHint(e.target), true);  // scroll doesn't bubble
+document.addEventListener("wheel", e => {
+  const el = e.target.closest?.(".scroller:not(.wrap)"), x = el?.scrollLeft;
+  if (el && Math.abs(e.deltaY) > Math.abs(e.deltaX)) { el.scrollLeft += e.deltaY; if (el.scrollLeft !== x) e.preventDefault(); }  // at its ends the page scrolls
+}, { passive: false });
+let hintRaf = 0;
+new MutationObserver(() => { cancelAnimationFrame(hintRaf); hintRaf = requestAnimationFrame(scrollHints); }).observe(document.body, { childList: true, subtree: true });
+addEventListener("resize", scrollHints);
 // swipe left / right on a unit page for the next / previous unit (not when scrolling a row sideways)
 let swipe = null;
 $("page").addEventListener("touchstart", e => {
