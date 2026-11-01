@@ -19,8 +19,10 @@
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 [hidden] { display: none !important; }
 html { color-scheme: dark; }
-body { margin: 0; color: var(--text); font: 14px/1.45 Arial, "Segoe UI", sans-serif; background: var(--bg) url(/static/base.jpg) center top / cover fixed; overscroll-behavior-y: none; }
-body::before { content: ""; position: fixed; inset: 0; background: linear-gradient(rgba(6,4,16,.5), rgba(6,4,16,.75)); z-index: -1; }
+body { margin: 0; color: var(--text); font: 14px/1.45 Arial, "Segoe UI", sans-serif; background: var(--bg); overscroll-behavior-y: none; }
+/* the backdrop on its own fixed layer: a "fixed" page background makes a phone repaint the whole page while scrolling */
+body::before { content: ""; position: fixed; inset: 0; z-index: -1; transform: translateZ(0);
+  background: linear-gradient(rgba(6,4,16,.5), rgba(6,4,16,.75)), var(--bg) url(/static/base.jpg) center top / cover; }
 .r, h1, h2, h3, .tag, .chip, .nav button, .badge, .st, .gname, .pill, .tbl th, .tbl td, .tabs2 button, select { font-family: Rodin, "Arial Black", Arial, sans-serif; }
 .ol { text-shadow: var(--ol); }
 button, select, input { font: inherit; color: var(--text); }
@@ -69,7 +71,7 @@ main { padding-bottom: calc(var(--navh) + 20px); }
 /* unit grid, like the in-game unit list */
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 8px 6px; padding: 10px 10px 0; }
 .gu { position: relative; text-align: center; cursor: pointer; }
-.gu img { width: 100%; aspect-ratio: 1; display: block; filter: drop-shadow(0 2px 2px #000); }
+.gu img { width: 100%; aspect-ratio: 1; display: block; }
 .gu .gname { font-size: 10.5px; line-height: 1.15; margin-top: 3px; text-shadow: var(--ol); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .gu .rr { position: absolute; left: 50%; transform: translateX(-50%); top: calc(100% - 46px); font-family: Rodin, Arial, sans-serif; font-size: 11px; text-shadow: var(--ol); color: var(--accent); white-space: nowrap; }
 .gu img.fav { position: absolute; top: 0; right: 0; width: 22px; height: 22px; aspect-ratio: auto; filter: drop-shadow(0 1px 1px #000); }
@@ -301,8 +303,8 @@ select.gsel { height: 38px; font-size: 12.5px; padding: 0 10px; }
 .lu:active, .item:active, .gate:active, .ni:active, .tpick:active { filter: brightness(1.25); } .eu:active img, .ichip:active { transform: scale(.94); }
 .chip:active, .jump button:active, .tabs2 button:active, .iconbtn:active, .favbtn:active { transform: scale(.94); }
 /* pages fade in */
-#page > *, .view.on { animation: fadein .2s ease-out; }
-@keyframes fadein { from { opacity: 0; transform: translateY(6px); } }
+#page > *, .view.on { animation: fadein .14s ease-out; }
+@keyframes fadein { from { opacity: 0; transform: translateY(4px); } }
 @media (prefers-reduced-motion: reduce) { #page > *, .view.on, .slot .pad b { animation: none; } }
 
 /* compare */
@@ -315,7 +317,7 @@ select.gsel { height: 38px; font-size: 12.5px; padding: 0 10px; }
 .cmp .tx { color: #ece6d6; font-size: 11px; line-height: 1.35; }
 
 /* start screen: the game's title art while the data loads */
-#splash { position: fixed; inset: 0; z-index: 60; background: #000; display: grid; place-items: center; transition: opacity .45s; }
+#splash { position: fixed; inset: 0; z-index: 60; background: #000; display: grid; place-items: center; transition: opacity .25s; }
 #splash img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 30%; }
 #splash .sl { position: absolute; bottom: calc(40px + env(safe-area-inset-bottom)); font-family: Rodin, Arial, sans-serif; font-size: 16px; text-shadow: var(--ol); animation: blink 1.2s infinite; }
 #splash.gone { opacity: 0; pointer-events: none; }
@@ -365,7 +367,7 @@ body.boxedit .totop { bottom: calc(var(--navh) + 78px); } body.boxedit .toast { 
 <main>
   <section class="view on" id="v-units">
     <div class="bar2">
-      <div class="searchrow"><input id="uq" type="search" placeholder="Name, skill, role… (fire omni heal)" autocomplete="off">
+      <div class="searchrow"><input id="uq" type="search" placeholder="Name, skill or role…" autocomplete="off">
         <select id="usort"><option value="rarity">Rarity</option><option value="element">Element</option><option value="new">Newest</option><option value="name">Name</option><option value="atk">ATK</option><option value="hp">HP</option><option value="def">DEF</option><option value="rec">REC</option><option value="cost">Cost</option><option value="power">Strongest (role)</option></select>
         <button class="iconbtn fbtn" id="ufbtn" title="Filters" aria-label="Filters"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg><span id="ufn"></span></button></div>
       <div id="ufilters">
@@ -409,7 +411,7 @@ body.boxedit .totop { bottom: calc(var(--navh) + 78px); } body.boxedit .toast { 
 <script>
 const $ = id => document.getElementById(id);
 // the start screen goes once the app is ready, or after 4 s whatever happens
-const hideSplash = () => { const s = $("splash"); if (s && !s.classList.contains("gone")) { s.classList.add("gone"); setTimeout(() => s.remove(), 500); } };
+const hideSplash = () => { const s = $("splash"); if (s && !s.classList.contains("gone")) { s.classList.add("gone"); setTimeout(() => s.remove(), 260); } };
 setTimeout(hideSplash, 4000);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const ELS = ["Fire", "Water", "Earth", "Thunder", "Light", "Dark"];
@@ -524,16 +526,16 @@ function tapUnit(u, d, onTap) {
 }
 function gridCell(u, onTap, role) {
   const d = document.createElement("div"); d.className = "gu"; d.onclick = () => tapUnit(u, d, onTap);
-  d.innerHTML = `<img loading="lazy" src="${uImg(u.id)}" alt="" onerror="this.style.visibility='hidden'">${favs.has(u.id) ? `<img class="fav" src="/static/star_fav.png" alt="★">` : ""}${mine.has(u.id) ? `<span class="own ${favs.has(u.id) ? "f" : ""}" title="In my box">✓</span>` : ""}${powerTag(u, role)}<div class="gname">${esc(u.n)}</div>`;
+  d.innerHTML = `<img loading="lazy" decoding="async" src="${uImg(u.id)}" alt="" onerror="this.style.visibility='hidden'">${favs.has(u.id) ? `<img class="fav" src="/static/star_fav.png" alt="★">` : ""}${mine.has(u.id) ? `<span class="own ${favs.has(u.id) ? "f" : ""}" title="In my box">✓</span>` : ""}${powerTag(u, role)}<div class="gname">${esc(u.n)}</div>`;
   return marked(d, u, () => gridCell(u, onTap, role));
 }
 function listRow(u, onTap, role) {
   const d = document.createElement("div"); d.className = "lu"; d.onclick = () => tapUnit(u, d, onTap);
   if (u.e) d.style.setProperty("--el", `var(--${u.e})`);
   const p = role && powerOf(u.id, role);
-  d.innerHTML = `<img loading="lazy" src="${uImg(u.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1">
+  d.innerHTML = `<img loading="lazy" decoding="async" src="${uImg(u.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1">
     <div class="ln">${favs.has(u.id) ? FAVSTAR + " " : ""}${esc(u.n)}</div><div class="badges">${unitBadges(u)}${mine.has(u.id) ? `<span class="badge own">✓ My box</span>` : ""}${p ? `<span class="badge pw">${esc(TAGS.labels[role])} ${fmtPower(role, p)} · ${SKILL_NAMES[p[1]]}</span>` : ""}</div>
-    <div class="ls"><div><span>HP</span>${u.hp}</div><div><span>ATK</span>${u.atk}</div><div><span>DEF</span>${u.def}</div><div><span>REC</span>${u.rec}</div></div></div>`;
+    <div class="ls"><div><span>HP</span>${fmt(u.hp)}</div><div><span>ATK</span>${fmt(u.atk)}</div><div><span>DEF</span>${fmt(u.def)}</div><div><span>REC</span>${fmt(u.rec)}</div></div></div>`;
   return marked(d, u, () => listRow(u, onTap, role));
 }
 // lists draw in batches as you scroll: thousands of icons at once is slow on a phone
@@ -541,8 +543,8 @@ let NAV_LIST = [];  // ids of the unit list shown last, for previous / next on a
 function paged(container, items, make, cls) {
   const box = document.createElement("div"); box.className = cls; container.replaceChildren(box);
   const more = document.createElement("div"); more.className = "more"; more.textContent = "…";
-  let n = 0;
-  const step = () => { const next = items.slice(n, n + 150); n += next.length; box.append(...next.map(make)); if (n < items.length) container.append(more); else more.remove(); };
+  let n = 0; const per = cls === "grid" ? 96 : 40;
+  const step = () => { const next = items.slice(n, n + per); n += next.length; box.append(...next.map(make)); if (n < items.length) container.append(more); else more.remove(); };
   step();
   new IntersectionObserver((es, ob) => { if (es[0].isIntersecting) { more.remove(); step(); if (n >= items.length) ob.disconnect(); } }, { rootMargin: "1200px" }).observe(more);
 }
@@ -728,27 +730,41 @@ function setupUnitFilters() {
   }
   $("usort").value = uState.sort; $("uq").value = uState.q;
   $("usort").onchange = e => { uState.sort = e.target.value; renderUnits(); };
-  let t; $("uq").oninput = e => { clearTimeout(t); t = setTimeout(() => { uState.q = e.target.value; renderUnits(); }, 180); };
+  let t; $("uq").oninput = e => { clearTimeout(t); t = setTimeout(() => { uState.q = e.target.value; renderUnits(); }, 70); };
 }
 
 // ---------------- unit page ----------------
+// a type's stats: the wiki's; for a unit it lists only Lord for, Lord's with the fixed changes every unit of that rarity
+// has in the game (Anima: HP for REC, Breaker: ATK for DEF, Guardian: DEF for REC, Oracle: REC for DEF)
+const TYPE_DIFF = {
+  4: { anima: [443, 0, 0, -118], breaker: [0, 118, -118, 0], guardian: [0, -118, 118, -59], oracle: [-177, 0, -59, 177] },
+  5: { anima: [593, 0, 0, -158], breaker: [0, 158, -158, 0], guardian: [0, -158, 158, -79], oracle: [-237, 0, -79, 237] },
+  6: { anima: [743, 0, 0, -198], breaker: [0, 198, -198, 0], guardian: [0, -198, 198, -99], oracle: [-297, 0, -99, 297] },
+  7: { anima: [892, 0, 0, -238], breaker: [0, 238, -238, 0], guardian: [0, 0, 238, -119], oracle: [0, 0, -119, 357] },
+  8: { anima: [1117, 0, 0, -298], breaker: [0, 298, -298, 0], guardian: [0, 0, 298, -149], oracle: [0, 0, -149, 447] } };
+function typeStats(u, T = {}) {
+  const lord = T.lord || (u.hp ? [u.hp, u.atk, u.def, u.rec] : null);
+  if (!lord || !TYPE_DIFF[u.r] || ["anima", "breaker", "guardian", "oracle"].some(t => T[t])) return T;
+  return { ...T, lord, ...Object.fromEntries(Object.entries(TYPE_DIFF[u.r]).map(([t, d]) => [t, lord.map((v, k) => v + d[k])])), derived: true };
+}
 const statRows = (u, w) => {
   const rows = [["Lv 1", [u.h1, u.a1, u.d1, u.r1]], ["Max level", [u.hp, u.atk, u.def, u.rec]]];
-  const T = w.stats || {};
+  const T = typeStats(u, w.stats);
   for (const [k, l] of [["lord", "Lord"], ["anima", "Anima"], ["breaker", "Breaker"], ["guardian", "Guardian"], ["oracle", "Oracle"]]) {
     if (!T[k]) continue;
     const base = T.lord || rows[1][1];  // types only list the stats they change; the rest are Lord's
     rows.push([l, T[k].map((v, i) => v || base[i])]);
   }
-  if (T.bonus) rows.push(["Imps (max)", T.bonus.map(v => v ? `+${v}` : "")]);
+  if (T.bonus) rows.push(["Imps (max)", T.bonus.map(v => v ? `+${fmt(v)}` : "")]);
   return rows;
 };
 function statTable(u, w) {
   const rows = statRows(u, w), typed = rows.filter(r => !["Lv 1", "Imps (max)"].includes(r[0]));
   const best = [0, 1, 2, 3].map(i => Math.max(...typed.map(r => +r[1][i] || 0)));
   return `<table class="tbl"><tr><th></th><th>HP</th><th>ATK</th><th>DEF</th><th>REC</th></tr>${rows.map(([l, v]) =>
-    `<tr><td>${l}</td>${v.map((x, i) => `<td class="${typed.length > 2 && +x === best[i] && l !== "Lv 1" ? "best" : ""}">${x || "–"}</td>`).join("")}</tr>`).join("")}</table>
-    ${typed.length > 2 ? `<p class="dim small" style="margin:6px 0 0">Gold = best value among the unit's types (Lord, Anima…). Imps raise stats further.</p>` : ""}`;
+    `<tr><td>${l}</td>${v.map((x, i) => `<td class="${typed.length > 2 && +x === best[i] && l !== "Lv 1" ? "best" : ""}">${typeof x === "number" ? x ? fmt(x) : "–" : x || "–"}</td>`).join("")}</tr>`).join("")}</table>
+    ${typed.length > 2 ? `<p class="dim small" style="margin:6px 0 0">Gold = best value among the unit's types (Lord, Anima…). Imps raise stats further.</p>` : ""}
+    ${typeStats(u, w.stats).derived ? `<p class="dim small" style="margin:4px 0 0">The wiki lists only Lord for this unit: the other types are Lord with the changes every ${u.r === 8 ? "Omni" : u.r + "★"} unit has.</p>` : ""}`;
 }
 function skillBlock(s) {
   const cls = { "Leader Skill": "ls", "Extra Skill": "es", "Dual BB": "dbb", "UBB": "ubb", "SBB": "sbb", "BB": "" }[s.kind] ?? "";
@@ -843,6 +859,7 @@ async function showUnit(id) {
   setTitle(u.n, true); $("share").hidden = false; $("share").onclick = () => shareUnit(id);
   const page = $("page");
   remember("u", id);
+  const data = Promise.all([wiki(id), load("details"), load("items")]);  // read while the pictures load
   const [art, spr] = await Promise.all([loadImg(aImg(id)), loadImg(sImg(id))]);
   if (nav !== NAV) return;  // left the page while it loaded
   // previous / next unit of the list it was opened from
@@ -870,7 +887,7 @@ async function showUnit(id) {
   if (prev) $("uprev").onclick = () => location.replace(`#/unit/${prev}`);
   if (next) $("unext").onclick = () => location.replace(`#/unit/${next}`);
   window.scrollTo(0, 0);
-  const [w, D, I] = await Promise.all([wiki(id), load("details"), load("items")]);
+  const [w, D, I] = await data;
   if (nav !== NAV) return;  // left the page while it loaded
   const d = D[id] || {};
   $("hmeta").innerHTML = [w.maxlv ? `<span class="badge">Max Lv ${w.maxlv}</span>` : "", w.gender ? `<span class="badge">${SEX[w.gender] ? `<img src="/static/sex_${SEX[w.gender][0]}.png" alt="">${SEX[w.gender][1]}` : `<img src="/static/sex_o.png" alt="">${esc(w.gender)}`}</span>` : "",
@@ -906,8 +923,12 @@ async function showUnit(id) {
   USRC = await load("usrc");
   if (nav !== NAV) return;  // left the page while it loaded
   const src = unitSrcHtml(USRC, id), foe = enemyHtml(USRC, id), wk = weekGate(id);
-  // how to get it: Revived's own data only (the wiki's ways are the global game's); else the unit it evolves from
-  const clear = d.clear && !USRC?.u?.[id]?.r ? d.clear : null, from = chain[chain.indexOf(id) - 1];
+  // how to get it: Revived's own data only (the wiki's ways are the global game's); else the nearest earlier form
+  // Revived gives (get that one and evolve it), else the unit it evolves from
+  const clearOf = c => D[c]?.clear && !USRC?.u?.[c]?.r ? D[c].clear : null;
+  const clear = clearOf(id), from = chain[chain.indexOf(id) - 1];
+  const back = src || clear ? null : chain.slice(0, chain.indexOf(id)).reverse().find(c => unitSrcHtml(USRC, c) || clearOf(c));
+  const clearNote = cl => `<div class="note" style="border-color:var(--gold2);margin:0 0 8px">In Revived, first clear reward of:<ul class="qlist" style="margin-top:4px">${cl.map(p => `<li><b>${esc(p)}</b></li>`).join("")}</ul></div>`;
   if (wk) { $("hmeta").insertAdjacentHTML("afterbegin", `<span class="badge wk" data-gate="${wk[0]}">This week: ${esc(USRC.g[wk[0]][0])} ›</span>`); $("hmeta").querySelector(".wk").onclick = () => go(`#/gate/${wk[0]}`); }
   $("ubody").innerHTML = `
     ${spr ? `<div class="sec"><h3 class="green">In battle</h3><div class="stage"><img class="spr" id="spr" src="${sImg(id)}" alt=""></div></div>` : ""}
@@ -918,8 +939,10 @@ async function showUnit(id) {
     ${chain.length > 1 || mats ? `<div class="sec"><h3 class="green">Evolution</h3><div class="evo">${chain.map((c, i) => (i ? `<span class="ar">›</span>` : "") + unitMini(c, c === id)).join("")}</div>
       ${mats ? `<p class="dim small" style="margin:10px 0 0">Materials to evolve this unit${w.evo.zel ? ` · ${esc(w.evo.zel)} Zel` : ""}${w.evo.karma ? ` · ${esc(w.evo.karma)} Karma` : ""}</p><div class="mats">${mats}</div>` : ""}</div>` : ""}
     ${similar.length ? `<div class="sec"><h3 class="blue">Similar units</h3><p class="dim small" style="margin:0 0 6px">Same element and roles, for when you don't have this one${similar.some(x => mine.has(x)) ? " (yours first)" : ""}:</p><div class="recent">${similar.map(x => unitMini(x)).join("")}</div></div>` : ""}
-    <div class="sec"><h3 class="green">How to get</h3>${src}${clear ? `<div class="note" style="border-color:var(--gold2);margin:0 0 8px">In Revived, first clear reward of:<ul class="qlist" style="margin-top:4px">${d.clear.map(p => `<li><b>${esc(p)}</b></li>`).join("")}</ul></div>` : ""}${
-      src || clear ? "" : from ? `<p class="small" style="margin:0">Not given directly in Revived right now: evolve it from ${unitLink(from)}.</p>`
+    <div class="sec"><h3 class="green">How to get</h3>${src}${clear ? clearNote(clear) : ""}${
+      src || clear ? "" : back ? `<p class="small" style="margin:0 0 8px">Not given directly in Revived right now: get ${unitLink(back)} and evolve it${
+        back !== from ? ` (${chain.indexOf(id) - chain.indexOf(back)} evolutions)` : ""}.</p>${unitSrcHtml(USRC, back)}${clearOf(back) ? clearNote(clearOf(back)) : ""}`
+      : from ? `<p class="small" style="margin:0">Not given directly in Revived right now, and neither are the units it evolves from. It evolves from ${unitLink(from)}.</p>`
       : `<p class="small dim" style="margin:0">Not in Revived's summons, quests, clear rewards or event shops right now (bfrevive.net).</p>`}</div>
     ${foe ? `<div class="sec"><h3>Fights as an enemy</h3><div class="src">✓ Revived's live game data (bfrevive.net, ${day(USRC.built * 1000)})</div>${foe}</div>` : ""}
     ${w.lore || quotes.length ? `<div class="sec"><h3 class="blue">Story</h3>${w.lore ? `<div class="lore">${esc(w.lore)}</div>` : ""}${quotes.map(([k, v]) => `<div class="quote"><b>${k}</b>${esc(v)}</div>`).join("")}</div>` : ""}
@@ -954,7 +977,7 @@ async function renderSpheres() {
   $("scount").textContent = q && list.length && !list.some(s => s.name.toLowerCase().includes(q)) ? `No exact match for “${$("sq").value.trim()}”. Did you mean:`
     : `${list.length} ${q ? "results" : sType === "Materials" ? "materials" : sType === "Craftable" ? "items you can craft in Synthesis" : "spheres"}`;
   paged($("slist"), list, s => { const d = document.createElement("div"); d.className = "item"; d.onclick = () => go(`#/item/${s.id}`);
-    d.innerHTML = `<img loading="lazy" src="${iImg(s.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1"><div class="t">${esc(s.name)} <span class="dim small">${s.rarity ? `${s.rarity}${STAR}` : ""}</span>${R[s.id] ? `<span class="craft">craftable</span>` : ""}</div><div class="s">${esc(s.type ? s.type + " · " : "")}${esc(s.desc)}</div></div>`;
+    d.innerHTML = `<img loading="lazy" decoding="async" src="${iImg(s.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1"><div class="t">${esc(s.name)} <span class="dim small">${s.rarity ? `${s.rarity}${STAR}` : ""}</span>${R[s.id] ? `<span class="craft">craftable</span>` : ""}</div><div class="s">${esc(s.type ? s.type + " · " : "")}${esc(s.desc)}</div></div>`;
     return d; }, "");
 }
 // ---------------- crafting planner (the game's Synthesis recipes: item -> [karma, [[material, count], ...]]) ----------------
@@ -1052,7 +1075,7 @@ async function renderDrops() {
   const capPlaces = [...caught].sort((a, b) => b[1].size - a[1].size || a[0].localeCompare(b[0])).slice(0, 30);
   $("dres").innerHTML = (units.length ? `<div class="sec"><h3 class="blue">Units</h3><div class="recent">${units.map(u => unitMini(u.id)).join("")}</div><p class="small dim" style="margin:4px 0 0">Open a unit for its summon gates, capture spots and rewards.</p></div>` : "")
     + (items.length ? `<div class="sec"><h3 class="purple">Items</h3>${items.map(s => `<div class="item" style="margin:0 0 8px" onclick="go('#/item/${s.id}')"><img src="${iImg(s.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1"><div class="t">${esc(s.name)}</div><div class="s">${esc(s.desc)}</div></div></div>`).join("")}</div>` : "")
-    + (ranked.length ? `<div class="sec"><h3 class="green">Drops in</h3>${ranked.map(([p, ns]) => `<div class="place"><b>${esc(p)}${revived.has(p) ? `<span class="rv">✓ in Revived</span>` : ""}</b>${
+    + (ranked.length ? `<div class="sec"><h3 class="green">Drops in</h3>${ranked.map(([p, ns]) => `<div class="place"><b>${esc(p.replace(/ > /g, " › "))}${revived.has(p) ? `<span class="rv">✓ in Revived</span>` : ""}</b>${
         [...ns].sort((a, b) => (b[1] || 0) - (a[1] || 0) || a[0].localeCompare(b[0])).map(([n, c]) => { const i = Dr.ids[n];
         return `<span class="ichip" ${i ? `onclick="go('#/item/${i}')"` : ""}>${i ? `<img src="${iImg(i)}" alt="" onerror="this.remove()">` : ""}${esc(n)}${c ? `<small>${c}%</small>` : ""}</span>`; }).join("")}</div>`).join("")}</div>` : "")
     + (capPlaces.length ? `<div class="sec"><h3 class="green">Capture here</h3>${capPlaces.map(([p, us]) => `<div class="place"><b>${esc(p)}</b>${
@@ -1109,7 +1132,7 @@ async function shareUnit(id) {
   else for (let i = 0; i < u.r; i++) g.drawImage(starI, 24 + i * 27, 86, 32, 32);
   if (orbI) g.drawImage(orbI, 28, 128, 30, 30); ot(`${u.e || ""}   COST ${u.c}`, 64, 152, 20, col("--" + (u.e || "Light")));
   let y = 200; const lines = [["HP", u.hp], ["ATK", u.atk], ["DEF", u.def], ["REC", u.rec]];
-  for (const [k, v] of lines) { ot(k, 28, y, 18, col("--orange")); ot(String(v), 100, y, 22); y += 34; }
+  for (const [k, v] of lines) { ot(k, 28, y, 18, col("--orange")); ot(fmt(v), 100, y, 22); y += 34; }
   y = art ? 520 : 360; g.fillStyle = "rgba(8,10,20,.85)"; g.fillRect(16, y - 30, W - 32, H - y + 14);
   const wrap = (text, x, yy, maxw, px, color) => { g.font = `${px}px Arial`; const words = String(text).split(" "); let line = "";
     for (const wd of words) { if (g.measureText(line + wd).width > maxw && line) { g.fillStyle = color; g.fillText(line, x, yy); yy += px * 1.3; line = ""; } line += wd + " "; }
@@ -1228,7 +1251,7 @@ const resetSlot = i => { TTYPE[TCUR][i] = "lord"; TSPH[TCUR][i] = [null, null]; 
 const lsText = (id, w, D) => D[id]?.leader?.desc || (w?.skills || []).find(s => s.kind === "Leader Skill")?.desc || "";
 // one unit's numbers: max-level stats of its type, + imps, × (1 + leader / friend skill, own extra skill and sphere boosts)
 function unitNumbers(i, team, W, D, I) {
-  const id = team[i], u = UMAP[id], w = W[i] || {}, T = w.stats || {};
+  const id = team[i], u = UMAP[id], w = W[i] || {}, T = typeStats(u, w.stats);
   const lord = T.lord || [u.hp, u.atk, u.def, u.rec];
   const types = TYPES.filter(t => t === "lord" || T[t]), ty = types.includes(TTYPE[TCUR][i]) ? TTYPE[TCUR][i] : "lord";
   let base = (T[ty] || lord).map((v, k) => v || lord[k]);
@@ -1553,7 +1576,7 @@ async function showCompare() {
     return s?.desc || game || "";
   };
   const n = us.length, row = (k, cells, cls = "") => `<div class="row" style="--n:${n}"><div class="k">${k}</div>${cells.map(c => `<div class="${cls}">${c}</div>`).join("")}</div>`;
-  const num = (k, vals) => { const m = Math.max(...vals.map(v => +v || 0)); return row(k, vals.map(v => `<span class="${n > 1 && +v === m && m ? "best" : ""}">${v || "–"}</span>`), "num"); };
+  const num = (k, vals) => { const m = Math.max(...vals.map(v => +v || 0)); return row(k, vals.map(v => `<span class="${n > 1 && +v === m && m ? "best" : ""}">${+v ? fmt(+v) : "–"}</span>`), "num"); };
   $("page").innerHTML = `<div class="sec"><div class="cmp">
       ${row("", us.map(u => `<div class="hd"><img class="ic" src="${uImg(u.id)}" data-u="${u.id}" alt=""><b>${esc(u.n)}</b><span class="small">${u.r === 8 ? OMNI + "Omni" : u.r + STAR}</span> ${orb(u.e)}<br>
         <button class="gbtn small dark" data-x="${u.id}" style="margin-top:4px">Remove</button></div>`))}
@@ -1629,8 +1652,8 @@ $("page").addEventListener("touchend", e => {
 $("favtab").onclick = () => go(tab === "favs" ? "#/units" : "#/favs");
 $("back").onclick = () => history.back();
 $("viewmode").onclick = () => { viewMode = viewMode === "grid" ? "list" : "grid"; store.set("bf.view", viewMode); tab === "favs" ? renderFavs() : renderUnits(); };
-let st; $("sq").oninput = () => { clearTimeout(st); st = setTimeout(renderSpheres, 180); };
-let dt; $("dq").oninput = () => { clearTimeout(dt); dt = setTimeout(renderDrops, 220); };
+let st; $("sq").oninput = () => { clearTimeout(st); st = setTimeout(renderSpheres, 80); };
+let dt; $("dq").oninput = () => { clearTimeout(dt); dt = setTimeout(renderDrops, 120); };
 $("dq").onchange = saveDropSearch;  // Enter or closing the keyboard keeps the search in "Recent searches"
 $("dres").addEventListener("click", e => { if (e.target.closest(".ichip, .item")) saveDropSearch(); });
 // Android back button (MainActivity calls this): leave a page, else let the app close
@@ -1657,7 +1680,10 @@ window.BFBack = () => {
   });
   // read the big files while nothing happens, so the first unit, item or search opens at once
   const idle = window.requestIdleCallback || (f => setTimeout(f, 800));
-  idle(() => ["details", "items", "usrc", "drops"].reduce((p, n) => p.then(() => load(n)), Promise.resolve()));
+  idle(() => {
+    fmt(1000); day(0);  // number and date formatting are slow the first time: not on the first unit opened
+    ["details", "items", "usrc", "drops"].reduce((p, n) => p.then(() => load(n)), Promise.resolve());
+  });
 })();
 </script>
 </body>

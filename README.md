@@ -24,7 +24,7 @@ No account, no ads, no internet needed: everything is inside the app.
 
 **Units**
 - All 2,292 units with artwork and their **animated battle sprite**, taken from the game's own files.
-- Stats for every type (Lord, Anima, Breaker, Guardian, Oracle), Imps, max level.
+- Stats for every type (Lord, Anima, Breaker, Guardian, Oracle) of every unit, Imps, max level.
 - Leader Skill, BB, SBB, UBB, Extra Skill and Dual BB with BC cost, hits and the exact numbers.
 - Roles with how strong they are ("Mitigation 50%", "BB ATK 600%"), SP enhancements, evolution line and materials, lore.
 - Search by name, skill text or role, several words at once: `fire omni heal`, `def ignore`, `water mitigation`.
@@ -38,7 +38,7 @@ No account, no ads, no internet needed: everything is inside the app.
 - Summon gates the unit is in, with the **chance per pull** and the chance to get it in 10 pulls.
 - Quests where you can **capture** it, with the capture chance; clear rewards; event shops.
 - Every quest it **fights in as an enemy**, also where it can't be captured or a capture gives another unit.
-- Only Revived's own data: a unit you can't get directly shows which unit it evolves from.
+- Only Revived's own data: for a unit you can't get directly, the earlier form you can get and how, then you evolve it.
 - A page for every summon gate, and a *Get it* filter (This week, Summon, Capture, Reward / shop).
 
 **Spheres and items**
