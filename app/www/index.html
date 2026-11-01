@@ -367,6 +367,8 @@ body.boxedit .totop { bottom: calc(var(--navh) + 78px); } body.boxedit .toast { 
 /* on a PC screen: one centered column, like a big phone */
 @media (min-width: 1000px) { main { max-width: 920px; margin: 0 auto; } .top { padding-left: calc(50vw - 460px); padding-right: calc(50vw - 460px); } }
 @media (min-width: 700px) { .grid { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); } .hero { min-height: 300px; } .list { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); } }
+/* a wide header: the picture under the glow (70% across), whole, instead of against the right edge and cut off */
+@media (min-width: 700px) { .hero .art { right: auto; left: 70%; transform: translateX(-50%); max-width: 56%; object-position: center bottom; } .hero .art.icon { transform: translate(-50%, 50%); } }
 </style>
 </head>
 <body>
