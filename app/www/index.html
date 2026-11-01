@@ -43,10 +43,10 @@ body.sub .top .back { display: grid; place-items: center; } body.sub .top .crest
 .iconbtn img { width: 26px; height: 26px; filter: grayscale(1) brightness(.75) drop-shadow(0 1px 1px #000); } .iconbtn.on img { filter: drop-shadow(0 0 4px #ffd76a); }
 
 /* bottom navigation: the game's own footer buttons */
-.nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: flex; justify-content: center; gap: 10px; padding: 5px 8px 4px; padding-bottom: max(4px, env(safe-area-inset-bottom));
+.nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: flex; justify-content: center; gap: 6px; padding: 5px 8px 4px; padding-bottom: max(4px, env(safe-area-inset-bottom));
   background: var(--steel) center / cover; border-top: 3px solid var(--gold); box-shadow: 0 -3px 0 var(--gold3), 0 -8px 18px rgba(0,0,0,.7); }
-.nav button { padding: 0; border: 0; background: none; height: 64px; width: 68px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-.nav button img { height: 64px; width: auto; display: block; margin: 0 auto; transition: transform .15s, filter .15s; filter: brightness(.7) saturate(.7) drop-shadow(0 2px 2px #000); }
+.nav button { padding: 0; border: 0; background: none; width: min(68px, calc((100vw - 48px) / 5)); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.nav button img { width: 100%; height: auto; max-height: 64px; display: block; margin: 0 auto; transition: transform .15s, filter .15s; filter: brightness(.7) saturate(.7) drop-shadow(0 2px 2px #000); }
 .nav button.on img { filter: drop-shadow(0 0 5px rgba(255,215,106,.9)) drop-shadow(0 2px 2px #000); transform: translateY(-3px) scale(1.06); }
 .nav button:active img { transform: scale(.94); }
 .sti { width: 1.2em; height: 1.2em; vertical-align: -.25em; }
@@ -152,6 +152,12 @@ main { padding-bottom: calc(var(--navh) + 20px); }
 .okc { color: #7ad67a; } .noc { color: #ff8a7a; } .bcl .okc, .bcl .noc { margin-left: 4px; font-size: 11px; }
 .item .sb { font-size: 11px; color: #9ff09f; margin: 1px 0 2px; }
 .item .t .sti { width: 14px; height: 14px; flex: none; }  /* not the 46px item icon size */
+/* Elgifs: rarity on the left, the whole effect (sphere text is cut at two lines) */
+.item .er { flex: none; width: 46px; text-align: center; font-family: Rodin, Arial, sans-serif; font-size: 12px; color: var(--accent); text-shadow: var(--ol); }
+.item .er .sti { width: 15px; height: 15px; vertical-align: -2px; } .item .er .omi { width: 30px; height: 30px; display: block; margin: 0 auto; }
+.item .eff { color: #ece6d6; font-size: 12px; margin-top: 2px; }
+.item .craft.got { background: linear-gradient(#7ad67a, #2a8f3a); }
+.item .eget { margin-top: 6px; font-size: 12px; color: var(--dim); } .item .eget > div { margin: 3px 0; } .item .eget b { color: #ece6d6; font-weight: normal; }
 .item .craft { margin-left: 6px; font-size: 9.5px; padding: 0 6px; border-radius: 999px; background: linear-gradient(#5aa8ff, #1e5fe0); text-shadow: var(--ol); vertical-align: 2px; }
 .recent { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 4px; clear: both; } .recent::-webkit-scrollbar { display: none; }
 .recent .eu { flex: none; width: 64px; text-align: center; cursor: pointer; } .recent .eu img { width: 56px; height: 56px; object-fit: contain; }
@@ -211,7 +217,7 @@ details > summary::before { content: "▸ "; } details[open] > summary::before {
 .gtag { flex: none; font-size: 10px; padding: 2px 7px; border-radius: 5px; text-shadow: var(--ol); border: 1px solid rgba(255,255,255,.35); margin-top: 1px; background: linear-gradient(#6d7a99, #3a4663); font-family: Rodin, Arial, sans-serif; }
 .gtag.craft { background: linear-gradient(#5aa8ff, #1e5fe0); } .gtag.raid { background: linear-gradient(#ff9a3c, #c73a0e); } .gtag.quests { background: linear-gradient(#7ad67a, #2a8f3a); }
 .gtag.achievement, .gtag.questreward, .gtag.grandquestreward, .gtag.clearreward { background: linear-gradient(#ffe38a, #c98a16); } .gtag.exchange, .gtag.shop { background: linear-gradient(#d7a6ff, #7a3fc4); }
-.gtag.drops, .gtag.capture { background: linear-gradient(#7ad67a, #2a8f3a); } .gtag.summon { background: linear-gradient(#ff9ad5, #b0306f); } .gtag.eventshop { background: linear-gradient(#d7a6ff, #7a3fc4); }
+.gtag.drops, .gtag.capture { background: linear-gradient(#7ad67a, #2a8f3a); } .gtag.summon { background: linear-gradient(#ff9ad5, #b0306f); } .gtag.eventshop { background: linear-gradient(#d7a6ff, #7a3fc4); } .gtag.frontier { background: linear-gradient(#7fd3ff, #1f6fb0); }
 .glink { cursor: pointer; } .glink b::after { content: " ›"; color: var(--gold); }
 .gate { display: flex; align-items: center; gap: 8px; padding: 9px 4px; border-top: 1px solid rgba(255,255,255,.07); cursor: pointer; } .gate b { flex: 1; font-weight: normal; }
 .gate .n { font-size: 11px; color: var(--dim); white-space: nowrap; }
@@ -382,6 +388,10 @@ body.boxedit .totop { bottom: calc(var(--navh) + 78px); } body.boxedit .toast { 
     <div class="count" id="ucount"></div>
     <div id="ulist"></div>
   </section>
+  <section class="view" id="v-elgifs">
+    <div class="bar2"><div class="searchrow"><input id="eq" type="search" placeholder="Search Elgifs: name, effect or where…" autocomplete="off"></div><div class="scroller" id="echips"></div></div>
+    <div class="count" id="ecount"></div><div id="elist" style="padding-top:10px"></div>
+  </section>
   <section class="view" id="v-spheres">
     <div class="bar2"><div class="searchrow"><input id="sq" type="search" placeholder="Search spheres and items…" autocomplete="off"></div><div class="scroller" id="stype"></div></div>
     <div class="count" id="scount"></div><div id="slist" style="padding-top:10px"></div>
@@ -399,6 +409,7 @@ body.boxedit .totop { bottom: calc(var(--navh) + 78px); } body.boxedit .toast { 
 
 <nav class="nav">
   <button data-tab="units" class="on" aria-label="Units"><img src="/static/nav_unit.png" alt=""></button>
+  <button data-tab="elgifs" aria-label="Elgifs"><img src="/static/nav_elgif.png" alt=""></button>
   <button data-tab="spheres" aria-label="Spheres and items"><img src="/static/nav_item.png" alt=""></button>
   <button data-tab="drops" aria-label="Drops"><img src="/static/nav_quest.png" alt=""></button>
   <button data-tab="team" aria-label="Team builder"><img src="/static/nav_team.png" alt=""></button>
@@ -945,6 +956,9 @@ async function showUnit(id) {
     ${chain.length > 1 || mats ? `<div class="sec"><h3 class="green">Evolution</h3><div class="evo">${chain.map((c, i) => (i ? `<span class="ar">›</span>` : "") + unitMini(c, c === id)).join("")}</div>
       ${mats ? `<p class="dim small" style="margin:10px 0 0">Materials to evolve this unit${w.evo.zel ? ` · ${esc(w.evo.zel)} Zel` : ""}${w.evo.karma ? ` · ${esc(w.evo.karma)} Karma` : ""}</p><div class="mats">${mats}</div>` : ""}</div>` : ""}
     ${similar.length ? `<div class="sec"><h3 class="blue">Similar units</h3><p class="dim small" style="margin:0 0 6px">Same element and roles, for when you don't have this one${similar.some(x => mine.has(x)) ? " (yours first)" : ""}:</p><div class="recent">${similar.map(x => unitMini(x)).join("")}</div></div>` : ""}
+    ${id === ELGIF || id === EMGIF ? `<div class="sec"><h3 class="purple">Elgifs</h3><p class="small" style="margin:0 0 8px">${id === ELGIF
+      ? "Fuse this tablet into a unit to give it the Elgif (an extra skill) the tablet carries."
+      : "Fuse this tablet into a unit to take its Elgif back out: the Elgif comes back to your Gift Box."}</p><button class="gbtn small blue" id="toelgifs">See all Elgifs</button></div>` : ""}
     <div class="sec"><h3 class="green">How to get</h3>${src}${clear ? clearNote(clear) : ""}${
       src || clear ? "" : back ? `<p class="small" style="margin:0 0 8px">Not given directly in Revived right now: get ${unitLink(back)} and evolve it${
         back !== from ? ` (${chain.indexOf(id) - chain.indexOf(back)} evolutions)` : ""}.</p>${unitSrcHtml(USRC, back)}${clearOf(back) ? clearNote(clearOf(back)) : ""}`
@@ -958,6 +972,7 @@ async function showUnit(id) {
   $("ubody").querySelectorAll("[data-unit]").forEach(b => b.onclick = () => go(`#/unit/${b.dataset.unit}`));
   // a sticky row of the page's sections to jump to (the unit pages are long)
   jumpBar($("ubody"), [...$("ubody").querySelectorAll(":scope > .sec")].filter(s => s.querySelector(":scope > h3")));
+  if ($("toelgifs")) $("toelgifs").onclick = () => go("#/elgifs");
   // pixel art scales best by whole numbers: as big as fits (at most 3x)
   if (spr && $("spr")) {
     const room = Math.min(($("spr").parentElement.clientWidth - 16) / spr.naturalWidth, 220 / spr.naturalHeight);
@@ -985,6 +1000,37 @@ async function renderSpheres() {
     : `${list.length} ${q ? "results" : sType === "Materials" ? "materials" : sType === "Craftable" ? "items you can craft in Synthesis" : "spheres"}`;
   paged($("slist"), list, s => { const d = document.createElement("div"); d.className = "item"; d.onclick = () => go(`#/item/${s.id}`);
     d.innerHTML = `<img loading="lazy" decoding="async" src="${iImg(s.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1"><div class="t">${esc(s.name)} <span class="dim small">${s.rarity ? `${s.rarity}${STAR}` : ""}</span>${craftable(s) ? `<span class="craft">craftable</span>` : nogTag(s)}</div><div class="s">${esc(s.type ? s.type + " · " : "")}${esc(s.desc)}</div></div>`;
+    return d; }, "");
+}
+// Elgifs: extra skills a unit learns when an Imbued Tablet Elgif carrying one is fused into it (the game's own list)
+const ELGIF = "50792", EMGIF = "60812";
+const elgifRarity = r => r === 8 ? `${OMNI}Omni` : `${r}${STAR}`;
+const elgifWhy = () => `<details class="why"><summary>What are Elgifs?</summary><ul>
+  <li>An Elgif is an <b>extra skill</b> on a tablet. Fuse an ${unitLink(ELGIF)} into a unit and the unit learns the skill that tablet carries. Its stars show the skill's rarity.</li>
+  <li>It works on any unit except fusion, evolution and sellable units. On a 7★ unit it's a second extra skill, in pink.</li>
+  <li>Evolving the unit keeps the Elgif; fusing the unit into another loses it. A new Elgif replaces the old one.</li>
+  <li>A ${unitLink(EMGIF)} takes it out again: it comes back as an Elgif in your Gift Box.</li>
+  <li>Revived gives the tablets as captures, quest rewards, achievements and shop items: open the tablet unit to see where. When the game's data says which Elgif a reward gives, that Elgif shows it (<b>in Revived</b>): a quest's first clear, a Grand Quest episode, a Frontier Hunter rank, a Frontier Gate, Frontier Rift or Frontier Spire milestone, or an achievement.</li>
+  <li>Frontier Hunter, Frontier Gate (with Eternal Crusade), Frontier Rift and Frontier Spire are in Imperial Capital Randall › Akras Summoners' Hall Survey Office. A program's View Rewards lists its milestones (floors cleared, or Esteem points); Frontier Hunter gives a reward at each Hunter Rank. The Grand Quest is in the Vortex (Grand).</li></ul></details>`;
+let eType = store.get("bf.etype", "All");  // "All", or "Get": only the Elgifs Revived gives
+const elgifGets = e => !!(e.g?.length || e.p?.length || e.a?.length);  // a quest's first clear, a Frontier mode or Grand Quest reward, or an achievement
+async function renderElgifs() {
+  const [E, S] = await Promise.all([load("elgifs"), load("usrc")]), all = Array.isArray(E) ? E : [], q = $("eq").value.trim().toLowerCase();
+  USRC = S;
+  if (!$("echips").children.length) for (const [k, l] of [["All", `All (${all.length})`], ["Get", `Can get in Revived (${all.filter(elgifGets).length})`]]) {
+    const b = chip(esc(l), k === eType);
+    b.onclick = () => { eType = k; store.set("bf.etype", k); [...$("echips").children].forEach(c => c.classList.toggle("on", c === b)); renderElgifs(); };
+    $("echips").append(b);
+  }
+  const where = e => [...(e.g || []).map(([m]) => srcQuest(S, m)), ...(e.p || []).flat(), ...(e.a || []).map(([t]) => t)].join(" ");
+  const list = all.filter(e => (eType !== "Get" || elgifGets(e)) && (!q || `${e.name} ${e.desc} ${where(e)}`.toLowerCase().includes(q)));
+  $("ecount").innerHTML = `${list.length} Elgif${list.length === 1 ? "" : "s"}${q ? ` matching “${esc($("eq").value.trim())}”` : ", the rarest first"}${elgifWhy()}`;
+  $("ecount").querySelectorAll("[data-unit]").forEach(b => b.onclick = () => go(`#/unit/${b.dataset.unit}`));
+  paged($("elist"), list, e => { const d = document.createElement("div"); d.className = "item"; d.style.cursor = "default";
+    d.innerHTML = `<div class="er">${elgifRarity(e.r)}</div><div style="min-width:0;flex:1"><div class="t">${esc(e.name)}${elgifGets(e) ? `<span class="craft got">in Revived</span>` : ""}</div><div class="eff">${hl(e.desc)}</div>${
+      elgifGets(e) ? `<div class="eget">${(e.g || []).map(([m, first]) => `<div><span class="gtag clearreward">Clear reward</span> ${first ? "first clear of" : "every clear of"} <b>${esc(srcQuest(S, m))}</b></div>`).join("")}${
+        (e.p || []).map(([mode, at, how]) => `<div><span class="gtag ${mode === "Grand Quest" ? "grandquestreward" : "frontier"}">${esc(mode)}</span> <b>${esc(at)}</b>${how ? `: ${esc(how)}` : ""}</div>`).join("")}${
+        (e.a || []).map(([t, goal]) => `<div><span class="gtag achievement">Achievement</span> <b>${esc(t)}</b>${goal && goal !== t ? `: ${esc(goal)}` : ""}</div>`).join("")}</div>` : ""}</div>`;
     return d; }, "");
 }
 // ---------------- crafting planner (the game's Synthesis recipes: item -> [karma, [[material, count], ...]]) ----------------
@@ -1600,7 +1646,7 @@ async function showCompare() {
 }
 
 // ---------------- navigation ----------------
-const TABS = { units: "Units", spheres: "Spheres", drops: "Drops", team: "Team", favs: "Favorites & box" };
+const TABS = { units: "Units", elgifs: "Elgifs", spheres: "Spheres", drops: "Drops", team: "Team", favs: "Favorites & box" };
 let tab = "units", tabsDrawn = new Set();
 function setTitle(t, sub) {
   $("title").textContent = t; document.body.classList.toggle("sub", !!sub);
@@ -1633,7 +1679,7 @@ async function route() {
   setTitle(TABS[tab], false);
   if (tab === "favs") renderFavs();
   else if (tab === "team") renderTeam();
-  else if (!tabsDrawn.has(tab)) { tabsDrawn.add(tab); if (tab === "units") renderUnits(); if (tab === "spheres") renderSpheres(); if (tab === "drops") renderDrops(); }
+  else if (!tabsDrawn.has(tab)) { tabsDrawn.add(tab); if (tab === "units") renderUnits(); if (tab === "spheres") renderSpheres(); if (tab === "drops") renderDrops(); if (tab === "elgifs") renderElgifs(); }
   requestAnimationFrame(() => window.scrollTo(0, scrollPos[tab] || 0));
 }
 addEventListener("scroll", () => { if (!document.body.classList.contains("sub")) scrollPos[tab] = scrollY; }, { passive: true });
@@ -1662,6 +1708,7 @@ $("favtab").onclick = () => go(tab === "favs" ? "#/units" : "#/favs");
 $("back").onclick = () => history.back();
 $("viewmode").onclick = () => { viewMode = viewMode === "grid" ? "list" : "grid"; store.set("bf.view", viewMode); tab === "favs" ? renderFavs() : renderUnits(); };
 let st; $("sq").oninput = () => { clearTimeout(st); st = setTimeout(renderSpheres, 80); };
+let et; $("eq").oninput = () => { clearTimeout(et); et = setTimeout(renderElgifs, 80); };
 let dt; $("dq").oninput = () => { clearTimeout(dt); dt = setTimeout(renderDrops, 120); };
 $("dq").onchange = saveDropSearch;  // Enter or closing the keyboard keeps the search in "Recent searches"
 $("dres").addEventListener("click", e => { if (e.target.closest(".ichip, .item")) saveDropSearch(); });

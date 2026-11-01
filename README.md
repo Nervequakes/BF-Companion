@@ -43,6 +43,11 @@ Slow download from GitHub? Get the APK from the **[Google Drive mirror](https://
 - Only Revived's own data: for a unit you can't get directly, the earlier form you can get and how, then you evolve it.
 - A page for every summon gate, and a *Get it* filter (This week, Summon, Capture, Reward / shop).
 
+**Elgifs**
+- All 541 Elgifs (the extra skills an Imbued Tablet Elgif gives a unit) from the game's own files, with rarity and effect.
+- The ones Revived gives, with how: Frontier Hunter ranks, Frontier Gate and Eternal Crusade floors or points, Frontier Rift
+  and Frontier Spire milestones, Grand Quest episodes, quest first clears and achievements. Search by name, effect or where.
+
 **Spheres and items**
 - Every sphere and material with Revived's own ways to get it: drops (chance per kill or per hit), clear rewards, shops,
   raid drops and Synthesis. Something Revived doesn't give says so, and *craftable* means every material can be had.
@@ -89,15 +94,16 @@ Yes, and you don't have to take my word for it:
   lists nothing but the app's name).
 - **It can't use the internet.** Without the *Internet* permission Android blocks every network connection, and on
   top of that the app's code refuses to load anything that isn't one of its own built-in pages
-  ([MainActivity.java, line 51](app/src/sg/bf/companion/MainActivity.java#L51)).
+  ([MainActivity.java, line 54](app/src/sg/bf/companion/MainActivity.java#L54)).
 - **It collects nothing.** No account, no ads, no analytics, no trackers. Your favorites and teams are saved only
   on your phone, in the app's own storage, and are gone when you uninstall it.
 - **The only file it ever writes** is a picture you choose to share or save (a unit or team card), in
   *Pictures/BF Companion*.
 - **Read the code.** The [`app`](app) folder holds everything that makes the APK:
   - [`AndroidManifest.xml`](app/AndroidManifest.xml): what the app is allowed to do (nothing extra).
-  - [`MainActivity.java`](app/src/sg/bf/companion/MainActivity.java): the whole Android part, about 140 lines. It
-    shows the app's pages, saves or shares a picture when you tap *Share*, and handles the back button.
+  - [`MainActivity.java`](app/src/sg/bf/companion/MainActivity.java): the whole Android part, about 160 lines. It
+    shows the app's pages, colours the phone's status and navigation bars, saves or shares a picture when you tap
+    *Share*, and handles the back button.
   - [`www/index.html`](app/www/index.html): the app itself. An APK is a zip file: unzip it and you'll find this
     exact file as `assets/www/index.html`. The rest of the APK is the game data, artwork and sprites it shows.
   - [`build_apk.bat`](app/build_apk.bat): how the APK is built with Google's Android tools.
@@ -106,7 +112,7 @@ Yes, and you don't have to take my word for it:
 
 ## Where the data comes from
 
-- **The game's own files**: unit, skill, sphere and item data, artwork, sprites and icons.
+- **The game's own files**: unit, skill, sphere, item and Elgif data, artwork, sprites and icons.
 - **[bfrevive.net](https://bfrevive.net/)**: Revived's server data for drops with chances, capture spots, the quests every unit
   fights in, summon gates and shops.
 - **[Brave Frontier Wiki](https://bravefrontierglobal.fandom.com/)**: skill numbers, SP enhancements, lore and evolution details.

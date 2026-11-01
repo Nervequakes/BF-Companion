@@ -14,6 +14,9 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Base64;
+import android.view.View;
+import android.view.Window;
+import android.view.WindowInsetsController;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -64,7 +67,25 @@ public class MainActivity extends Activity {
             }
         });
         setContentView(web);
+        darkSystemBars();
         if (state != null) web.restoreState(state); else web.loadUrl("https://" + HOST + "/index.html");
+    }
+
+    /** The phone's own bottom bar (gesture handle or buttons): left unset, some phones paint it white under the page's
+     *  tab bar. It gets the tab bar's steel colour, and both system bars get light icons. */
+    private void darkSystemBars() {
+        Window w = getWindow();
+        w.setNavigationBarColor(Color.parseColor("#1c2129"));
+        if (Build.VERSION.SDK_INT >= 29) w.setNavigationBarContrastEnforced(false);  // no grey scrim over it
+        if (Build.VERSION.SDK_INT >= 30) {
+            WindowInsetsController c = w.getInsetsController();
+            if (c != null) c.setSystemBarsAppearance(0,
+                WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS | WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS);
+        } else {
+            View d = w.getDecorView();
+            int light = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | (Build.VERSION.SDK_INT >= 26 ? View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR : 0);
+            d.setSystemUiVisibility(d.getSystemUiVisibility() & ~light);
+        }
     }
 
     private static WebResourceResponse blocked() {
