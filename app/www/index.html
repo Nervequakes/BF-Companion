@@ -916,11 +916,11 @@ async function showUnit(id) {
   const d = D[id] || {};
   $("hmeta").innerHTML = [w.maxlv ? `<span class="badge">Max Lv ${w.maxlv}</span>` : "", w.gender ? `<span class="badge">${SEX[w.gender] ? `<img src="/static/sex_${SEX[w.gender][0]}.png" alt="">${SEX[w.gender][1]}` : `<img src="/static/sex_o.png" alt="">${esc(w.gender)}`}</span>` : "",
     w.hits ? `<span class="badge">${w.hits} hits</span>` : ""].join("");
-  // skills: the wiki's version has BC cost, hits and the numbers; fall back to the game's text
+  // skills: the wiki's version has the numbers in full; fall back to the game's text, BC cost and hits
   let skills = w.skills || [];
   if (!skills.length) skills = [
     d.leader?.desc ? { kind: "Leader Skill", name: d.leader.name, desc: d.leader.desc } : null,
-    ...(d.skills || []).map(s => ({ kind: s.label, name: s.name, desc: s.desc })),
+    ...(d.skills || []).map(s => ({ ...s, kind: s.label })),
     d.extra ? { kind: "Extra Skill", name: "", desc: d.extra } : null].filter(Boolean);
   // best spheres from the game data
   let spheres = "";
@@ -1362,8 +1362,10 @@ function skillFill(s) {
 // the attack's damage modifier %; an HP-scaled one ("200% + 750% * HP") counted at full HP
 const fullMod = s => { if (!s?.mod) return 0; const m = s.hps && (s.fx || []).map(e => e.p.match(/(\d+)%\s*\+\s*(\d+)%/)).find(Boolean); return m ? +m[1] + +m[2] : s.mod; };
 const short = n => n >= 1e6 ? `${(n / 1e6).toFixed(n >= 1e7 ? 1 : 2)}M` : n >= 1e4 ? `${Math.round(n / 1e3)}K` : n.toLocaleString("en");
-function battleCheck(team, W, NUMS) {
-  const skill = (i, kind) => (W[i]?.skills || []).find(s => s.kind === kind);
+function battleCheck(team, W, NUMS, D) {
+  // the wiki's skill, else the game's own (its BC cost, hits and damage modifier from the game's tables)
+  const skill = (i, kind) => (W[i]?.skills || []).find(s => s.kind === kind)
+    || (s => s && { ...s, kind })((D?.[team[i]]?.skills || []).find(s => s.label === kind && s.name));
   // buffs of one kind don't stack in the game: the biggest one on the team's BB/SBB counts
   const best = c => Math.max(0, ...team.filter(Boolean).map(id => { const p = powerOf(id, c); return p && "BS".includes(p[1]) ? p[0] : 0; }));
   const atkBuff = best("atk"), bbAtk = best("bbatk");
@@ -1448,7 +1450,7 @@ async function renderTeam() {
         : `<p class="dim">No units yet: tap the + spots above or <b>Fill empty slots</b>.</p>`}
       <p class="small dim" style="margin:8px 0 0">Max level stats of the chosen type${SQ.imps ? ", max imps" : ""}${SQ.lead ? ", the leader's skill" : ""}${SQ.friend ? ", the friend's skill" : ""}${SQ.es ? ", each unit's extra skill" : ""} and the spheres you pick (the app can't see yours). Like the game's squad screen, the friend is off by default.
         Tap a sphere to choose it. ✱ = a boost with a condition (counted). Cost: friend not counted. ${elems.map(([e, n]) => `<span class="badge">${orb(e)}×${n}</span>`).join(" ")}</p></div>
-    ${battleHtml(battleCheck(team, W, NUMS))}
+    ${battleHtml(battleCheck(team, W, NUMS, D))}
     ${team[0] || team[5] ? `<div class="sec"><h3 class="blue">Leader skills</h3>${[0, 5].filter(i => team[i]).map(i => { const [n, d] = ls(team[i], W[i]); const b = boostText(statBoosts(lsText(team[i], W[i], D)));
         return `<div class="sk"><div class="kn"><span class="tag ls">${i ? "Friend" : "Leader"}</span><span class="nm">${esc(n || UMAP[team[i]]?.n)}</span></div><p>${d ? hl(d) : `<span class="dim">No leader skill</span>`}</p>${b ? `<div class="pills"><span class="pill">Counted: ${esc(b)}</span></div>` : ""}</div>`; }).join("")}</div>` : ""}
     <div class="sec"><h3 class="green">What the team covers</h3><div class="cov">${COVER.map(c => { const p = providers(team, c);
