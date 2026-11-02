@@ -234,6 +234,7 @@ details > summary::before { content: "▸ "; } details[open] > summary::before {
 .gate { display: flex; align-items: center; gap: 8px; padding: 9px 4px; border-top: 1px solid rgba(255,255,255,.07); cursor: pointer; } .gate b { flex: 1; font-weight: normal; }
 .gate .n { font-size: 11px; color: var(--dim); white-space: nowrap; }
 .ulink { color: var(--accent); text-decoration: underline; cursor: pointer; }
+.count .umore { background: none; border: 0; padding: 0; font: inherit; text-shadow: inherit; }
 .rowlbl { flex: none; align-self: center; font-size: 11px; color: var(--dim); }
 .qlist.drops li { padding: 4px 0; } .qlist.drops li + li { border-top: 1px solid rgba(255,255,255,.06); }
 .chance { font-size: 10.5px; padding: 0 7px; border-radius: 999px; line-height: 17px; background: linear-gradient(#7ad67a, #2a8f3a); font-family: Rodin, Arial, sans-serif; text-shadow: var(--ol); }
@@ -645,9 +646,10 @@ function closeNames(q, items, name, rank = () => 0) {
   }
   return hits.sort((a, b) => a[0] - b[0] || b[1] - a[1]).map(h => h[2]);
 }
-function filteredUnits() {
+// anyRarity: as if every rarity chip were on
+function filteredUnits(anyRarity) {
   const q = uState.q.trim().toLowerCase(), rars = RARITY.filter(r => uState.rar.has(r[0]));
-  const list = UNITS.filter(u => (!u.e || uState.els.has(u.e)) && (q || uState.mine || !rars.length || rars.some(r => r[2](u))) && (q || uState.mine || !u.f)
+  const list = UNITS.filter(u => (!u.e || uState.els.has(u.e)) && (anyRarity || q || uState.mine || !rars.length || rars.some(r => r[2](u))) && (q || uState.mine || !u.f)
     && (!uState.mine || mine.has(u.id)) && [...uState.roles].every(c => roleOf(u.id, c, true)) && (!uState.get.size || hasSrc(u.id)) && searchHit(u, q));
   const role = activeRole();
   if (uState.sort === "power" && role) return list.sort(byPower(role));  // strongest first
@@ -664,6 +666,17 @@ async function renderUnits() {
   NAV_LIST = list.map(u => u.id);
   $("ucount").textContent = `${list.length} units${uState.q ? ` matching “${uState.q}”${bySkill ? ` (${bySkill} by skill or role)` : ""}` : ""}${
     uState.sort === "power" ? role ? ` · strongest ${TAGS.labels[role]} first` : " · pick a role to sort by strength" : ""}`;
+  // with a Get it or role filter on, the units it finds that the rarity chips hide (This week's 4★ and 5★ DEEMO
+  // units): how many, and a tap turns those rarities on
+  const more = (uState.get.size || uState.roles.size) && !q && !uState.mine && uState.rar.size
+    ? filteredUnits(true).filter(u => !RARITY.some(([k, , is]) => uState.rar.has(k) && is(u))) : [];
+  if (more.length) {
+    const keys = RARITY.filter(([k, , is]) => !uState.rar.has(k) && more.some(is)).map(r => r[0]);
+    const b = document.createElement("button"); b.className = "ulink umore"; b.id = "umore";
+    b.textContent = `${more.length} more in other rarities (${keys.map(k => RAR_SHORT[k]).join(", ")}): show them`;
+    b.onclick = () => { keys.forEach(k => uState.rar.add(k)); document.querySelectorAll("#urar [data-rar]").forEach(c => c.classList.toggle("on", uState.rar.has(c.dataset.rar))); renderUnits(); };
+    $("ucount").append(" · ", b);
+  }
   if (!list.length) {
     const close = q ? closeNames(q, UNITS, u => u.n, u => u.r).slice(0, 12) : [];
     $("ulist").innerHTML = uState.mine && !mine.size ? `<div class="empty"><b>Your box is empty</b>Your box is the units you own in the game: mark them here, or open one and tap <b>＋ My box</b>. The app then shows a ✓ on them, can fill teams from them and tells you which gate units you're missing.<div class="btnrow" style="justify-content:center"><button class="gbtn green" id="ueditnow">✎ Edit my box</button></div></div>`
@@ -683,10 +696,11 @@ async function renderUnits() {
 }
 const chip = (html, on) => { const b = document.createElement("button"); b.className = "chip" + (on ? " on" : ""); b.innerHTML = html; return b; };
 // the filter rows fold away behind the filter button; folded, one line says what is filtered
+const RAR_SHORT = { omni: "Omni", 7: "7★", 6: "6★", 5: "5★", low: "≤4★" };
 function filterSummary() {
-  const rl = { omni: "Omni", 7: "7★", 6: "6★", 5: "5★", low: "≤4★" }, parts = [];
+  const parts = [];
   parts.push(uState.els.size === ELS.length ? "All elements" : [...uState.els].join(", ") || "No element");
-  parts.push(uState.mine ? "My box" : [...uState.rar].map(k => rl[k]).join(", ") || "All rarities");
+  parts.push(uState.mine ? "My box" : [...uState.rar].map(k => RAR_SHORT[k]).join(", ") || "All rarities");
   if (uState.roles.size) parts.push([...uState.roles].map(c => TAGS.labels[c]).join(" + "));
   if (uState.get.size) parts.push(GETS.filter(g => uState.get.has(g[0])).map(g => g[1]).join(" / "));
   return parts.join(" · ");
@@ -732,7 +746,7 @@ function setupUnitFilters() {
   }
   const help = chip(`<img src="/static/orb_Light.png" alt="">Which beats which?`, true); help.onclick = elementChart; els.append(help);
   for (const [k, label] of RARITY) {
-    const b = chip(label, uState.rar.has(k));
+    const b = chip(label, uState.rar.has(k)); b.dataset.rar = k;
     b.onclick = () => { uState.rar.has(k) ? uState.rar.delete(k) : uState.rar.add(k); b.classList.toggle("on"); renderUnits(); };
     rar.append(b);
   }
