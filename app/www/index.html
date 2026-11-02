@@ -258,6 +258,11 @@ details > summary::before { content: "▸ "; } details[open] > summary::before {
 .boss { font-size: 10px; padding: 0 6px; border-radius: 999px; line-height: 16px; background: linear-gradient(#ff7a6b, #b8232a); text-shadow: var(--ol); }
 .ichip small { color: #9ff09f; font-family: Rodin, Arial, sans-serif; margin-left: 2px; }
 .qlist { list-style: none; margin: 0; padding: 0; } .qlist li { padding: 1px 0; } .qlist b { font-weight: normal; color: #fff; }
+/* a quest's Vortex banner (the game's own, as its quest list shows it), small beside its path (which wraps in its own
+   column); a tap shows it big */
+.qpath { display: flex; align-items: center; gap: 8px; margin: 2px 0; } .qpath > span { min-width: 0; }
+.qban, .item img.qban { flex: none; width: auto; height: 28px; aspect-ratio: 640 / 224; border-radius: 3px; filter: drop-shadow(0 1px 2px #000); cursor: zoom-in; }
+.bigban { width: 100%; max-width: 480px; border-radius: 6px; }
 .src { font-size: 10px; color: #9aa4bf; margin: 1px 0 3px; } .rv { font-size: 10px; color: #7ad67a; margin-left: 6px; white-space: nowrap; }
 .nog { margin-left: 6px; font-size: 9.5px; padding: 0 6px; border-radius: 999px; border: 1px solid #6b6f80; color: #b9bccb; vertical-align: 2px; white-space: nowrap; }
 .mlist { list-style: none; margin: 6px 0 0; padding: 0 0 0 10px; border-left: 2px solid var(--gold3); } .mlist > li { padding: 4px 0 4px 8px; } .mlist b { color: var(--accent); font-weight: 600; }
@@ -902,8 +907,23 @@ function skillBlock(s) {
       : s.note ? `<details><summary>Numbers</summary><div class="note">${esc(s.note)}</div></details>` : ""}</div>`;
 }
 const slug = k => k.toLowerCase().replace(/[^a-z]/g, "");
+// the game's Vortex banner for a quest path (data/banners.json, from export_bundle.py): its dungeon's, else its area's,
+// found by the path's longest known start; story areas have none
+let BAN = {};
+const banOf = p => { const parts = p.split(/ [›>] /).map(s => s.trim().replace(/\s+/g, " "));
+  for (let i = parts.length; i > 0; i--) { const b = BAN[parts.slice(0, i).join(" › ")]; if (b) return b; } return ""; };
+// a quest path as HTML: "Area › Dungeon › Quest", with its banner on the left when it has one
+const qpath = p => { const b = banOf(p), t = esc(p.replace(/ > /g, " › "));
+  return b ? `<span class="qpath"><img class="qban" src="/thumbs/b/${b}.webp" alt="" loading="lazy" onerror="this.remove()"><span>${t}</span></span>` : t; };
+// a tap on a banner shows it big with its quest (before the row's own tap, if it has one)
+document.addEventListener("click", e => {
+  const b = e.target.closest?.(".qban"); if (!b) return;
+  e.stopPropagation(); e.preventDefault();
+  modal(`<img class="bigban" src="${b.getAttribute("src")}" alt=""><p class="small" style="margin:8px 0">${esc(b.nextElementSibling?.textContent || "")}</p>
+    <div class="btnrow" style="justify-content:center"><button class="gbtn mclose">Close</button></div>`);
+}, true);
 // one quest of Revived's drop table: chance per enemy kill (chests) or per hit, how many, boss only
-const dropRow = d => `<li><b>${esc(d.p)}</b><span class="fxm"><span class="chance">${d.c}%</span><span class="fxt">per ${d.w === "hit" ? "hit" : "kill"}</span>${
+const dropRow = d => `<li><b>${qpath(d.p)}</b><span class="fxm"><span class="chance">${d.c}%</span><span class="fxt">per ${d.w === "hit" ? "hit" : "kill"}</span>${
   d.n > 1 ? `<span class="fxt">${d.w === "hit" ? "up to " : "×"}${d.n}</span>` : ""}${d.b ? `<span class="boss">Boss</span>` : ""}</span></li>`;
 const dropsHtml = g => `<div class="src">✓ Revived's own drop table (bfrevive.net) · best chance first</div><ul class="qlist drops">${g.drops.slice(0, 6).map(dropRow).join("")}</ul>${
   g.drops.length > 6 ? `<details><summary>${g.drops.length - 6} more quest${g.drops.length > 7 ? "s" : ""}</summary><ul class="qlist drops">${g.drops.slice(6).map(dropRow).join("")}</ul></details>` : ""}${
@@ -1046,9 +1066,9 @@ function unitSrcHtml(S, id) {
   const out = [];
   if (s.g) out.push(["Summon", foldList(s.g, ([g, p]) => `<li class="glink" data-gate="${g}"><b>${esc(S.g[g]?.[0] || `Gate ${g}`)}</b><span class="fxm"><span class="chance">${p}%</span><span class="fxt">per pull</span><span class="fxt">≈${in10(p)}% in 10 pulls</span>${
     S.g[g]?.[1] & 1 ? `<span class="boss">This week</span>` : ""}</span></li>`, 3)]);
-  if (s.c) out.push(["Capture", foldList(s.c, ([m, cap, appear, n, boss, as]) => `<li><b>${esc(srcQuest(S, m))}</b><span class="fxm"><span class="chance">${cap}%</span><span class="fxt">capture</span>${
+  if (s.c) out.push(["Capture", foldList(s.c, ([m, cap, appear, n, boss, as]) => `<li><b>${qpath(srcQuest(S, m))}</b><span class="fxm"><span class="chance">${cap}%</span><span class="fxt">capture</span>${
     n > 1 ? `<span class="fxt">×${n}</span>` : ""}${appear < 100 ? `<span class="fxt">in ${appear}% of runs</span>` : ""}${boss ? `<span class="boss">Boss</span>` : ""}${as ? `<span class="fxt">fights as ${unitLink(as)}</span>` : ""}</span></li>`)]);
-  if (s.r) out.push(["Clear reward", foldList(s.r, ([m, first, n]) => `<li><b>${esc(srcQuest(S, m))}</b><span class="fxm"><span class="fxt">${first === 1 ? "first clear" : "every clear"}</span>${n > 1 ? `<span class="fxt">×${n}</span>` : ""}</span></li>`)]);
+  if (s.r) out.push(["Clear reward", foldList(s.r, ([m, first, n]) => `<li><b>${qpath(srcQuest(S, m))}</b><span class="fxm"><span class="fxt">${first === 1 ? "first clear" : "every clear"}</span>${n > 1 ? `<span class="fxt">×${n}</span>` : ""}</span></li>`)]);
   if (s.s) out.push(["Event shop", foldList(s.s, ([t, price, most, n]) => `<li><b>${esc(S.t[t] || "Event token")} shop</b><span class="fxm"><span class="chance">${price} ${esc(S.t[t] || "tokens")}</span>${
     n > 1 ? `<span class="fxt">for ${n}</span>` : ""}<span class="fxt">buy up to ${most}</span></span></li>`)]);
   return `<div class="src">✓ Revived's live game data (bfrevive.net, ${day(S.built * 1000)})</div><ul class="get">${out.map(([k, h]) => `<li><span class="gtag ${slug(k)}">${k}</span><div>${h}</div></li>`).join("")}</ul>`;
@@ -1060,7 +1080,7 @@ function enemyHtml(S, id) {
   const other = e.filter(r => r[1] > 0).length;
   return `<p class="small" style="margin:0 0 6px">${UMAP[id]?.n ? esc(UMAP[id].n) : "It"} fights in <b>${e.length}</b> quest${e.length > 1 ? "s" : ""} in Revived${
     other ? `. Capturing it there gives another unit${other < e.length ? ` (in ${other} of them; in the rest it can't be captured)` : ""}` : ", but it can't be captured there"}.</p>
-    ${foldList(e, ([m, cap, appear, n, boss, got]) => `<li><b>${esc(srcQuest(S, m))}</b><span class="fxm">${cap > 0 ? `<span class="chance">${cap}%</span><span class="fxt">capture: joins as ${unitLink(got)}</span>` : `<span class="fxt">no capture</span>`}${
+    ${foldList(e, ([m, cap, appear, n, boss, got]) => `<li><b>${qpath(srcQuest(S, m))}</b><span class="fxm">${cap > 0 ? `<span class="chance">${cap}%</span><span class="fxt">capture: joins as ${unitLink(got)}</span>` : `<span class="fxt">no capture</span>`}${
       n > 1 ? `<span class="fxt">×${n}</span>` : ""}${appear < 100 ? `<span class="fxt">in ${appear}% of runs</span>` : ""}${boss ? `<span class="boss">Boss</span>` : ""}</span></li>`)}`;
 }
 // every unit a summon gate can give: the rarest first, then the best chance
@@ -1310,7 +1330,7 @@ async function renderElgifs() {
   $("ecount").querySelectorAll("[data-unit]").forEach(b => b.onclick = () => go(`#/unit/${b.dataset.unit}`));
   paged($("elist"), list, e => { const d = document.createElement("div"); d.className = "item"; d.style.cursor = "default";
     d.innerHTML = `<div class="er">${elgifRarity(e.r)}</div><div style="min-width:0;flex:1"><div class="t">${esc(e.name)}${elgifGets(e) ? `<span class="craft got">in Revived</span>` : ""}</div><div class="eff">${hl(e.desc)}</div>${
-      elgifGets(e) ? `<div class="eget">${(e.g || []).map(([m, first]) => `<div><span class="gtag clearreward">Clear reward</span> ${first ? "first clear of" : "every clear of"} <b>${esc(srcQuest(S, m))}</b></div>`).join("")}${
+      elgifGets(e) ? `<div class="eget">${(e.g || []).map(([m, first]) => `<div><span class="gtag clearreward">Clear reward</span> ${first ? "first clear of" : "every clear of"} <b>${qpath(srcQuest(S, m))}</b></div>`).join("")}${
         (e.p || []).map(([mode, at, how]) => `<div><span class="gtag ${mode === "Grand Quest" ? "grandquestreward" : "frontier"}">${esc(mode)}</span> <b>${esc(at)}</b>${how ? `: ${esc(how)}` : ""}</div>`).join("")}${
         (e.a || []).map(([t, goal]) => `<div><span class="gtag achievement">Achievement</span> <b>${esc(t)}</b>${goal && goal !== t ? `: ${esc(goal)}` : ""}</div>`).join("")}</div>` : ""}</div>`;
     return d; }, "");
@@ -1412,10 +1432,10 @@ async function renderDrops() {
   const capPlaces = [...caught].sort((a, b) => b[1].size - a[1].size || a[0].localeCompare(b[0])).slice(0, 30);
   $("dres").innerHTML = (units.length ? `<div class="sec"><h3 class="blue">Units</h3><div class="recent">${units.map(u => unitMini(u.id)).join("")}</div><p class="small dim" style="margin:4px 0 0">Open a unit for its summon gates, capture spots and rewards.</p></div>` : "")
     + (items.length ? `<div class="sec"><h3 class="purple">Items</h3>${items.map(s => `<div class="item" style="margin:0 0 8px" onclick="go('#/item/${s.id}')"><img src="${iImg(s.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1"><div class="t">${esc(s.name)}${nogTag(s)}</div><div class="s">${esc(s.desc)}</div></div></div>`).join("")}</div>` : "")
-    + (ranked.length ? `<div class="sec"><h3 class="green">Drops in</h3><div class="src">✓ Revived's own drop table (bfrevive.net)</div>${ranked.map(([p, ns]) => `<div class="place"><b>${esc(p.replace(/ > /g, " › "))}</b>${
+    + (ranked.length ? `<div class="sec"><h3 class="green">Drops in</h3><div class="src">✓ Revived's own drop table (bfrevive.net)</div>${ranked.map(([p, ns]) => `<div class="place"><b>${qpath(p)}</b>${
         [...ns].sort((a, b) => (b[1] || 0) - (a[1] || 0) || a[0].localeCompare(b[0])).map(([n, c]) => { const i = Dr.ids[n];
         return `<span class="ichip" ${i ? `onclick="go('#/item/${i}')"` : ""}>${i ? `<img src="${iImg(i)}" alt="" onerror="this.remove()">` : ""}${esc(n)}${c ? `<small>${c}%</small>` : ""}</span>`; }).join("")}</div>`).join("")}</div>` : "")
-    + (capPlaces.length ? `<div class="sec"><h3 class="green">Capture here</h3>${capPlaces.map(([p, us]) => `<div class="place"><b>${esc(p)}</b>${
+    + (capPlaces.length ? `<div class="sec"><h3 class="green">Capture here</h3>${capPlaces.map(([p, us]) => `<div class="place"><b>${qpath(p)}</b>${
         [...us].sort((a, b) => b[1] - a[1] || UMAP[b[0]].r - UMAP[a[0]].r).map(([id, c]) => `<span class="ichip" onclick="go('#/unit/${id}')"><img src="${uImg(id)}" alt="" onerror="this.remove()">${esc(UMAP[id].n)}<small>${c}%</small></span>`).join("")}</div>`).join("")}</div>` : "")
     + (!items.length && !ranked.length && !units.length && !capPlaces.length ? `<div class="empty"><b>Nothing found</b>Try another name.</div>` : "");
 }
@@ -2355,7 +2375,7 @@ window.BFBack = () => {
 };
 
 (async () => {
-  const [U, T] = await Promise.all([load("units"), load("tags")]);
+  const [U, T] = await Promise.all([load("units"), load("tags"), load("banners").then(b => { BAN = b; })]);
   TAGS = { labels: {}, units: {}, power: {}, powerUnit: {}, ...T };
   for (const p of Object.values(TAGS.power)) for (const [c, [v]] of Object.entries(p)) POWER_MAX[c] = Math.max(POWER_MAX[c] || 0, c === "heal" ? Math.min(v, 10000) : v);
   UNITS = Object.entries(U).map(([id, [n, r, e, c, h1, a1, d1, r1, hm, am, dm, rm, no]]) =>

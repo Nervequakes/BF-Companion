@@ -46,6 +46,7 @@ Slow download from GitHub? Get the APK from the **[Google Drive mirror](https://
 - Every quest it **fights in as an enemy**, also where it can't be captured or a capture gives another unit.
 - Only Revived's own data: for a unit you can't get directly, the earlier form you can get and how, then you evolve it.
 - A page for every summon gate, and a *Get it* filter (This week, Summon, Capture, Reward / shop).
+- Every Vortex quest with its banner from the game, like the game's quest list (tap it to see it big).
 
 **Elgifs**
 - All 541 Elgifs (the extra skills an Imbued Tablet Elgif gives a unit) from the game's own files, with rarity and effect.
@@ -88,7 +89,7 @@ Slow download from GitHub? Get the APK from the **[Google Drive mirror](https://
 2. Open it and allow installing apps from your browser or file manager when Android asks.
 3. Done. For later versions you don't need this page: tap the logo, then *Privacy → Check for updates*.
 
-Android 7.0 or newer. About 110 MB, because every unit's artwork and animated sprite is included.
+Android 7.0 or newer. About 115 MB, because every unit's artwork and animated sprite is included.
 
 **Every version and what changed in it:** [Releases](../../releases). Older versions stay there to download.
 
