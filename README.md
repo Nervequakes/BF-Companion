@@ -29,7 +29,8 @@ Slow download from GitHub? Get the APK from the **[Google Drive mirror](https://
   as a **GIF** to share, on the app's battle background or see-through.
 - Stats for every type (Lord, Anima, Breaker, Guardian, Oracle) of every unit, Imps, max level.
 - Leader Skill, BB, SBB, UBB, Extra Skill and Dual BB with BC cost, hits and the exact numbers.
-- Roles with how strong they are ("Mitigation 50%", "BB ATK 600%"), SP enhancements, evolution line and materials, lore.
+- Roles with how strong they are ("Mitigation 50%", "BB ATK 600%"), evolution line and materials, lore.
+- SP enhancements with the players' suggested SP builds from the Brave Frontier Wiki, the build's options ticked.
 - All in English: units from the Japanese game show the game's own English, and a fan translation where it has none.
 - Search by name, skill text or role, several words at once: `fire omni heal`, `def ignore`, `water mitigation`.
   A typo still finds it: *Did you mean…?* shows the closest names.
@@ -54,7 +55,7 @@ Slow download from GitHub? Get the APK from the **[Google Drive mirror](https://
 **Spheres and items**
 - Every sphere and material with Revived's own ways to get it: drops (chance per kill or per hit), clear rewards, shops,
   raid drops, Arena rank rewards, achievements and Synthesis. Something Revived doesn't give says so, and *craftable*
-  means every material can be had.
+  means every material can be had. Filter by sphere type, element, or only what Revived gives.
 - **Crafting planner**: all base materials and Karma for any Synthesis recipe, for any amount, and **where to farm**
   each material with its drop chance.
 - Suggested spheres for each unit: the ones that switch on its extra skill, then the spheres Revived gives that suit
