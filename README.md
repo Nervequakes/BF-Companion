@@ -25,7 +25,8 @@ Slow download from GitHub? Get the APK from the **[Google Drive mirror](https://
 ## What's inside
 
 **Units**
-- All 2,292 units with artwork and their **animated battle sprite**, taken from the game's own files.
+- All 2,292 units with artwork and their **animated battle sprite**, taken from the game's own files. Save the sprite
+  as a **GIF** to share, on the app's battle background or see-through.
 - Stats for every type (Lord, Anima, Breaker, Guardian, Oracle) of every unit, Imps, max level.
 - Leader Skill, BB, SBB, UBB, Extra Skill and Dual BB with BC cost, hits and the exact numbers.
 - Roles with how strong they are ("Mitigation 50%", "BB ATK 600%"), SP enhancements, evolution line and materials, lore.
@@ -64,9 +65,12 @@ Slow download from GitHub? Get the APK from the **[Google Drive mirror](https://
 **Team builder**
 - Up to 10 named teams of 5 units + a friend, on a battle field with the animated sprites.
 - Squad numbers like the game: HP, ATK, DEF, REC with the unit type, spheres, leader skill, friend skill, extra skills and Imps.
-- **Battle check**: how much BC the team's SBBs fill, who can cast again right away, and rough BB/SBB/UBB damage.
+- **Battle check**: how much BC the team's skills fill (also per spark, and from leader and extra skills), who can cast
+  SBB again right away, and rough BB/SBB/UBB damage from every attack, with the game's own modifiers.
+- **Spark estimate**: how many of the team's hits spark in slot order, the best casting order and each unit's share,
+  from the game's hit frames and the community's Automatic Sparking Simulator timings.
 - What the team covers (mitigation, healing, BB fill, buffs…), *Fill empty slots* with units that cover what's missing,
-  from every unit or only from your box.
+  newer units first: from the units you can get in Revived, or only from your box.
 - **Against each element**: how many of your units hit each enemy element hard or weakly, and the team's best element.
 - Choosing a leader or friend shows each unit's leader skill.
 - Share your team as a picture.
@@ -100,13 +104,13 @@ Yes, and you don't have to take my word for it:
   ([MainActivity.java, line 54](app/src/sg/bf/companion/MainActivity.java#L54)).
 - **It collects nothing.** No account, no ads, no analytics, no trackers. Your favorites and teams are saved only
   on your phone, in the app's own storage, and are gone when you uninstall it.
-- **The only file it ever writes** is a picture you choose to share or save (a unit or team card), in
+- **The only file it ever writes** is a picture you choose to share or save (a unit or team card, or a sprite GIF), in
   *Pictures/BF Companion*.
 - **Read the code.** The [`app`](app) folder holds everything that makes the APK:
   - [`AndroidManifest.xml`](app/AndroidManifest.xml): what the app is allowed to do (nothing extra).
   - [`MainActivity.java`](app/src/sg/bf/companion/MainActivity.java): the whole Android part, about 160 lines. It
     shows the app's pages, colours the phone's status and navigation bars, saves or shares a picture when you tap
-    *Share*, and handles the back button.
+    *Share* or *Save GIF*, and handles the back button.
   - [`www/index.html`](app/www/index.html): the app itself. An APK is a zip file: unzip it and you'll find this
     exact file as `assets/www/index.html`. The rest of the APK is the game data, artwork and sprites it shows.
   - [`build_apk.bat`](app/build_apk.bat): how the APK is built with Google's Android tools.
@@ -126,7 +130,8 @@ The data is a snapshot from the day the APK was built; new versions come with fr
 
 Made by [@Nervequakes](https://github.com/Nervequakes).
 
-Thanks to the BF Revive team for bringing the game back and publishing its data, and to the Brave Frontier Wiki editors.
+Thanks to the BF Revive team for bringing the game back and publishing its data, to the Brave Frontier Wiki editors, and
+to the makers of the Automatic Sparking Simulator (and BluuArc's Project Sparkle) for the spark timings.
 
 *BF Companion is a fan-made guide and is not affiliated with gumi Inc., Alim or the BF Revive team. Brave Frontier, its
 characters, artwork and sprites belong to their owners.*

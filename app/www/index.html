@@ -157,6 +157,8 @@ main { padding-bottom: calc(var(--navh) + 20px); }
 .bcrow { display: flex; gap: 8px; align-items: center; padding: 6px 0; border-top: 1px solid rgba(255,255,255,.07); } .bcrow img { width: 40px; height: 40px; flex: none; cursor: pointer; }
 .bcl { font-size: 12.5px; } .bcl b { font-family: Rodin, Arial, sans-serif; text-shadow: var(--ol); } .bcd { font-size: 12px; color: var(--dim); } .bcd b { color: var(--accent); font-weight: normal; font-family: Rodin, Arial, sans-serif; }
 .okc { color: #7ad67a; } .noc { color: #ff8a7a; } .bcl .okc, .bcl .noc { margin-left: 4px; font-size: 11px; }
+.spark { margin-top: 8px; padding: 7px 9px; border-radius: 7px; background: rgba(0,0,0,.35); border-left: 3px solid #f2c94c; }
+.spark .bcl b { color: var(--accent); } .sorder { margin: 5px 0 0; padding-left: 22px; font-size: 12.5px; } .sorder li { margin: 2px 0; }
 .item .sb { font-size: 11px; color: #9ff09f; margin: 1px 0 2px; }
 .item .t .sti { width: 14px; height: 14px; flex: none; }  /* not the 46px item icon size */
 /* Elgifs: rarity on the left, the whole effect (sphere text is cut at two lines) */
@@ -283,6 +285,7 @@ select.gsel { height: 38px; font-size: 12.5px; padding: 0 10px; }
 .stage { position: relative; min-height: 170px; margin: -2px -2px 0; border-radius: 9px; overflow: hidden; background: #2b3a1c url(/static/battle_bg.jpg) center 62% / cover; display: grid; place-items: end center; padding: 10px 0 18px; }
 .stage::after { content: ""; position: absolute; inset: 0; background: linear-gradient(rgba(0,0,0,.05), rgba(0,0,0,.25)); pointer-events: none; }
 .stage .spr { position: relative; z-index: 1; image-rendering: pixelated; filter: drop-shadow(0 3px 2px rgba(0,0,0,.5)); }
+.gifs { display: flex; gap: 8px; margin-top: 8px; } .gifs .gbtn { flex: 1; }
 .formation { position: relative; isolation: isolate; height: 330px; border-radius: 12px; overflow: hidden; border: 2px solid var(--gold2); box-shadow: inset 0 0 0 1px #000, 0 3px 6px #000; background: #2b3a1c url(/static/battle_bg.jpg) center 70% / cover; }
 .slot { position: absolute; width: 112px; height: 104px; transform: translate(-50%, -100%); padding: 0; border: 0; background: none; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; cursor: pointer; }
 .slot img { max-width: 112px; max-height: 88px; filter: drop-shadow(0 3px 2px rgba(0,0,0,.55)); }
@@ -963,7 +966,8 @@ async function showUnit(id) {
   const clearNote = cl => `<div class="note" style="border-color:var(--gold2);margin:0 0 8px">In Revived, first clear reward of:<ul class="qlist" style="margin-top:4px">${cl.map(p => `<li><b>${esc(p)}</b></li>`).join("")}</ul></div>`;
   if (wk) { $("hmeta").insertAdjacentHTML("afterbegin", `<span class="badge wk" data-gate="${wk[0]}">This week: ${esc(USRC.g[wk[0]][0])} ›</span>`); $("hmeta").querySelector(".wk").onclick = () => go(`#/gate/${wk[0]}`); }
   $("ubody").innerHTML = `
-    ${spr ? `<div class="sec"><h3 class="green">In battle</h3><div class="stage"><img class="spr" id="spr" src="${sImg(id)}" alt=""></div></div>` : ""}
+    ${spr ? `<div class="sec"><h3 class="green">In battle</h3><div class="stage"><img class="spr" id="spr" src="${sImg(id)}" alt=""></div>
+      <div class="gifs"><button class="gbtn small" data-gif="1">Save GIF</button><button class="gbtn small dark" data-gif="0">GIF, see-through</button></div></div>` : ""}
     <div class="sec"><h3>Stats</h3>${statTable(u, w)}</div>
     ${skills.length || roles ? `<div class="sec"><h3 class="blue">Skills</h3>${roles ? `<div class="roles">${roles}</div>` : ""}${skills.map(skillBlock).join("")}</div>` : ""}
     ${spheres ? `<div class="sec"><h3 class="purple">Best spheres</h3>${spheres}</div>` : ""}
@@ -988,6 +992,7 @@ async function showUnit(id) {
   // a sticky row of the page's sections to jump to (the unit pages are long)
   jumpBar($("ubody"), [...$("ubody").querySelectorAll(":scope > .sec")].filter(s => s.querySelector(":scope > h3")));
   if ($("toelgifs")) $("toelgifs").onclick = () => go("#/elgifs");
+  $("ubody").querySelectorAll("[data-gif]").forEach(b => b.onclick = () => saveSpriteGif(id, b.dataset.gif === "1", b));
   // every unit at the same zoom, as in the game (whole numbers keep pixel art sharp); only one too big for the stage shrinks
   if (spr && $("spr")) {
     const stage = $("spr").parentElement.clientWidth, zoom = stage >= 560 ? 3 : 2;
@@ -1256,6 +1261,188 @@ async function shareUnit(id) {
   else { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `${u.n}.png`; a.click(); }
 }
 
+// ---------------- the battle sprite as a GIF ----------------
+// The idle loop is an animated WebP: each frame is a small WebP of its own inside it (an ANMF chunk) that the WebView
+// decodes, put together as the WebP spec says (drawn over or blended; cleared afterwards or not).
+// Returns the canvas size and [pixels, ms] per frame.
+async function webpFrames(buf) {
+  const b = new Uint8Array(buf), dv = new DataView(buf), u24 = o => b[o] | b[o + 1] << 8 | b[o + 2] << 16;
+  const chunks = (o, end) => { const out = []; while (o + 8 <= end) { const n = dv.getUint32(o + 4, true);
+    out.push({ t: String.fromCharCode(...b.subarray(o, o + 4)), o: o + 8, n }); o += 8 + n + (n & 1); } return out; };
+  const top = chunks(12, b.length), vp8x = top.find(c => c.t === "VP8X"), anmf = top.filter(c => c.t === "ANMF");
+  const bytes = s => [...s].map(c => c.charCodeAt(0)), le = (n, k) => Array.from({ length: k }, (_, i) => n >> 8 * i & 255);
+  const still = (w, h, parts) => {  // one frame's chunks (ALPH + VP8, or VP8L) as a WebP file
+    const head = parts.some(p => p.t === "ALPH") ? [...bytes("VP8X"), ...le(10, 4), 16, 0, 0, 0, ...le(w - 1, 3), ...le(h - 1, 3)] : [];
+    const body = parts.map(p => b.subarray(p.o - 8, p.o + p.n + (p.n & 1)));
+    const size = 4 + head.length + body.reduce((a, p) => a + p.length, 0);
+    return new Blob([new Uint8Array([...bytes("RIFF"), ...le(size, 4), ...bytes("WEBP"), ...head]), ...body], { type: "image/webp" });
+  };
+  const cv = document.createElement("canvas"), g = cv.getContext("2d", { willReadFrequently: true }), out = [];
+  if (!vp8x || !anmf.length) {  // a still picture
+    const im = await createImageBitmap(new Blob([b], { type: "image/webp" }));
+    cv.width = im.width; cv.height = im.height; g.drawImage(im, 0, 0);
+    return { W: cv.width, H: cv.height, frames: [[g.getImageData(0, 0, cv.width, cv.height), 1000]] };
+  }
+  const W = cv.width = u24(vp8x.o + 4) + 1, H = cv.height = u24(vp8x.o + 7) + 1;
+  let clear = null;
+  for (const f of anmf) {
+    const o = f.o, x = 2 * u24(o), y = 2 * u24(o + 3), w = u24(o + 6) + 1, h = u24(o + 9) + 1, ms = u24(o + 12), flags = b[o + 15];
+    if (clear) g.clearRect(...clear);  // the last frame asked to be cleared away
+    const im = await createImageBitmap(still(w, h, chunks(o + 16, o + f.n).filter(p => /^(ALPH|VP8 |VP8L)$/.test(p.t))));
+    if (flags & 2) g.clearRect(x, y, w, h);  // drawn over what's there, not blended with it
+    g.drawImage(im, x, y); im.close?.();
+    out.push([g.getImageData(0, 0, W, H), ms]);
+    clear = flags & 1 ? [x, y, w, h] : null;
+  }
+  return { W, H, frames: out };
+}
+
+// GIF's LZW for 8-bit pixels: codes from 9 bits up to 12, then a clear code and a fresh table
+function lzw(px) {
+  const out = [], CLEAR = 256, END = 257;
+  let size = 9, next = 258, table = new Map(), acc = 0, nb = 0;
+  const put = c => { acc |= c << nb; nb += size; while (nb >= 8) { out.push(acc & 255); acc >>>= 8; nb -= 8; } };
+  put(CLEAR);
+  let cur = px[0];
+  for (let i = 1; i < px.length; i++) {
+    const k = px[i], key = cur << 8 | k, code = table.get(key);
+    if (code !== undefined) { cur = code; continue; }
+    put(cur);
+    if (next === 4096) { put(CLEAR); table.clear(); size = 9; next = 258; }
+    else { if (next >= 1 << size) size++; table.set(key, next++); }
+    cur = k;
+  }
+  put(cur); put(END);
+  if (nb) out.push(acc & 255);
+  return out;
+}
+
+// A looping GIF of RGBA frames: one palette for all of them (the exact colours when there are up to 255, else a median
+// cut that splits the widest, busiest colour boxes first so the sprite keeps its colours next to a big background),
+// index 255 see-through. See-through GIFs (clear) redraw each whole frame; on a background a frame only redraws the box
+// that changed. Frames shorter than 2/100 s or the same as the last one are folded into the one before.
+function makeGif(w, h, pics, ms, clear) {
+  const solid = (p, i) => !clear || p[i + 3] >= 128, exact = new Set();
+  for (const p of pics) { for (let i = 0; i < p.length && exact.size <= 255; i += 4) if (solid(p, i)) exact.add(p[i] << 16 | p[i + 1] << 8 | p[i + 2]); }
+  let pal;
+  if (exact.size <= 255) pal = [...exact].map(c => [c >> 16, c >> 8 & 255, c & 255]);
+  else {
+    const cnt = new Float64Array(32768), sum = new Float64Array(32768 * 3);
+    for (const p of pics) for (let i = 0; i < p.length; i += 4) if (solid(p, i)) {
+      const k = p[i] >> 3 << 10 | p[i + 1] >> 3 << 5 | p[i + 2] >> 3; cnt[k]++; sum[3 * k] += p[i]; sum[3 * k + 1] += p[i + 1]; sum[3 * k + 2] += p[i + 2];
+    }
+    const ch = (k, c) => k >> 10 - 5 * c & 31, stat = bins => {
+      const lo = [31, 31, 31], hi = [0, 0, 0]; let n = 0;
+      for (const k of bins) { n += cnt[k]; for (let c = 0; c < 3; c++) { lo[c] = Math.min(lo[c], ch(k, c)); hi[c] = Math.max(hi[c], ch(k, c)); } }
+      const c = [0, 1, 2].reduce((a, c) => hi[c] - lo[c] > hi[a] - lo[a] ? c : a, 0);
+      return { bins, c, score: bins.length > 1 ? (hi[c] - lo[c]) * Math.sqrt(n) : -1, n };
+    };
+    const boxes = [stat([...cnt.keys()].filter(k => cnt[k]))];
+    while (boxes.length < 255) {
+      const i = boxes.reduce((a, bx, j) => bx.score > boxes[a].score ? j : a, 0), bx = boxes[i];
+      if (bx.score < 0) break;
+      const s = bx.bins.sort((a, b) => ch(a, bx.c) - ch(b, bx.c));
+      let half = 0, cut = 1;
+      for (; cut < s.length - 1 && (half += cnt[s[cut - 1]]) < bx.n / 2; cut++);
+      boxes.splice(i, 1, stat(s.slice(0, cut)), stat(s.slice(cut)));
+    }
+    pal = boxes.map(bx => { const n = bx.n, t = [0, 0, 0]; for (const k of bx.bins) for (let c = 0; c < 3; c++) t[c] += sum[3 * k + c]; return t.map(v => Math.round(v / n)); });
+    // then a few rounds of k-means over the bins, each palette colour moving to the middle of its pixels (on a
+    // background, rarer colours count for more, as in the split above, so the big background doesn't take them all)
+    const bins = boxes.flatMap(bx => bx.bins), mean = bins.map(k => [0, 1, 2].map(c => sum[3 * k + c] / cnt[k]));
+    for (let round = 0; round < 4; round++) {
+      const acc = pal.map(() => [0, 0, 0, 0]);
+      bins.forEach((k, i) => {
+        const [r, g, b] = mean[i], wt = clear ? cnt[k] : Math.sqrt(cnt[k]); let best = Infinity, j = 0;
+        pal.forEach(([pr, pg, pb], q) => { const d = 2 * (r - pr) ** 2 + 4 * (g - pg) ** 2 + 3 * (b - pb) ** 2; if (d < best) { best = d; j = q; } });
+        acc[j][0] += r * wt; acc[j][1] += g * wt; acc[j][2] += b * wt; acc[j][3] += wt;
+      });
+      pal = acc.map((a, j) => a[3] ? a.slice(0, 3).map(v => Math.round(v / a[3])) : pal[j]);
+    }
+  }
+  const near = new Map(), index = (r, g, b) => {
+    const key = r << 16 | g << 8 | b; let v = near.get(key);
+    if (v === undefined) { let best = Infinity; pal.forEach(([pr, pg, pb], j) => { const d = 2 * (r - pr) ** 2 + 4 * (g - pg) ** 2 + 3 * (b - pb) ** 2; if (d < best) { best = d; v = j; } }); near.set(key, v); }
+    return v;
+  };
+  const idx = pics.map(p => { const a = new Uint8Array(w * h); for (let j = 0; j < a.length; j++) a[j] = solid(p, 4 * j) ? index(p[4 * j], p[4 * j + 1], p[4 * j + 2]) : 255; return a; });
+  const keep = [];  // [indices, start in 1/100 s]
+  let t = 0;
+  idx.forEach((a, k) => {
+    const s = Math.round(t / 10), last = keep.at(-1); t += ms[k];
+    if (!last || s - last[1] >= 2 && a.some((v, j) => v !== last[0][j])) keep.push([a, s]);
+  });
+  const B = [], w16 = v => B.push(v & 255, v >> 8 & 255);
+  B.push(...[..."GIF89a"].map(c => c.charCodeAt(0))); w16(w); w16(h); B.push(0xf7, 0, 0);
+  for (let j = 0; j < 256; j++) B.push(...(pal[j] || [0, 0, 0]));
+  B.push(0x21, 0xff, 11, ...[..."NETSCAPE2.0"].map(c => c.charCodeAt(0)), 3, 1, 0, 0, 0);  // loop for ever
+  keep.forEach(([a, s], k) => {
+    const delay = Math.max(2, (keep[k + 1]?.[1] ?? Math.round(t / 10)) - s), prev = !clear && k ? keep[k - 1][0] : null;
+    let x0 = 0, y0 = 0, x1 = w, y1 = h;
+    if (prev) {
+      x0 = w; y0 = h; x1 = y1 = 0;
+      for (let j = 0; j < a.length; j++) if (a[j] !== prev[j]) { const x = j % w, y = (j - x) / w; x0 = Math.min(x0, x); x1 = Math.max(x1, x + 1); y0 = Math.min(y0, y); y1 = Math.max(y1, y + 1); }
+    }
+    const sub = new Uint8Array((x1 - x0) * (y1 - y0));
+    for (let y = y0, j = 0; y < y1; y++) for (let x = x0; x < x1; x++, j++) sub[j] = prev && a[y * w + x] === prev[y * w + x] ? 255 : a[y * w + x];
+    // see-through: the frame is cleared before the next one (disposal 2); on a background it stays under it (1)
+    B.push(0x21, 0xf9, 4, (clear ? 2 : 1) << 2 | (clear || prev ? 1 : 0)); w16(delay); B.push(255, 0);
+    B.push(0x2c); w16(x0); w16(y0); w16(x1 - x0); w16(y1 - y0); B.push(0, 8);
+    const data = lzw(sub);
+    for (let i = 0; i < data.length; i += 255) { const c = data.slice(i, i + 255); B.push(c.length, ...c); }
+    B.push(0);
+  });
+  B.push(0x3b);
+  return new Uint8Array(B);
+}
+
+// A unit's idle loop as a GIF at the unit page's zoom (2x, pixels kept sharp): on the page's battle background, or
+// see-through (a GIF pixel is fully clear or solid, so soft glows get hard edges)
+async function spriteGif(id, onStage) {
+  const { W, H, frames } = await webpFrames(await (await fetch(sImg(id))).arrayBuffer()), Z = 2;
+  let x0 = W, y0 = H, x1 = 0, y1 = 0;  // what any frame draws
+  for (const [d] of frames) for (let i = 3; i < d.data.length; i += 4) if (d.data[i] >= (onStage ? 1 : 128)) {
+    const p = (i - 3) / 4, x = p % W, y = (p - x) / W; x0 = Math.min(x0, x); x1 = Math.max(x1, x + 1); y0 = Math.min(y0, y); y1 = Math.max(y1, y + 1);
+  }
+  if (x1 <= x0) return null;
+  // on the stage as on the unit page: the sprite's picture centred with its bottom 18px above the stage's, every frame
+  // inside with room around it; see-through: just what the frames draw
+  const GW = onStage ? Math.max(240, Math.ceil(2 * Z * Math.max(W / 2 - x0, x1 - W / 2)) + 32) : (x1 - x0) * Z;
+  const GH = onStage ? Math.max(170, Z * (H - y0) + 28) : (y1 - y0) * Z;
+  const sx = onStage ? Math.round((GW - W * Z) / 2) : -x0 * Z, sy = onStage ? GH - 18 - H * Z : -y0 * Z;
+  const one = document.createElement("canvas"); one.width = W; one.height = H;
+  const cv = document.createElement("canvas"); cv.width = GW; cv.height = GH;
+  const g = cv.getContext("2d", { willReadFrequently: true }), bg = onStage ? await loadImg("/static/battle_bg.jpg") : null;
+  const pics = frames.map(([d]) => {
+    one.getContext("2d").putImageData(d, 0, 0);
+    g.filter = "none"; g.clearRect(0, 0, GW, GH);
+    if (onStage) {  // .stage: the battle background (cover, 62% down), a little darker towards the bottom; the sprite's shadow
+      g.fillStyle = "#2b3a1c"; g.fillRect(0, 0, GW, GH);
+      if (bg) { const k = Math.max(GW / bg.width, GH / bg.height), bw = bg.width * k, bh = bg.height * k; g.drawImage(bg, (GW - bw) / 2, (GH - bh) * .62, bw, bh); }
+      const shade = g.createLinearGradient(0, 0, 0, GH); shade.addColorStop(0, "rgba(0,0,0,.05)"); shade.addColorStop(1, "rgba(0,0,0,.25)");
+      g.fillStyle = shade; g.fillRect(0, 0, GW, GH);
+      g.filter = "drop-shadow(0 3px 2px rgba(0,0,0,.5))";
+    }
+    g.imageSmoothingEnabled = false; g.drawImage(one, sx, sy, W * Z, H * Z);
+    return g.getImageData(0, 0, GW, GH).data;
+  });
+  return makeGif(GW, GH, pics, frames.map(f => f[1]), !onStage);
+}
+
+async function saveSpriteGif(id, onStage, btn) {
+  const u = UMAP[id], name = `${u.n.replace(/[^\w ]+/g, "")} idle${onStage ? "" : " see-through"}.gif`;
+  btn.disabled = true;
+  try {
+    const gif = await spriteGif(id, onStage);
+    if (!gif) return toast("This sprite has nothing to draw");
+    if (window.BFApp) {
+      let s = ""; for (let i = 0; i < gif.length; i += 0x8000) s += String.fromCharCode(...gif.subarray(i, i + 0x8000));
+      BFApp.shareFile(btoa(s), name, "image/gif", true);
+    } else { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([gif], { type: "image/gif" })); a.download = name; a.click(); }
+  } catch (e) { toast("Couldn't make the GIF"); }
+  finally { btn.disabled = false; }
+}
+
 // ---------------- team builder: 5 units + a friend, like the game's squad ----------------
 const SLOTS = ["Leader", "Unit", "Unit", "Unit", "Unit", "Friend"];
 // where each slot stands on the field (% across, % down to the feet): the front column faces the enemies on the left
@@ -1288,11 +1475,16 @@ function addToTeam(id) {
   if (s < 0) return toast(`${teamName(TCUR)} is full`);
   t[s] = id; saveTeams(); toast(`Added to ${teamName(TCUR)} as ${SLOTS[s] === "Unit" ? "a unit" : SLOTS[s]}`);
 }
-// fill empty slots one by one with the unit that covers the most of what is still missing (only one element if chosen)
+// fill empty slots one by one with the unit that covers the most of what is still missing (only one element if chosen):
+// from your box, or the 7★ and Omni units you can get in Revived (S = usrc.json, "o": evolving one you get counts)
 let fillEl = store.get("bf.fillel", "");
-function autoFill(team, el) {
+function autoFill(team, el, S) {
+  const can = new Set(S?.o || []);
   // units without skills (the custom ones, Summoner, Rainbow Crystal…) don't help a team
-  const pool = UNITS.filter(u => (SQ.mineOnly ? mine.has(u.id) : u.r >= 7 && !u.f) && (!el || u.e === el) && TAGS.units[u.id] && !/\(custom\)/i.test(u.n));
+  const pool = UNITS.filter(u => (SQ.mineOnly ? mine.has(u.id) : u.r >= 7 && !u.f && (!can.size || can.has(u.id))) && (!el || u.e === el) && TAGS.units[u.id] && !/\(custom\)/i.test(u.n));
+  // newer units outdo older ones with the same roles (power creep): 0 for the oldest to 1 for the newest, by release
+  // order, worth about one more role covered
+  const order = [...pool].sort((a, b) => a.no - b.no), newness = new Map(order.map((u, i) => [u.id, u.no ? i / Math.max(1, order.length - 1) : 0]));
   let added = 0;
   for (let s = 0; s < 6; s++) {
     if (team[s]) continue;
@@ -1304,7 +1496,7 @@ function autoFill(team, el) {
       // each missing role it brings counts, more when it's strong at it (compared with the strongest unit for that role)
       const covers = got.length + got.reduce((a, c) => a + (powerOf(u.id, c)?.[0] || 0) / (POWER_MAX[c] || 1) * .6, 0);
       const ls = lead ? ["atk", "mit", "bbf", "crit", "elem", "spark", "heal"].filter(c => (TAGS.units[u.id]?.[c] || "").includes("L")).length : 0;
-      const score = covers * 10 + ls * 3 + u.r + u.atk / 1e5;
+      const score = covers * 10 + ls * 3 + newness.get(u.id) * 10 + u.r + u.atk / 1e5;
       if (score > bestScore) { bestScore = score; best = u; }
     }
     if (best) { team[s] = best.id; added++; }
@@ -1390,9 +1582,64 @@ function skillFill(s) {
   for (const m of t.matchAll(FILL_RE)) { const v = +m[1]; if (/each|per/i.test(m[2] || "")) turn = Math.max(turn, v); else now = Math.max(now, v); }
   return now + turn;
 }
-// the attack's damage modifier %; an HP-scaled one ("200% + 750% * HP") counted at full HP
-const fullMod = s => { if (!s?.mod) return 0; const m = s.hps && (s.fx || []).map(e => e.p.match(/(\d+)%\s*\+\s*(\d+)%/)).find(Boolean); return m ? +m[1] + +m[2] : s.mod; };
+// BC a skill gives on each spark ("Fills 3~4 BC per spark", "2-3 BC fill on spark"; low end): [for everyone, to self
+// only ("8 BC fill to self on spark")]; and a leader or extra skill's BC each turn ("6 BC fill each turn")
+const SPARK_RE = /(\d+(?:\.\d+)?)(?:\s*[~-]\s*\d+(?:\.\d+)?)?\s*bc(?:\s*fill)?(\s*to\s*(?:self|own))?\s*(?:per|on)\s*(?:each\s*)?spark/gi;
+const TURN_RE = /(\d+(?:\.\d+)?)(?:\s*[~-]\s*\d+(?:\.\d+)?)?\s*bc(?:\s*fill)?\s*(?:each|per)\s*turn/gi;
+const skillTxt = s => s ? [s.desc, s.note, ...(s.fx || []).map(e => e.p)].join(" ; ") : "";
+function sparkFill(s) {
+  const out = [0, 0];
+  for (const m of skillTxt(s).matchAll(SPARK_RE)) { const k = m[2] ? 1 : 0; out[k] = Math.max(out[k], +m[1]); }
+  return out;
+}
+const turnFill = s => Math.max(0, ...[...skillTxt(s).matchAll(TURN_RE)].map(m => +m[1]));
+// the wiki's attack damage modifier %, when the game's own total (D's "dmg") isn't there: an HP-scaled one ("200% +
+// 750% * HP", in the effects or the note) counted at full HP
+const fullMod = s => { if (!s?.mod) return 0; const m = s.hps && [...(s.fx || []).map(e => e.p), s.note || ""].map(t => t.match(/(\d+)%\s*\+\s*(\d+)%/)).find(Boolean); return m ? +m[1] + +m[2] : s.mod; };
 const short = n => n >= 1e6 ? `${(n / 1e6).toFixed(n >= 1e7 ? 1 : 2)}M` : n >= 1e4 ? `${Math.round(n / 1e3)}K` : n.toLocaleString("en");
+// The spark estimate, as the community's Automatic Sparking Simulator worked it out (by Hamza Khan and others; Project
+// Sparkle by BluuArc is its JavaScript port): a hit lands on its frame (the game's skill table), plus the skill's effect
+// delay (not for a teleporter), plus a run-up, plus 2 frames for each unit that cast before it. The run-up of one that
+// runs to the foe is below, by its speed type and slot; one that stays where it is takes its move speed in frames; a
+// teleporter, its delay where the community measured it (else none). Two units' hits on the same frame spark.
+const RUNUP = { 1: [20, 15, 18, 30, 40, 33], 2: [16, 13, 15, 24, 33, 27], 3: [13, 10, 12, 19, 26, 21],
+  4: [9, 7, 8, 14, 19, 15], 5: [6, 4, 5, 9, 12, 9] };  // by slot: Leader (front middle), front top, front bottom, back top, back middle, Friend (back bottom)
+const TELEPORT = { ezra: 19, arthur: 11, zeis: 25, ciara: 32, kalon: 48, neferet: 34, gabriela: 30, mariela: 43, zenia: 21,
+  carrol: 23, zalvard: 17, diastima: 21, licht: 15, beatrix: 23, mard: 20 };
+const teleportDelay = id => { const n = (UMAP[id]?.n || "").toLowerCase(), k = Object.keys(TELEPORT).find(k => n.includes(k)); return k ? TELEPORT[k] : null; };
+// the frames a unit's hits land on when it casts n-th (0 = first)
+function sparkFrames(m, n) {
+  const [type, speed, move] = m.mv, run = type === 1 ? RUNUP[speed][m.slot] : type === 3 ? Math.round(move) : m.tele || 0;
+  return m.sp.flatMap(([delay, , ...hits]) => hits.map(f => f + (type === 2 ? 0 : delay) + run + 2 * n));
+}
+// the share of hits landing on a frame another unit also hits: the team's, and each unit's (same order as members)
+function sparkRate(members, order) {
+  const frames = members.map(m => sparkFrames(m, order.indexOf(m))), on = new Map();
+  for (const fs of frames) for (const f of new Set(fs)) on.set(f, (on.get(f) || 0) + 1);
+  const hit = fs => fs.filter(f => on.get(f) > 1).length, all = frames.reduce((a, fs) => a + fs.length, 0);
+  return { rate: all ? frames.reduce((a, fs) => a + hit(fs), 0) / all : 0, per: frames.map(fs => fs.length ? hit(fs) / fs.length : 0) };
+}
+const orders = a => a.length <= 1 ? [a] : a.flatMap((x, i) => orders([...a.slice(0, i), ...a.slice(i + 1)]).map(o => [x, ...o]));  // up to 6! = 720
+function sparkCheck(rows, W, D) {
+  const members = rows.map(r => ({ r, id: r.id, slot: r.i, mv: W[r.i]?.mv, sp: (D?.[r.id]?.skills || []).find(x => x.label === r.s?.kind)?.sp }))
+    .filter(m => m.mv && m.sp?.length && (m.mv[0] !== 1 || RUNUP[m.mv[1]]) && [1, 2, 3].includes(m.mv[0]));
+  members.forEach(m => m.tele = m.mv[0] === 2 ? teleportDelay(m.id) : 0);
+  if (members.length < 2) return null;
+  const slotOrder = [...members].sort((a, b) => a.slot - b.slot), now = sparkRate(members, slotOrder);
+  let best = { order: slotOrder, ...now };
+  for (const o of orders(members)) { const x = sparkRate(members, o); if (x.rate > best.rate + 1e-9) best = { order: o, ...x }; }
+  return { members, now, best, untimed: rows.filter(r => !members.some(m => m.r === r)), guessed: members.filter(m => m.tele === null) };
+}
+function sparkHtml(S) {
+  const pct = x => `${Math.round(x * 100)}%`, name = m => esc(UMAP[m.id].n), better = S.best.rate > S.now.rate + 0.005;
+  return `<div class="spark"><div class="bcl"><b>Sparks</b> (estimate): casting in slot order, <b>${pct(S.now.rate)}</b> of the team's hits spark.${
+    better ? ` In the best order, <b>${pct(S.best.rate)}</b>:` : " No order does better."}</div>
+    ${better ? `<ol class="sorder">${S.best.order.map(m => `<li>${name(m)} <span class="dim">${pct(S.best.per[S.members.indexOf(m)])}</span></li>`).join("")}</ol>`
+      : `<div class="bcd">${S.members.map((m, k) => `${name(m)} ${pct(S.now.per[k])}`).join(" · ")}</div>`}
+    <p class="small dim" style="margin:6px 0 0">Two units' hits on the same frame spark. Hit frames from the game; run-up from the community's spark simulator.${
+      S.guessed.length ? ` No measured teleport delay for ${S.guessed.map(name).join(", ")} (counted as none).` : ""}${
+      S.untimed.length ? ` Not counted, no timing data: ${S.untimed.map(r => esc(UMAP[r.id].n)).join(", ")}.` : ""}</p></div>`;
+}
 function battleCheck(team, W, NUMS, D) {
   // the wiki's skill, else the game's own (its BC cost, hits and damage modifier from the game's tables)
   const skill = (i, kind) => (W[i]?.skills || []).find(s => s.kind === kind)
@@ -1404,25 +1651,44 @@ function battleCheck(team, W, NUMS, D) {
     if (!id || !UMAP[id]) return null;
     const s = skill(i, "SBB") || skill(i, "BB"), u = skill(i, "UBB"), N = NUMS[i];
     const atk = N ? N.base[1] * (1 + (N.pct[1] + atkBuff) / 100) : UMAP[id].atk;
-    const dmg = sk => sk ? Math.round(atk * (fullMod(sk) + (sk.mod2 || 0)) / 100 * (1 + bbAtk / 100)) : 0;
-    return { i, id, s, cost: +s?.bc || 0, fill: Math.min(skillFill(s), 999), sDmg: dmg(s), uDmg: dmg(u), aoe: s?.aoe === "A" };
+    // every attack of the skill at full HP: the game's own total, else the wiki's first and second attack
+    const mod = sk => (D?.[id]?.skills || []).find(x => x.label === sk.kind)?.dmg || fullMod(sk) + (sk.mod2 || 0);
+    const dmg = sk => sk ? Math.round(atk * mod(sk) / 100 * (1 + bbAtk / 100)) : 0;
+    const es = SQ.es && (W[i]?.skills || []).find(x => x.kind === "Extra Skill");
+    return { i, id, s, cost: +s?.bc || 0, fill: Math.min(skillFill(s), 999), sDmg: dmg(s), uDmg: dmg(u), aoe: s?.aoe === "A",
+      perSpark: sparkFill(s), esSpark: sparkFill(es)[0] + sparkFill(es)[1], esTurn: turnFill(es) };
   }).filter(Boolean);
   const teamFill = rows.reduce((a, r) => a + r.fill, 0);  // everyone casts its SBB in the same turn
   const full = rows.some(r => r.fill >= 999);              // a "fill to max" refills everyone
-  const ok = r => r.cost > 0 && (full || teamFill >= r.cost);
+  // the leader's and the friend's leader skills (as the squad's chips say): BC each turn and on each spark, for everyone
+  const lead = rows.filter(r => r.i === 0 && SQ.lead || r.i === 5 && SQ.friend).map(r => (W[r.i]?.skills || []).find(x => x.kind === "Leader Skill"));
+  const lsTurn = lead.reduce((a, s) => a + turnFill(s), 0), lsSpark = lead.reduce((a, s) => a + Math.max(...sparkFill(s)), 0);
+  // BC on spark: the biggest such buff from the team's SBBs (they don't stack; a "to self" one only for its caster),
+  // plus leader skills and the unit's own extra skill, times its hits that spark in the spark estimate's best order
+  const spark = sparkCheck(rows, W, D), party = Math.max(0, ...rows.map(r => r.perSpark[0]));
+  for (const r of rows) {
+    const m = spark?.members.find(m => m.r === r), k = m ? spark.members.indexOf(m) : -1;
+    r.sparks = m ? Math.round(spark.best.per[k] * m.sp.reduce((a, x) => a + x.length - 2, 0)) : 0;
+    r.sparkBC = Math.floor(r.sparks * (Math.max(party, r.perSpark[1]) + lsSpark + r.esSpark));
+    r.bcIn = teamFill + lsTurn + r.esTurn + r.sparkBC;
+  }
+  const ok = r => r.cost > 0 && (full || r.bcIn >= r.cost);
   const known = rows.filter(r => r.cost);                  // units whose BB/SBB cost the wiki lists
-  return { rows, teamFill, full, ok, atkBuff, bbAtk, known: known.length, can: known.filter(ok).length };
+  return { rows, teamFill: teamFill + lsTurn, full, ok, atkBuff, bbAtk, known: known.length, can: known.filter(ok).length, spark,
+    sparkBC: rows.some(r => r.sparkBC) };
 }
 function battleHtml(B) {
   if (!B.rows.length) return "";
   return `<div class="sec"><h3 class="purple">Battle check</h3>
-    <p class="small" style="margin:0 0 8px">When everyone casts SBB in the same turn, the team fills <b>${B.full ? "the gauge to max" : `${B.teamFill} BC`}</b>:
-      <b class="${B.can === B.known ? "okc" : "noc"}">${B.can} of ${B.known}</b> can cast SBB again right away.</p>
+    <p class="small" style="margin:0 0 8px">When everyone casts SBB in the same turn, skills fill ${B.full ? "<b>the gauge to max</b>"
+      : [B.teamFill ? `<b>${B.teamFill} BC</b> for everyone` : "", B.sparkBC ? "BC from sparks" : ""].filter(Boolean).join(", plus ") || "<b>no BC</b>"}:
+      <b class="${B.can === B.known ? "okc" : "noc"}">${B.can} of ${B.known}</b> can cast SBB again with that alone. Hits and crystals give more BC on top.</p>
     ${B.rows.map(r => `<div class="bcrow"><img src="${uImg(r.id)}" alt="" data-u="${r.id}"><div>
-      <div class="bcl">${r.s ? `<b>${esc(r.s.kind)}</b> ${r.cost ? `${r.cost} BC` : "<span class='dim'>cost not listed</span>"}` : "<span class='dim'>No BB listed</span>"}${r.fill ? ` · fills ${r.fill >= 999 ? "max" : r.fill + " BC"}` : ""}
-        ${r.cost ? B.ok(r) ? `<span class="okc">✓ every turn</span>` : `<span class="noc">needs ${r.cost - B.teamFill} BC more</span>` : ""}</div>
+      <div class="bcl">${r.s ? `<b>${esc(r.s.kind)}</b> ${r.cost ? `${r.cost} BC` : "<span class='dim'>cost not listed</span>"}` : "<span class='dim'>No BB listed</span>"}${r.fill ? ` · fills ${r.fill >= 999 ? "max" : r.fill + " BC"}` : ""}${!B.full && r.sparkBC ? ` · +${r.sparkBC} BC from sparks` : ""}
+        ${r.cost ? B.ok(r) ? `<span class="okc">✓ every turn</span>` : `<span class="noc">needs ${r.cost - r.bcIn} BC more from hits</span>` : ""}</div>
       <div class="bcd">${r.sDmg ? `${esc(r.s.kind)} ≈ <b>${short(r.sDmg)}</b>${r.aoe ? " (all foes)" : ""}` : ""}${r.uDmg ? ` · UBB ≈ <b>${short(r.uDmg)}</b>` : ""}</div></div></div>`).join("")}
-    <p class="small dim" style="margin:8px 0 0">Rough: BC from hits, crystals and leader skills isn't counted. Damage = ATK${B.atkBuff ? ` with the team's +${B.atkBuff}% ATK buff` : ""}${B.bbAtk ? ` and +${B.bbAtk}% BB ATK` : ""} × the skill's modifier, before enemy DEF, critical hits, sparks and elements.</p></div>`;
+    ${B.spark ? sparkHtml(B.spark) : ""}
+    <p class="small dim" style="margin:8px 0 0">Rough: counts BC from the skills' fills (SBB, leader and extra skills; each turn and per spark, sparks as in the best order above), not from hits, crystals or BC cost cuts. Damage = ATK${B.atkBuff ? ` with the team's +${B.atkBuff}% ATK buff` : ""}${B.bbAtk ? ` and +${B.bbAtk}% BB ATK` : ""} × all the skill's attacks (the game's modifiers, at full HP), before enemy DEF, critical hits, sparks and elements.</p></div>`;
 }
 
 // the game's element wheel: an element deals 50% more damage to the one it beats and 50% less to the one that beats
@@ -1473,7 +1739,7 @@ async function renderTeam() {
         <select id="tfillel" class="gsel" aria-label="Element for Fill"><option value="">Any element</option>${ELS.map(e => `<option ${e === fillEl ? "selected" : ""}>${e}</option>`).join("")}</select>
         <button class="gbtn blue" id="tshare" ${team.some(Boolean) ? "" : "disabled"}>Share picture</button><button class="gbtn dark" id="tclear">Clear team</button></div>
       <div class="chipwrap" style="margin:-2px 0 8px"><button class="chip ${SQ.mineOnly ? "on" : ""}" data-opt="mineOnly">✓ Fill from my box only</button></div>
-      <p class="small dim" style="margin:0">Tap a spot to choose a unit. <b>Fill</b> picks ${SQ.mineOnly ? `from the ${mine.size} units in your box` : "7★ and Omni units"} that cover what the team still misses.</p></div>
+      <p class="small dim" style="margin:0">Tap a spot to choose a unit. <b>Fill</b> picks ${SQ.mineOnly ? `from the ${mine.size} units in your box` : "7★ and Omni units you can get in Revived"} that cover what the team still misses, newer units first.</p></div>
     <div class="sec"><h3>Squad</h3>
       <div class="sqbar"><span class="costplate ${SQ.maxcost && cost > +SQ.maxcost ? "over" : ""}">COST <b>${cost}</b>/<input id="maxcost" inputmode="numeric" value="${esc(SQ.maxcost)}" placeholder="max" aria-label="Your max cost"></span>
         <button class="chip ${SQ.imps ? "on" : ""}" data-opt="imps">Imps max</button><button class="chip ${SQ.lead ? "on" : ""}" data-opt="lead">Leader skill</button><button class="chip ${SQ.friend ? "on" : ""}" data-opt="friend">Friend skill</button><button class="chip ${SQ.es ? "on" : ""}" data-opt="es">Extra skills</button></div>
@@ -1514,10 +1780,10 @@ async function renderTeam() {
   v.querySelectorAll("[data-opt]").forEach(b => b.onclick = () => { SQ[b.dataset.opt] = !SQ[b.dataset.opt]; saveSquad(); renderTeam(); });
   $("maxcost").onchange = e => { SQ.maxcost = e.target.value.replace(/\D/g, ""); saveSquad(); renderTeam(); };
   $("tfillel").onchange = e => { fillEl = e.target.value; store.set("bf.fillel", fillEl); };
-  $("tfill").onclick = () => {
+  $("tfill").onclick = async () => {
     if (!team.includes(null)) return toast("No empty slots");
     if (SQ.mineOnly && !mine.size) return toast("Your box is empty: open a unit you have and tap ＋ My box");
-    const n = autoFill(team, fillEl); saveTeams(); renderTeam();
+    const n = autoFill(team, fillEl, await load("usrc")); saveTeams(); renderTeam();
     toast(n ? `Added ${n} unit${n > 1 ? "s" : ""}` : `No ${fillEl ? fillEl + " " : ""}units left to add`);
   };
   $("tshare").onclick = () => shareTeam(team, W);

@@ -105,15 +105,19 @@ public class MainActivity extends Activity {
         return "application/octet-stream";
     }
 
-    /** Called from the page: pictures go to the gallery or the share sheet, text to the clipboard. */
+    /** Called from the page: pictures (PNG or GIF) go to the gallery or the share sheet, text to the clipboard. */
     private class Bridge {
         @JavascriptInterface
-        public void shareImage(String base64Png, String name, boolean share) {
+        public void shareImage(String base64Png, String name, boolean share) { shareFile(base64Png, name, "image/png", share); }
+
+        /** A picture of any image type (a PNG card, a GIF of a battle sprite). */
+        @JavascriptInterface
+        public void shareFile(String base64, String name, String mime, boolean share) {
             runOnUiThread(() -> {
-                Uri uri = savePicture(base64Png, name);
+                Uri uri = savePicture(base64, name, mime);
                 if (uri == null) { toast("Couldn't save the picture"); return; }
                 if (!share) { toast("Saved to Pictures/BF Companion"); return; }
-                Intent i = new Intent(Intent.ACTION_SEND).setType("image/png")
+                Intent i = new Intent(Intent.ACTION_SEND).setType(mime)
                     .putExtra(Intent.EXTRA_STREAM, uri).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 startActivity(Intent.createChooser(i, "Share picture"));
             });
@@ -128,16 +132,16 @@ public class MainActivity extends Activity {
         }
     }
 
-    private Uri savePicture(String base64Png, String name) {
+    private Uri savePicture(String base64, String name, String mime) {
         if (Build.VERSION.SDK_INT < 29) return null;  // needs scoped storage (Android 10+)
         ContentValues v = new ContentValues();
         v.put(MediaStore.Images.Media.DISPLAY_NAME, name);
-        v.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
+        v.put(MediaStore.Images.Media.MIME_TYPE, mime);
         v.put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/BF Companion");
         Uri uri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, v);
         if (uri == null) return null;
         try (OutputStream out = getContentResolver().openOutputStream(uri)) {
-            out.write(Base64.decode(base64Png, Base64.DEFAULT));
+            out.write(Base64.decode(base64, Base64.DEFAULT));
             return uri;
         } catch (IOException | NullPointerException e) {
             return null;
