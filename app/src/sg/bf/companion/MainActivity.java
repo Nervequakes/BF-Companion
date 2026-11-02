@@ -143,7 +143,8 @@ public class MainActivity extends Activity {
         try (OutputStream out = getContentResolver().openOutputStream(uri)) {
             out.write(Base64.decode(base64, Base64.DEFAULT));
             return uri;
-        } catch (IOException | NullPointerException e) {
+        } catch (IOException | NullPointerException | IllegalArgumentException e) {
+            getContentResolver().delete(uri, null, null);  // no empty picture left in the gallery
             return null;
         }
     }
