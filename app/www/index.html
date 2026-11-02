@@ -164,6 +164,7 @@ main { padding-bottom: calc(var(--navh) + 20px); }
 .item .er .sti { width: 15px; height: 15px; vertical-align: -2px; } .item .er .omi { width: 30px; height: 30px; display: block; margin: 0 auto; }
 .item .eff { color: #ece6d6; font-size: 12px; margin-top: 2px; }
 .item .craft.got { background: linear-gradient(#7ad67a, #2a8f3a); }
+.chip.rev.on { border-color: #9be89b; background: linear-gradient(#3f9a46, #1d6229); }  /* "Can get in Revived": on top of the type chips */
 .ecatch { margin: 8px 0 2px; padding: 7px 9px; border-radius: 7px; background: rgba(0,0,0,.4); border-left: 3px solid var(--accent); font-size: 12.5px; color: #ece6d6; }
 .ecatch ul { margin: 5px 0 3px; padding-left: 16px; } .ecatch li { margin: 2px 0; } .ecatch b { font-weight: normal; font-family: Rodin, Arial, sans-serif; color: var(--accent); }
 .item .eget { margin-top: 6px; font-size: 12px; color: var(--dim); } .item .eget > div { margin: 3px 0; } .item .eget b { color: #ece6d6; font-weight: normal; }
@@ -995,22 +996,29 @@ async function showUnit(id) {
 }
 
 // ---------------- spheres ----------------
-let sType = store.get("bf.stype", "All");
+let sType = store.get("bf.stype", "All"), sRev = store.get("bf.srev", false);  // sRev: only what Revived gives (with any type)
 async function renderSpheres() {
   const [I, R] = await Promise.all([load("items"), load("recipes")]), q = $("sq").value.trim().toLowerCase();
   const all = Object.values(I).filter(s => s.name);
   const types = ["All", "Craftable", ...[...new Set(all.filter(s => s.type).map(s => s.type))].sort(), "Materials"];
-  if (!$("stype").children.length) for (const t of types) {
-    const b = document.createElement("button"); b.className = "chip" + (t === sType ? " on" : ""); b.textContent = t;
-    b.onclick = () => { sType = t; store.set("bf.stype", t); [...$("stype").children].forEach(c => c.classList.toggle("on", c === b)); renderSpheres(); };
-    $("stype").append(b);
+  if (!$("stype").children.length) {
+    const r = document.createElement("button"); r.className = "chip rev" + (sRev ? " on" : ""); r.textContent = "Can get in Revived";
+    r.onclick = () => { sRev = !sRev; store.set("bf.srev", sRev); r.classList.toggle("on", sRev); renderSpheres(); };
+    for (const t of types) {
+      const b = document.createElement("button"); b.className = "chip" + (t === sType ? " on" : ""); b.textContent = t;
+      b.onclick = () => { sType = t; store.set("bf.stype", t); $("stype").querySelectorAll(".chip:not(.rev)").forEach(c => c.classList.toggle("on", c === b)); renderSpheres(); };
+      $("stype").append(b);
+      if (t === "All") $("stype").append(r);  // right after All, as on the Elgif tab
+    }
   }
   const craftable = s => s.cr ?? R[s.id];  // its recipe's materials can all be had
   const pick = { All: s => s.type, Craftable: craftable, Materials: s => !s.type }[sType] || (s => s.type === sType);
-  const list = all.filter(s => (!q || s.name.toLowerCase().includes(q)) && (q || pick(s))).sort((a, b) => (b.rarity || 0) - (a.rarity || 0) || a.name.localeCompare(b.name));
-  if (q && !list.length) list.push(...closeNames(q, all, s => s.name, s => s.rarity || 0).slice(0, 12));
+  const list = all.filter(s => (!q || s.name.toLowerCase().includes(q)) && (q || pick(s)) && (!sRev || s.ok === 1))
+    .sort((a, b) => (b.rarity || 0) - (a.rarity || 0) || a.name.localeCompare(b.name) || (b.ok || 0) - (a.ok || 0));  // two of a name: Revived's first
+  if (q && !list.length) list.push(...closeNames(q, sRev ? all.filter(s => s.ok === 1) : all, s => s.name, s => s.rarity || 0).slice(0, 12));
   $("scount").textContent = q && list.length && !list.some(s => s.name.toLowerCase().includes(q)) ? `No exact match for “${$("sq").value.trim()}”. Did you mean:`
-    : `${list.length} ${q ? "results" : sType === "Materials" ? "materials" : sType === "Craftable" ? "items you can craft in Synthesis" : "spheres"}`;
+    : `${list.length} ${q ? "results" : sType === "Materials" ? "materials" : sType === "Craftable" ? "items you can craft in Synthesis" : sType === "All" ? "spheres" : `${sType} spheres`}${
+      sRev && sType !== "Craftable" ? " you can get in Revived" : ""}`;
   paged($("slist"), list, s => { const d = document.createElement("div"); d.className = "item"; d.onclick = () => go(`#/item/${s.id}`);
     d.innerHTML = `<img loading="lazy" decoding="async" src="${iImg(s.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1"><div class="t">${esc(s.name)} <span class="dim small">${s.rarity ? `${s.rarity}${STAR}` : ""}</span>${craftable(s) ? `<span class="craft">craftable</span>` : nogTag(s)}</div><div class="s">${esc(s.type ? s.type + " · " : "")}${esc(s.desc)}</div></div>`;
     return d; }, "");
@@ -1164,7 +1172,8 @@ async function renderDrops() {
     (places.get(place) || places.set(place, new Map()).get(place)).set(name, chance); if (onMap) revived.add(place);
   }
   const ranked = [...places].sort((a, b) => revived.has(b[0]) - revived.has(a[0]) || b[1].size - a[1].size || a[0].localeCompare(b[0])).slice(0, 60);
-  const items = Object.values(I).filter(s => s.name.toLowerCase().includes(q)).slice(0, 12);
+  // what Revived gives first (the game has two "Memory Fragment"s; only one is in Revived), then by name
+  const items = Object.values(I).filter(s => s.name.toLowerCase().includes(q)).sort((a, b) => (b.ok || 0) - (a.ok || 0) || a.name.localeCompare(b.name)).slice(0, 12);
   const units = UNITS.filter(u => S.u?.[u.id] && u.n.toLowerCase().includes(q)).sort(SORTS.rarity).slice(0, 12);
   // units you can capture in the quests that match: "Kagan Desert" lists who joins there
   if (!S.where) { S.where = []; for (const [id, s] of Object.entries(S.u || {})) for (const [m, cap] of s.c || []) if (UMAP[id]) { const p = srcQuest(S, m); S.where.push([p.toLowerCase(), p, id, cap]); } }
