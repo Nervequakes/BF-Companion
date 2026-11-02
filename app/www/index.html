@@ -158,7 +158,8 @@ main { padding-bottom: calc(var(--navh) + 20px); }
 .bcl { font-size: 12.5px; } .bcl b { font-family: Rodin, Arial, sans-serif; text-shadow: var(--ol); } .bcd { font-size: 12px; color: var(--dim); } .bcd b { color: var(--accent); font-weight: normal; font-family: Rodin, Arial, sans-serif; }
 .okc { color: #7ad67a; } .noc { color: #ff8a7a; } .bcl .okc, .bcl .noc { margin-left: 4px; font-size: 11px; }
 .spark { margin-top: 8px; padding: 7px 9px; border-radius: 7px; background: rgba(0,0,0,.35); border-left: 3px solid #f2c94c; }
-.spark .bcl b { color: var(--accent); } .sorder { margin: 5px 0 0; padding-left: 22px; font-size: 12.5px; } .sorder li { margin: 2px 0; }
+.spark .bcl b { color: var(--accent); }
+.bctip { margin-top: 8px; padding: 7px 9px; border-radius: 7px; background: rgba(0,0,0,.35); border-left: 3px solid #6fd17a; } .sorder { margin: 5px 0 0; padding-left: 22px; font-size: 12.5px; } .sorder li { margin: 2px 0; }
 .item .sb { font-size: 11px; color: #9ff09f; margin: 1px 0 2px; }
 .item .t .sti { width: 14px; height: 14px; flex: none; }  /* not the 46px item icon size */
 /* Elgifs: rarity on the left, the whole effect (sphere text is cut at two lines) */
@@ -1591,7 +1592,7 @@ const FILL_RE = /(?:fills|boosts bb gauge by)\s+(\d+(?:\.\d+)?)(?:\s*[~-]\s*\d+(
 function skillFill(s) {
   if (!s) return 0;
   const t = [s.desc, s.note, ...(s.fx || []).map(e => e.p)].join(" ; ");
-  if (/refills bb gauge to 100%|fills (?:own )?bb gauge to max/i.test(t)) return 999;
+  if (refill(s) === "all") return 999;
   let now = 0, turn = 0;
   for (const m of t.matchAll(FILL_RE)) { const v = +m[1]; if (/each|per/i.test(m[2] || "")) turn = Math.max(turn, v); else now = Math.max(now, v); }
   return now + turn;
@@ -1607,6 +1608,27 @@ function sparkFill(s) {
   return out;
 }
 const turnFill = s => Math.max(0, ...[...skillTxt(s).matchAll(TURN_RE)].map(m => +m[1]));
+// a leader or extra skill's cut to BB/SBB cost when it gives a number ("Reduces BC cost of BB gauge by 30%", "20% reduction
+// to BB activation cost", "30% BC cost reduction"; low end), and whether it's for all allies
+const CUT_RE = /reduces?\s+(?:bc cost of bb gauge|bb gauge consumption|bb gauge required for bb|bb cost|bc cost)\s+by\s+(\d+(?:\.\d+)?)|(\d+(?:\.\d+)?)(?:\s*[~-]\s*\d+(?:\.\d+)?)?\s*%\s*(?:reduction (?:to|in) bb (?:activation )?cost|b[bc] cost reduction|reduced b[bc] cost)/gi;
+const costCut = s => Math.max(0, ...[...skillTxt(s).matchAll(CUT_RE)].map(m => +(m[1] || m[2])));
+// whether an extra skill's effect is for all allies: the target of its effect line when the wiki lists one, else the
+// part of the description that names it ("10% reduction to BB activation cost for all allies"; in "20% all parameters
+// and fills BB gauge each turn for all allies, …, 30% reduction to BB activation cost" only the fill is)
+const CUT_TOPIC = /cost|consum|required for bb/i, TURN_TOPIC = /bb gauge each turn|bc (?:fill )?each turn/i;
+const forAll = (s, topic) => {
+  const fx = (s?.fx || []).find(e => topic.test(e.p));
+  if (fx) return /all allies/i.test(fx.t || "");
+  const part = (s?.desc || "").split(/,\s*|\s+&\s+/).find(p => topic.test(p));
+  return !!part && /all allies/i.test(part);
+};
+// a refill to max: "all" when it's for everyone ("fills all allies' BB gauge to max"), "self" when only the caster's
+// ("fills own BB gauge to max", "Refills BB gauge to 100%" to self: nearly every BB/SBB one), else null
+const refill = s => {
+  const t = skillTxt(s);
+  if (/all allies.? bb gauge to max/i.test(t) || (s?.fx || []).some(e => /refills bb gauge to 100%/i.test(e.p) && /all allies/i.test(e.t || ""))) return "all";
+  return /fills (?:own )?bb gauge to max|refills bb gauge to 100%/i.test(t) ? "self" : null;
+};
 // the wiki's attack damage modifier %, when the game's own total (D's "dmg") isn't there: an HP-scaled one ("200% +
 // 750% * HP", in the effects or the note) counted at full HP
 const fullMod = s => { if (!s?.mod) return 0; const m = s.hps && [...(s.fx || []).map(e => e.p), s.note || ""].map(t => t.match(/(\d+)%\s*\+\s*(\d+)%/)).find(Boolean); return m ? +m[1] + +m[2] : s.mod; };
@@ -1669,14 +1691,19 @@ function battleCheck(team, W, NUMS, D) {
     const mod = sk => (D?.[id]?.skills || []).find(x => x.label === sk.kind)?.dmg || fullMod(sk) + (sk.mod2 || 0);
     const dmg = sk => sk ? Math.round(atk * mod(sk) / 100 * (1 + bbAtk / 100)) : 0;
     const es = SQ.es && (W[i]?.skills || []).find(x => x.kind === "Extra Skill");
-    return { i, id, s, cost: +s?.bc || 0, fill: Math.min(skillFill(s), 999), sDmg: dmg(s), uDmg: dmg(u), aoe: s?.aoe === "A",
-      perSpark: sparkFill(s), esSpark: sparkFill(es)[0] + sparkFill(es)[1], esTurn: turnFill(es) };
+    return { i, id, s, bb: skill(i, "BB"), cost: +s?.bc || 0, fill: Math.min(skillFill(s), 999), self: refill(s) === "self", sDmg: dmg(s), uDmg: dmg(u), aoe: s?.aoe === "A",
+      perSpark: sparkFill(s), esSpark: sparkFill(es)[0] + sparkFill(es)[1], esTurn: turnFill(es), esTurnAll: forAll(es, TURN_TOPIC),
+      esCut: costCut(es), esCutAll: forAll(es, CUT_TOPIC) };
   }).filter(Boolean);
   const teamFill = rows.reduce((a, r) => a + r.fill, 0);  // everyone casts its SBB in the same turn
   const full = rows.some(r => r.fill >= 999);              // a "fill to max" refills everyone
   // the leader's and the friend's leader skills (as the squad's chips say): BC each turn and on each spark, for everyone
   const lead = rows.filter(r => r.i === 0 && SQ.lead || r.i === 5 && SQ.friend).map(r => (W[r.i]?.skills || []).find(x => x.kind === "Leader Skill"));
-  const lsTurn = lead.reduce((a, s) => a + turnFill(s), 0), lsSpark = lead.reduce((a, s) => a + Math.max(...sparkFill(s)), 0);
+  // plus extra skills' BC each turn for all allies (each unit's own one only for itself)
+  const lsTurn = lead.reduce((a, s) => a + turnFill(s), 0) + rows.reduce((a, r) => a + (r.esTurnAll ? r.esTurn : 0), 0);
+  const lsSpark = lead.reduce((a, s) => a + Math.max(...sparkFill(s)), 0);
+  // BC cost cuts: the leader skills', plus the biggest extra skill cut for all allies or the unit's own (at most 75%)
+  const lsCut = lead.reduce((a, s) => a + costCut(s), 0), esCut = Math.max(0, ...rows.filter(r => r.esCutAll).map(r => r.esCut));
   // BC on spark: the biggest such buff from the team's SBBs (they don't stack; a "to self" one only for its caster),
   // plus leader skills and the unit's own extra skill, times its hits that spark in the spark estimate's best order
   const spark = sparkCheck(rows, W, D), party = Math.max(0, ...rows.map(r => r.perSpark[0]));
@@ -1684,11 +1711,27 @@ function battleCheck(team, W, NUMS, D) {
     const m = spark?.members.find(m => m.r === r), k = m ? spark.members.indexOf(m) : -1;
     r.sparks = m ? Math.round(spark.best.per[k] * m.sp.reduce((a, x) => a + x.length - 2, 0)) : 0;
     r.sparkBC = Math.floor(r.sparks * (Math.max(party, r.perSpark[1]) + lsSpark + r.esSpark));
-    r.bcIn = teamFill + lsTurn + r.esTurn + r.sparkBC;
+    r.bcIn = teamFill + lsTurn + (r.esTurnAll ? 0 : r.esTurn) + r.sparkBC;
+    r.cut = Math.min(75, lsCut + Math.max(esCut, r.esCut));
+    r.need = Math.round(r.cost * (1 - r.cut / 100));
   }
-  const ok = r => r.cost > 0 && (full || r.bcIn >= r.cost);
+  const ok = r => r.cost > 0 && (full || r.self || r.bcIn >= r.need);  // a refill of its own gauge: itself only
   const known = rows.filter(r => r.cost);                  // units whose BB/SBB cost the wiki lists
-  return { rows, teamFill: teamFill + lsTurn, full, ok, atkBuff, bbAtk, known: known.length, can: known.filter(ok).length, spark,
+  const can = known.filter(ok).length;
+  // a unit whose BB fills more than its SBB (to max, or a big fill each turn) can cast BB instead: the swap that lets
+  // the most units cast again, if it beats everyone casting SBB (its sparks counted as with its SBB)
+  let tip = null;
+  for (const r of rows) {
+    const f = Math.min(skillFill(r.bb), 999);
+    if (r.s?.kind !== "SBB" || !+r.bb?.bc || f <= r.fill) continue;
+    const fill2 = teamFill - r.fill + f, full2 = full || f >= 999;
+    const party2 = Math.max(0, ...rows.filter(x => x !== r).map(x => x.perSpark[0]), sparkFill(r.bb)[0]);
+    const bcIn2 = x => fill2 + lsTurn + (x.esTurnAll ? 0 : x.esTurn) + Math.floor(x.sparks * (Math.max(party2, x === r ? 0 : x.perSpark[1]) + lsSpark + x.esSpark));
+    const need2 = x => x === r ? Math.round(+r.bb.bc * (1 - r.cut / 100)) : x.need;
+    const n = known.filter(x => full2 || (x === r ? refill(r.bb) === "self" : x.self) || bcIn2(x) >= need2(x)).length;
+    if (n > can && (!tip || n > tip.can)) tip = { id: r.id, fill: f, can: n };
+  }
+  return { rows, teamFill: teamFill + lsTurn, full, ok, atkBuff, bbAtk, known: known.length, can, spark, tip,
     sparkBC: rows.some(r => r.sparkBC) };
 }
 function battleHtml(B) {
@@ -1698,11 +1741,13 @@ function battleHtml(B) {
       : [B.teamFill ? `<b>${B.teamFill} BC</b> for everyone` : "", B.sparkBC ? "BC from sparks" : ""].filter(Boolean).join(", plus ") || "<b>no BC</b>"}:
       <b class="${B.can === B.known ? "okc" : "noc"}">${B.can} of ${B.known}</b> can cast SBB again with that alone. Hits and crystals give more BC on top.</p>
     ${B.rows.map(r => `<div class="bcrow"><img src="${uImg(r.id)}" alt="" data-u="${r.id}"><div>
-      <div class="bcl">${r.s ? `<b>${esc(r.s.kind)}</b> ${r.cost ? `${r.cost} BC` : "<span class='dim'>cost not listed</span>"}` : "<span class='dim'>No BB listed</span>"}${r.fill ? ` · fills ${r.fill >= 999 ? "max" : r.fill + " BC"}` : ""}${!B.full && r.sparkBC ? ` · +${r.sparkBC} BC from sparks` : ""}
-        ${r.cost ? B.ok(r) ? `<span class="okc">✓ every turn</span>` : `<span class="noc">needs ${r.cost - r.bcIn} BC more from hits</span>` : ""}</div>
+      <div class="bcl">${r.s ? `<b>${esc(r.s.kind)}</b> ${r.cost ? r.cut ? `${r.need} BC <span class="dim">(${r.cost} −${r.cut}%)</span>` : `${r.cost} BC` : "<span class='dim'>cost not listed</span>"}` : "<span class='dim'>No BB listed</span>"}${r.fill ? ` · fills ${r.fill >= 999 ? "everyone to max" : r.fill + " BC"}` : ""}${r.self ? " · refills itself" : ""}${!B.full && r.sparkBC ? ` · +${r.sparkBC} BC from sparks` : ""}
+        ${r.cost ? B.ok(r) ? `<span class="okc">✓ every turn</span>` : `<span class="noc">needs ${r.need - r.bcIn} BC more from hits</span>` : ""}</div>
       <div class="bcd">${r.sDmg ? `${esc(r.s.kind)} ≈ <b>${short(r.sDmg)}</b>${r.aoe ? " (all foes)" : ""}` : ""}${r.uDmg ? ` · UBB ≈ <b>${short(r.uDmg)}</b>` : ""}</div></div></div>`).join("")}
+    ${B.tip ? `<div class="bctip small"><b>Tip:</b> with ${esc(UMAP[B.tip.id].n)} casting <b>BB</b> instead of SBB (it fills ${B.tip.fill >= 999 ? "everyone's gauge to max" : `${B.tip.fill} BC for everyone`}),
+      <b class="okc">${B.tip.can} of ${B.known}</b> can cast again right away.</div>` : ""}
     ${B.spark ? sparkHtml(B.spark) : ""}
-    <p class="small dim" style="margin:8px 0 0">Rough: counts BC from the skills' fills (SBB, leader and extra skills; each turn and per spark, sparks as in the best order above), not from hits, crystals or BC cost cuts. Damage = ATK${B.atkBuff ? ` with the team's +${B.atkBuff}% ATK buff` : ""}${B.bbAtk ? ` and +${B.bbAtk}% BB ATK` : ""} × all the skill's attacks (the game's modifiers, at full HP), before enemy DEF, critical hits, sparks and elements.</p></div>`;
+    <p class="small dim" style="margin:8px 0 0">Rough: counts BC from the skills' fills (SBB, leader and extra skills; each turn and per spark, sparks as in the best order above) and the BC cost cuts leader and extra skills give a number for, not BC from hits or crystals. Damage = ATK${B.atkBuff ? ` with the team's +${B.atkBuff}% ATK buff` : ""}${B.bbAtk ? ` and +${B.bbAtk}% BB ATK` : ""} × all the skill's attacks (the game's modifiers, at full HP), before enemy DEF, critical hits, sparks and elements.</p></div>`;
 }
 
 // the game's element wheel: an element deals 50% more damage to the one it beats and 50% less to the one that beats
