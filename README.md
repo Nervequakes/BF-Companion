@@ -57,7 +57,8 @@ Slow download from GitHub? Get the APK from the **[Google Drive mirror](https://
   means every material can be had.
 - **Crafting planner**: all base materials and Karma for any Synthesis recipe, for any amount, and **where to farm**
   each material with its drop chance.
-- Best spheres for each unit, including the ones that switch on its extra skill.
+- Suggested spheres for each unit: the ones that switch on its extra skill, then the spheres Revived gives that suit
+  what it does (damage or support, its element), and stronger ones Revived doesn't give yet.
 
 **Quest search**
 - Type an item to see where it drops in Revived, or a quest or area to see what drops there and which units you can capture.

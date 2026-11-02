@@ -843,7 +843,78 @@ const getHtml = s => revGet(s).length ? `<ul class="get">${revGet(s).map(getLine
 const sphereCard = s => `<div class="item" style="margin:0 0 8px;cursor:default;align-items:flex-start"><img src="${iImg(s.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1">
   <div class="t">${esc(s.name)} <span class="dim small">${s.type ? `${s.type} sphere` : "item"}${s.rarity ? ` · ${s.rarity}${STAR}` : ""}</span>${nogTag(s)}</div>
   <div class="small" style="color:#ece6d6;margin:3px 0">${hl(s.desc)}</div><details><summary>Where to get it</summary>${getHtml(s)}</details></div></div>`;
-const unitMini = (id, cur) => { const u = UMAP[id]; return u ? `<div class="eu ${cur ? "cur" : ""}" onclick="go('#/unit/${id}')"><img src="${uImg(id)}" alt="" onerror="this.style.visibility='hidden'"><div class="gname">${esc(u.n)}</div></div>` : ""; };
+// What a sphere does, part by part: damage (BB ATK, crits, sparks, elements, DEF ignore), BC (BB gauge, BC drops and
+// fills, BC cost), defence (damage reduction, KO resistance, guarding), healing, status ailment cures. A part that
+// fills BC on sparks is BC, not damage; "negates critical and elemental damage" is defence.
+const SPH_PART = { bc: /bb gauge|\bbc\b/, def: /damage reduction|reduces damage|mitigat|negates (?:critical|elemental)|ko attack|survive|angel idol|guard/,
+  heal: /restores? hp|recovers? (?:\w+ )*hp|hp each turn|\bheal/, cure: /status ailment/,
+  dmg: /\bbb atk|critical (?:hit )?(?:rate|damage)|spark damage|elemental damage|def ignor|max atk limit|to attack/ };
+// A part that needs something ("when HP is above 50%", "while guarding", "when slaying foes", "probable …") counts half,
+// and each kind counts at most twice, so a long list of small effects doesn't outrank a few strong ones.
+const COND_PART = /\bwhen\b|\bwhile\b|\bif\b|\bin first\b|\bafter\b|probab|\bmay\b|\bchance\b|guarding|slaying/;
+// A sphere for some elements only ("(Light, Dark)", "200% Light, Dark elemental damage") doesn't count its element
+// parts for a unit of another element (el).
+const ELEM_WORD = /\b(?:fire|water|earth|thunder|light|dark)\b/g;
+function sphereParts(s, el) {
+  const out = { dmg: 0, bc: 0, def: 0, heal: 0, cure: 0 }, t = (s.desc || "").toLowerCase(), named = t.match(ELEM_WORD) || [];
+  const other = named.length && el && !named.includes(el);
+  for (const p of t.split(/,\s*|\s+&\s+/)) {
+    if (other && ELEM_WORD.test(p)) { ELEM_WORD.lastIndex = 0; continue; }
+    ELEM_WORD.lastIndex = 0;
+    const got = Object.keys(SPH_PART).filter(k => SPH_PART[k].test(p)), w = COND_PART.test(p) ? 0.5 : 1;
+    for (const k of got) if (k !== "dmg" || !got.some(x => x === "bc" || x === "def") && !/reduction|negates/.test(p)) out[k] += w;
+  }
+  for (const k in out) out[k] = Math.min(2, out[k]);
+  return out;
+}
+// A unit's damage and support roles on its BB/SBB/UBB/extra skill, as shares (the weights a sphere's parts get)
+const OFF_ROLES = ["atk", "bbatk", "spark", "crit", "elem", "defign", "hits"], SUP_ROLES = ["mit", "emit", "heal", "bbf", "od", "snull", "ko", "barrier", "taunt"];
+function unitFocus(id) {
+  const off = OFF_ROLES.filter(c => roleOf(id, c)).length, sup = SUP_ROLES.filter(c => roleOf(id, c)).length, all = off + sup || 1;
+  return { off: off / all, sup: sup / all, label: off > sup * 1.5 ? "damage" : sup > off * 1.5 ? "support" : "damage and support" };
+}
+// How well a sphere suits a unit: its parts weighted by what the unit does (BC helps everyone), its stat boosts (ATK
+// for damage, HP/DEF/REC for support; a boost for another element doesn't count), rarity, and the sphere type its
+// extra skill gives a bonus with
+function sphereFit(s, id, focus, bonusTypes) {
+  const el = (UMAP[id]?.e || "").toLowerCase(), p = sphereParts(s, el);
+  let atk = 0, rest = 0;
+  for (const c of statBoosts(s.desc)) if (!c.els || c.els.includes(el)) {
+    const w = c.cond ? 0.5 : 1;  // "… when HP is above 50%" counts half
+    if (c.stats.includes("atk")) atk += w * c.pct;
+    rest += w * c.pct * c.stats.filter(x => x !== "atk").length / 3;
+  }
+  const wDmg = 0.3 + 2.4 * focus.off, wSup = 0.3 + 2.4 * focus.sup;
+  return wDmg * (p.dmg + Math.min(atk, 200) / 75) + p.bc + wSup * (p.def + p.heal + Math.min(rest, 200) / 75) + 0.3 * p.cure + 0.4 * (s.rarity || 0)
+    + (bonusTypes.includes(s.type) ? 3 : 0);
+}
+// the sphere types a unit's extra skill gives a bonus with (none when it has no sphere-specific bonus)
+const bonusTypes = d => d?.es_generic ? [] : (d?.es_types || []).map(t => t.type);
+// the spheres that switch on a unit's extra skill: the game data's, else the ones its wiki page names (the game files
+// leave the extra skill out for some older units: Ignis Halcyon Vargas "when Dandelga is equipped"); of two spheres
+// with one name, Revived's
+function esSpheres(id, d, w, I) {
+  if (!d?.es_generic && d?.es_spheres?.length) return d.es_spheres.filter(i => I[i]);
+  const names = ((w?.skills || []).find(s => s.kind === "Extra Skill")?.item || "").toLowerCase().split(/\s*(?:,|\/|\bor\b|\band\b|\n)\s*/).filter(Boolean);
+  const byName = {};
+  for (const s of Object.values(I)) if (s.type && names.includes(s.name.toLowerCase()) && (!byName[s.name] || s.ok === 1)) byName[s.name] = s;
+  return Object.values(byName).map(s => s.id);
+}
+// the spheres Revived gives (or, gettable false, the ones it doesn't) that suit a unit best, without the ones already
+// shown; each pick makes another sphere of the same type a little less likely, so the list mixes types (a unit carries
+// two spheres). fits: each pick's own score.
+function bestSpheres(id, I, d, n, skip = [], gettable = true) {
+  const focus = unitFocus(id), bonus = bonusTypes(d);
+  const pool = Object.values(I).filter(s => s.type && (s.ok === 1) === gettable && !skip.includes(s.id)).map(s => [s, sphereFit(s, id, focus, bonus)]), list = [], fits = [];
+  while (list.length < n && pool.length) {
+    const score = ([s, f]) => f - 1.5 * list.filter(x => x.type === s.type).length;
+    let k = 0;
+    pool.forEach((x, i) => { const a = score(x), b = score(pool[k]); if (a > b || a === b && x[0].name < pool[k][0].name) k = i; });
+    const [s, f] = pool.splice(k, 1)[0]; list.push(s); fits.push(f);
+  }
+  return { list, fits, focus, bonus };
+}
+const unitMini =(id, cur) => { const u = UMAP[id]; return u ? `<div class="eu ${cur ? "cur" : ""}" onclick="go('#/unit/${id}')"><img src="${uImg(id)}" alt="" onerror="this.style.visibility='hidden'"><div class="gname">${esc(u.n)}</div></div>` : ""; };
 
 // a quest of Revived's map as "Area › Dungeon › Quest"
 const srcQuest = (S, m) => { const x = S.m[m] || [`Quest ${m}`, 0], p = S.p[x[1]]; return p ? `${p} › ${x[0]}` : x[0]; };
@@ -948,15 +1019,19 @@ async function showUnit(id) {
     d.leader?.desc ? { kind: "Leader Skill", name: d.leader.name, desc: d.leader.desc } : null,
     ...(d.skills || []).map(s => ({ ...s, kind: s.label })),
     d.extra ? { kind: "Extra Skill", name: "", desc: d.extra } : null].filter(Boolean);
-  // best spheres from the game data
+  // suggested spheres: the ones that switch on its extra skill (the game data), then the spheres Revived gives that suit
+  // what it does, other units' own spheres included
   let spheres = "";
-  if (d.es_spheres || d.es_types) {
-    const es = (d.es_spheres || []).map(i => I[i]).filter(Boolean);
-    if (es.length && !d.es_generic) spheres += `<p class="dim small" style="margin:0 0 8px">These switch on the unit's extra skill:</p>` + es.map(sphereCard).join("");
-    for (const t of d.es_types || []) {
-      const opts = t.ids.map(i => I[i]).filter(Boolean).sort((a, b) => (b.ok ?? 1) - (a.ok ?? 1)); if (!opts.length) continue;  // obtainable first
-      spheres += `<p class="dim small" style="margin:8px 0">${d.es_generic ? "No sphere-specific bonus. Strong all-round picks:" : `Also works with any <b>${esc(t.type)}</b> sphere, for example:`}</p>` + opts.map(sphereCard).join("");
-    }
+  if (TAGS.units[id]) {
+    const own = esSpheres(id, d, w, I).map(i => I[i]);
+    if (own.length) spheres += `<p class="dim small" style="margin:0 0 8px">These switch on the unit's extra skill:</p>` + own.map(sphereCard).join("");
+    const B = bestSpheres(id, I, d, 5, own.map(s => s.id));
+    if (B.list.length) spheres += `<p class="dim small" style="margin:${own.length ? 8 : 0}px 0 8px">${own.length ? "Also suggested" : "Suggested"} for what it does (${B.focus.label}), from the spheres Revived gives${
+      B.bonus.length ? `, counting its extra skill's bonus with <b>${B.bonus.map(esc).join(", ")}</b> spheres` : ""}:</p>` + B.list.map(sphereCard).join("");
+    // spheres Revived doesn't give now that would suit it better than any it does: worth knowing if they come back
+    const top = B.fits.length ? Math.max(...B.fits) : 0, N = bestSpheres(id, I, d, 3, own.map(s => s.id), false);
+    const missing = N.list.filter((s, k) => N.fits[k] > top);
+    if (missing.length) spheres += `<p class="dim small" style="margin:8px 0">Not in Revived right now, but even better for it:</p>` + missing.map(sphereCard).join("");
     if (d.es_partners?.length) spheres = `<p class="dim small" style="margin:0 0 8px">Extra skill bonus with <b>${d.es_partners.map(esc).join(", ")}</b> in the squad.</p>` + spheres;
   }
   const chain = await evoChain(id);
@@ -985,7 +1060,7 @@ async function showUnit(id) {
       <div class="gifs"><button class="gbtn small" data-gif="1">Save GIF</button><button class="gbtn small dark" data-gif="0">GIF, see-through</button></div></div>` : ""}
     <div class="sec"><h3>Stats</h3>${statTable(u, w)}</div>
     ${skills.length || roles ? `<div class="sec"><h3 class="blue">Skills</h3>${roles ? `<div class="roles">${roles}</div>` : ""}${skills.map(skillBlock).join("")}</div>` : ""}
-    ${spheres ? `<div class="sec"><h3 class="purple">Best spheres</h3>${spheres}</div>` : ""}
+    ${spheres ? `<div class="sec"><h3 class="purple">Suggested spheres</h3>${spheres}</div>` : ""}
     ${sp ? `<div class="sec"><h3>SP Enhancements</h3>${sp}</div>` : ""}
     ${chain.length > 1 || mats ? `<div class="sec"><h3 class="green">Evolution</h3><div class="evo">${chain.map((c, i) => (i ? `<span class="ar">›</span>` : "") + unitMini(c, c === id)).join("")}</div>
       ${mats ? `<p class="dim small" style="margin:10px 0 0">Materials to evolve this unit${w.evo.zel ? ` · ${esc(w.evo.zel)} Zel` : ""}${w.evo.karma ? ` · ${esc(w.evo.karma)} Karma` : ""}</p><div class="mats">${mats}</div>` : ""}</div>` : ""}
@@ -1963,19 +2038,20 @@ async function shareTeam(team, W) {
 // choosing a sphere for a squad unit: the ones its extra skill wants first, then the biggest stat boosts for it
 let sphQ = "";
 async function showSpherePick(slot, n) {
-  const nav = NAV, [I, D] = await Promise.all([load("items"), load("details")]), id = TEAMS[TCUR][slot], u = UMAP[id];
+  const nav = NAV, id = TEAMS[TCUR][slot], u = UMAP[id], [I, D, w] = await Promise.all([load("items"), load("details"), u ? wiki(id) : {}]);
   if (nav !== NAV) return;  // left the page while it loaded
   if (!u) return go("#/team");
   setTitle(`Sphere ${n + 1} · ${u.n}`, true); $("share").hidden = true;
-  const el = (u.e || "").toLowerCase();
-  const gain = s => statBoosts(s.desc).filter(c => !c.els || c.els.includes(el)).reduce((a, c) => a + c.pct * c.stats.length, 0);
-  const best = (D[id]?.es_spheres || []).filter(x => I[x]);
+  // how well each sphere suits this unit (as on its page: what it does, its stat boosts, its extra skill's sphere type)
+  const focus = unitFocus(id), bonus = bonusTypes(D[id]), fit = new Map();
+  const gain = s => { if (!fit.has(s.id)) fit.set(s.id, sphereFit(s, id, focus, bonus)); return fit.get(s.id); };
+  const best = esSpheres(id, D[id], w, I);
   const row = s => { const b = boostText(statBoosts(s.desc));
     return `<div class="item" data-pick="${s.id}"><img loading="lazy" src="${iImg(s.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1">
       <div class="t">${esc(s.name)} <span class="dim small">${s.rarity ? `${s.rarity}${STAR}` : ""} ${esc(s.type || "")}</span></div>${b ? `<div class="sb">${esc(b)}</div>` : ""}<div class="s">${esc(s.desc)}</div></div></div>`; };
   $("page").innerHTML = `<div id="sphpage"><div class="bar2"><div class="searchrow"><input id="spq" type="search" placeholder="Search spheres…" value="${esc(sphQ)}" autocomplete="off"></div>
       <div class="scroller"><button class="chip on" id="spnone">No sphere</button></div></div>
-    ${best.length ? `<div class="count">Best for ${esc(u.n)} (its extra skill)</div><div style="padding-top:8px">${best.map(x => row(I[x])).join("")}</div>` : ""}
+    ${best.length ? `<div class="count">These switch on ${esc(u.n)}'s extra skill</div><div style="padding-top:8px">${best.map(x => row(I[x])).join("")}</div>` : ""}
     <div class="count" id="spcount"></div><div id="splist" style="padding-top:8px"></div></div>`;
   let picked = false;
   const pick = sid => { if (picked) return; picked = true; TSPH[TCUR][slot][n] = sid; saveSquad(); history.back(); };
@@ -1985,7 +2061,7 @@ async function showSpherePick(slot, n) {
     const q = sphQ.trim().toLowerCase();
     const list = Object.values(I).filter(s => s.type && s.name && (!q || s.name.toLowerCase().includes(q) || s.desc.toLowerCase().includes(q)))
       .map(s => [s, gain(s)]).sort((a, b) => b[1] - a[1] || (b[0].rarity || 0) - (a[0].rarity || 0) || a[0].name.localeCompare(b[0].name)).map(x => x[0]);
-    $("spcount").textContent = `${list.length} spheres, biggest stat boost for ${u.e || "this unit"} first`;
+    $("spcount").textContent = `${list.length} spheres, the ones suggested for what it does (${focus.label}) first`;
     paged($("splist"), list, s => { const d = document.createElement("div"); d.innerHTML = row(s); return d.firstElementChild; }, "");
   };
   $("spq").oninput = e => { clearTimeout(showSpherePick.t); showSpherePick.t = setTimeout(() => { sphQ = e.target.value; draw(); }, 200); };
