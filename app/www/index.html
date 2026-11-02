@@ -105,6 +105,21 @@ main { padding-bottom: calc(var(--navh) + 20px); }
 .about p { margin: 6px 0; font-size: 13px; } .about .big { font: 18px Rodin, Arial, sans-serif; text-shadow: var(--ol); margin: 4px 0 2px; }
 .about .facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 10px 0; } .about .facts div { background: rgba(0,0,0,.35); border-radius: 8px; padding: 6px 2px; }
 .about .facts b { display: block; font: 16px Rodin, Arial, sans-serif; color: var(--accent); }
+/* About → Privacy: the update switch, "Check for updates" and how a download is going (the app only) */
+.priv { text-align: left; background: rgba(0,0,0,.3); border-radius: 8px; padding: 8px 10px; margin: 10px 0; }
+.priv .h { font: 15px Rodin, Arial, sans-serif; text-shadow: var(--ol); } .about .priv p { font-size: 12.5px; color: #ece6d6; }
+.sw { position: relative; display: flex; gap: 10px; align-items: flex-start; margin: 8px 0; cursor: pointer; }
+.sw input { position: absolute; opacity: 0; pointer-events: none; }
+.sw .knob { flex: none; position: relative; width: 44px; height: 24px; margin-top: 1px; border-radius: 12px; border: 2px solid var(--gold2); background: #0a1020; box-shadow: inset 0 1px 4px #000; transition: background .15s; }
+.sw .knob::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--dim); box-shadow: 0 1px 2px #000; transition: transform .15s; }
+.sw input:checked + .knob { background: var(--orange); border-color: var(--gold); } .sw input:checked + .knob::after { transform: translateX(20px); background: #fff; }
+.sw input:focus-visible + .knob { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sw b { display: block; font-size: 13.5px; } .sw small { display: block; font-size: 12px; color: var(--dim); margin-top: 2px; }
+.upd { font-size: 12.5px; } .upd p { margin: 6px 0; } .upd ul { margin: 4px 0 8px; padding-left: 18px; } .upd li { margin: 3px 0; }
+.upd .new { color: #9ff09f; font-family: Rodin, Arial, sans-serif; font-size: 14px; text-shadow: var(--ol); }
+.upd .bar { height: 10px; margin: 6px 0; border-radius: 5px; border: 1px solid var(--gold2); background: #0a1020; overflow: hidden; }
+.upd .bar i { display: block; height: 100%; background: linear-gradient(#7ad67a, #2a8f3a); transition: width .2s; }
+.upd .err { color: var(--warn); }
 .gu .pwtag { position: absolute; left: 0; top: calc(100% - 52px); font-family: Rodin, Arial, sans-serif; font-size: 10px; padding: 0 4px; border-radius: 4px; background: linear-gradient(#5aa8ff, #1e5fe0); text-shadow: var(--ol); white-space: nowrap; }
 .role b { color: var(--accent); font-weight: normal; }
 .badge img { width: 16px; height: 16px; } .badge .sti { width: 14px; height: 14px; margin-left: -1px; } .badge .omi { width: 17px; height: 17px; margin: -2px 1px -2px -3px; }
@@ -483,12 +498,77 @@ async function showAbout() {
     ${log.length ? `<div class="news"><b>What's new in ${esc(log[0].version)}</b>${notes(log[0])}${log.length > 1 ? `<details><summary>Earlier versions</summary>${
       log.slice(1).map(e => `<p class="small" style="margin:8px 0 0"><b>${esc(e.version)}</b>${e.date ? ` · ${day(e.date)}` : ""}</p>${notes(e)}`).join("")}</details>` : ""}</div>` : ""}
     <p class="small">Your box: <b>${mine.size}</b> units · Favorites: <b>${favs.size}</b></p>
-    <p class="dim small">Data from the game's own files, <b>bfrevive.net</b> and the Brave Frontier Wiki. No internet, no account, nothing collected. Fan-made: not affiliated with gumi or the BF Revive team.</p>
+    ${canUpdate() ? `<div class="priv"><b class="h">Privacy</b>
+      <p>BF Companion doesn't collect anything about you: no account, no ads, no trackers. On its own it never goes online. The only thing it can ask the internet is GitHub, for new versions of BF Companion.</p>
+      <label class="sw"><input type="checkbox" id="autoupd"${UPD.auto ? " checked" : ""}><span class="knob"></span><span><b>Check for updates automatically</b>
+        <small>Asks GitHub for the newest release when BF Companion starts (at most every 6 hours). <i>Check for updates</i> still works when this is off.</small></span></label>
+      <div class="upd" id="upd"></div></div>` : ""}
+    <p class="dim small">Data from the game's own files, <b>bfrevive.net</b> and the Brave Frontier Wiki.${canUpdate() ? "" : " No internet, no account, nothing collected."} Fan-made: not affiliated with gumi or the BF Revive team.</p>
     <p class="small">New versions: <b>github.com/Nervequakes/BF-Companion</b></p>
     <div class="btnrow" style="justify-content:center"><button class="gbtn blue" id="copylink">Copy link</button><button class="gbtn mclose">Close</button></div></div>`);
   $("copylink").onclick = () => { window.BFApp ? BFApp.copyText(url) : navigator.clipboard?.writeText(url); toast("Link copied: open it in your browser"); };
+  if (canUpdate()) {
+    $("autoupd").onchange = e => { UPD.auto = e.target.checked; store.set("bf.autoupd", UPD.auto); if (UPD.auto) checkUpdate(true); };
+    drawUpdate();
+  }
 }
 $("about").onclick = showAbout;
+
+// ---------------- updates (the app only) ----------------
+// Off unless you turn it on, or tap "Check for updates". MainActivity asks GitHub for the newest release; "Download and
+// install" fetches its APK, checks it against GitHub's SHA-256 and hands it to Android, which asks before installing.
+const canUpdate = () => !!window.BFApp?.checkUpdate;
+const UPD = { auto: store.get("bf.autoupd", false), r: null, st: "", msg: "", done: 0, total: 0, manual: false };
+const mb = n => `${Math.round(n / 1e6)} MB`;
+function checkUpdate(manual) {
+  if (!canUpdate() || ["checking", "download", "install"].includes(UPD.st)) return;
+  Object.assign(UPD, { manual, st: "checking", r: null, msg: "" });
+  store.set("bf.updlast", Date.now()); drawUpdate(); BFApp.checkUpdate();
+}
+// MainActivity's answers
+window.BFUpdate = {
+  // { current, latest, newer, size, date, notes } or { current, error }; a check on start that fails says nothing
+  onCheck(r) { const err = r.error && UPD.manual; Object.assign(UPD, { r: r.error && !err ? null : r, st: err ? "error" : "", msg: r.error || "" }); drawUpdate(); },
+  onProgress(done, total) { Object.assign(UPD, { st: "download", done, total }); drawUpdate(); },
+  // allow (Android's "Install unknown apps" switch is open), notallowed, download, install, cancelled, done, error
+  onState(st, msg) { Object.assign(UPD, { st, msg: msg || "" }); drawUpdate(); },
+};
+function updateHtml() {
+  const r = UPD.r, chk = `<button class="gbtn blue small" id="updchk">Check for updates</button>`;
+  const get = r?.newer ? `<button class="gbtn green" id="updgo">Download and install · ${mb(r.size)}</button>` : "";
+  const what = r?.newer ? `<p class="new">BF Companion ${esc(r.latest)} is out</p><p class="dim">You have ${esc(r.current)}${r.date ? ` · this one came out ${day(r.date)}` : ""}</p>${
+    r.notes?.length ? `<ul>${r.notes.map(n => `<li>${esc(n)}</li>`).join("")}</ul>` : ""}` : "";
+  switch (UPD.st) {
+    case "checking": return `<p>Asking GitHub for the newest version…</p>`;
+    case "allow": return what + `<p>Android asks first: turn on <b>Allow from this source</b> for BF Companion, then come back. The download starts by itself.</p>`;
+    case "notallowed": return what + `<p class="err">BF Companion isn't allowed to install apps, so nothing was downloaded.</p>${get}`;
+    case "download": { const p = UPD.total ? Math.floor(100 * UPD.done / UPD.total) : 0;
+      return what + `<p>Downloading from GitHub… <b>${p}%</b> (${mb(UPD.done)} of ${mb(UPD.total)})</p><div class="bar"><i style="width:${p}%"></i></div>
+        <p class="dim">Keep BF Companion open until it's done: Android pauses apps in the background.</p>`; }
+    case "install": return what + `<p>Downloaded and checked. Tap <b>Update</b> on Android's screen: BF Companion closes while it updates, then open it again. Your favorites and teams stay.</p>`;
+    case "cancelled": return what + `<p>Not installed: you still have ${esc(r?.current || "this version")}.</p>${get}`;
+    case "done": return `<p>Updated. Open BF Companion again for the new version.</p>`;
+    case "error": return what + `<p class="err">${esc(UPD.msg || "Something went wrong.")}</p>${get || chk}`;
+  }
+  return r?.newer ? what + get : `${r ? `<p>You have the newest version, <b>${esc(r.current)}</b>.</p>` : ""}${chk}`;
+}
+function drawUpdate() {
+  const el = $("upd");
+  if (!el) {  // a check on start found a new version: shown on its own once per version, unless something else is open
+    if (UPD.r?.newer && !UPD.st && !UPD.manual && store.get("bf.updskip", "") !== UPD.r.latest && $("modal").hidden) showUpdate();
+    return;
+  }
+  el.innerHTML = updateHtml();
+  const c = $("updchk"), g = $("updgo");
+  if (c) c.onclick = () => checkUpdate(true);
+  if (g) g.onclick = () => BFApp.installUpdate();
+}
+function showUpdate() {
+  store.set("bf.updskip", UPD.r.latest);  // after this, only in About → Privacy
+  modal(`<div class="about"><img src="/static/logo.png" alt="" style="height:56px"><div class="priv"><div class="upd" id="upd"></div></div>
+    <div class="btnrow" style="justify-content:center"><button class="gbtn mclose">Later</button></div></div>`);
+  drawUpdate();
+}
 const elementChart = () => modal(`<img src="/static/elements.png" alt="Element correlation"><div class="btnrow" style="justify-content:center"><button class="gbtn mclose">Close</button></div>`);
 
 try { localStorage.removeItem("bf.box"); } catch {}  // a box imported in version 4.0–4.3 (the import is gone)
@@ -2289,6 +2369,8 @@ window.BFBack = () => {
     store.set("bf.seenv", V.version);
     if (seen || used) setTimeout(showAbout, 600);
   });
+  // the update switch: ask GitHub on start, at most every 6 hours (after What's new, which then shows the answer)
+  if (canUpdate() && UPD.auto && !(Date.now() - store.get("bf.updlast", 0) < 6 * 3600e3)) setTimeout(() => checkUpdate(false), 1500);
   // read the big files while nothing happens, so the first unit, item or search opens at once
   const idle = window.requestIdleCallback || (f => setTimeout(f, 800));
   idle(() => {

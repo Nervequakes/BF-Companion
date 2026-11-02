@@ -3,9 +3,10 @@
 An offline Android guide for **Brave Frontier Revived**: every unit, sphere, drop and summon gate in your
 pocket, plus a team builder that shows your squad's numbers like the game's Manage Squad screen.
 
-No account, no ads, no internet needed: everything is inside the app.
+No account, no ads, no internet needed: everything is inside the app. If you want, it checks GitHub for new versions
+and installs them for you.
 
-**[⬇ Download the latest APK](../../releases/latest)** · ✅ No permissions · ✅ No internet access · ✅ [Code you can read](app) · ✅ [Scanned on VirusTotal (4.9)](https://www.virustotal.com/gui/file/4a0becfd3c7d33b522ca3ecc7b6105d0245334f8b0ad832bdbb7cdcc6cafebd6) · [Is it safe?](#is-it-safe)
+**[⬇ Download the latest APK](../../releases/latest)** · ✅ Collects nothing · ✅ Offline (online only to check for updates, if you want) · ✅ [Code you can read](app) · ✅ [Scanned on VirusTotal (4.9)](https://www.virustotal.com/gui/file/4a0becfd3c7d33b522ca3ecc7b6105d0245334f8b0ad832bdbb7cdcc6cafebd6) · [Is it safe?](#is-it-safe)
 
 Slow download from GitHub? Get the APK from the **[Google Drive mirror](https://drive.google.com/file/d/1uFvBd24L8b5KQAOG_Wnh-q1i7tvH-koN/view)** (Google says it can't scan files this big for viruses: tap *Download anyway*).
 
@@ -78,14 +79,14 @@ Slow download from GitHub? Get the APK from the **[Google Drive mirror](https://
 - Share your team as a picture.
 
 **Also:** favorites, recently viewed, compare up to 3 units side by side, the element chart, swipe between units, and
-*What's new* in every version (tap the logo).
+*What's new* in every version and **updates from inside the app** (tap the logo).
 
 ## Install
 
 1. Download `BF-Companion.apk` from the [latest release](../../releases/latest) on your phone (or from the
    [Google Drive mirror](https://drive.google.com/file/d/1uFvBd24L8b5KQAOG_Wnh-q1i7tvH-koN/view) if GitHub is slow).
 2. Open it and allow installing apps from your browser or file manager when Android asks.
-3. Done. The app needs no permissions at all.
+3. Done. For later versions you don't need this page: tap the logo, then *Privacy → Check for updates*.
 
 Android 7.0 or newer. About 110 MB, because every unit's artwork and animated sprite is included.
 
@@ -98,21 +99,24 @@ mean anything is wrong. If Google Play Protect offers to scan the app, let it.
 
 Yes, and you don't have to take my word for it:
 
-- **It asks for no permissions at all.** After installing, open *Settings → Apps → BF Companion → Permissions*:
-  it says *No permissions requested*. Android's own tool shows the same for the APK (`aapt2 dump permissions`
-  lists nothing but the app's name).
-- **It can't use the internet.** Without the *Internet* permission Android blocks every network connection, and on
-  top of that the app's code refuses to load anything that isn't one of its own built-in pages
-  ([MainActivity.java, line 54](app/src/sg/bf/companion/MainActivity.java#L54)).
+- **It only goes online when you ask, and only to GitHub.** Updates are off until you tap *Check for updates* or turn on
+  *Check for updates automatically* (tap the logo, then *Privacy*). Then the app asks GitHub's API for this repo's newest
+  release. If you tap *Download and install*, it downloads that release's APK, checks it against the SHA-256 GitHub gives
+  for it, and hands it to Android, which asks you before installing and only takes an APK signed with the same key.
+  The app's pages still can't load anything that isn't built in
+  ([MainActivity.java, line 76](app/src/sg/bf/companion/MainActivity.java#L76)).
+- **Two permissions, both only for updates.** *Internet*, to ask GitHub, and *Install unknown apps*, to hand the new
+  version to Android's installer (Android asks you to allow it the first time). Android's own tool lists exactly these
+  two for the APK (`aapt2 dump permissions`).
 - **It collects nothing.** No account, no ads, no analytics, no trackers. Your favorites and teams are saved only
   on your phone, in the app's own storage, and are gone when you uninstall it.
 - **The only file it ever writes** is a picture you choose to share or save (a unit or team card, or a sprite GIF), in
   *Pictures/BF Companion*.
 - **Read the code.** The [`app`](app) folder holds everything that makes the APK:
-  - [`AndroidManifest.xml`](app/AndroidManifest.xml): what the app is allowed to do (nothing extra).
-  - [`MainActivity.java`](app/src/sg/bf/companion/MainActivity.java): the whole Android part, about 160 lines. It
+  - [`AndroidManifest.xml`](app/AndroidManifest.xml): what the app is allowed to do (the two update permissions, nothing else).
+  - [`MainActivity.java`](app/src/sg/bf/companion/MainActivity.java): the whole Android part, about 390 lines. It
     shows the app's pages, colours the phone's status and navigation bars, saves or shares a picture when you tap
-    *Share* or *Save GIF*, and handles the back button.
+    *Share* or *Save GIF*, handles the back button, and checks for and installs updates when you ask.
   - [`www/index.html`](app/www/index.html): the app itself. An APK is a zip file: unzip it and you'll find this
     exact file as `assets/www/index.html`. The rest of the APK is the game data, artwork and sprites it shows.
   - [`build_apk.bat`](app/build_apk.bat): how the APK is built with Google's Android tools.
@@ -126,7 +130,7 @@ Yes, and you don't have to take my word for it:
   fights in, summon gates and shops.
 - **[Brave Frontier Wiki](https://bravefrontierglobal.fandom.com/)**: skill numbers, SP enhancements, lore and evolution details.
 
-The data is a snapshot from the day the APK was built; new versions come with fresh data.
+The data is a snapshot from the day the APK was built; new versions come with fresh data (*Check for updates* in the app finds them).
 
 ## Credits
 
