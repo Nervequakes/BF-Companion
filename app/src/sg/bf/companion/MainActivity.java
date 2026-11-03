@@ -3,6 +3,8 @@ package sg.bf.companion;
 // Brave Frontier unit guide. Everything (page, textures, unit data, icons) is inside the APK under
 // assets/www and is served to the WebView as https://bf.app/... so it works offline on any phone.
 // The one thing that goes online is "Check for updates" (off unless you turn it on), at the end of this file.
+// A data update from it (the page, data and static files of a newer release, in files/www) is served before the APK's
+// own copy until an APK update of that version or newer replaces it.
 
 import android.app.Activity;
 import android.app.PendingIntent;
@@ -35,6 +37,9 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -47,17 +52,21 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 public class MainActivity extends Activity {
     private static final String HOST = "bf.app";
     private static MainActivity current;  // for Installed, Android's answer to an update install
     private WebView web;
     private boolean resumed;
+    private volatile boolean usePack;  // files/www holds a newer release's page and data (a data update)
 
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         current = this;
+        usePack = keepPack();
         getWindow().setStatusBarColor(Color.parseColor("#161922"));
         web = new WebView(this);
         web.setBackgroundColor(Color.parseColor("#0b0a14"));
@@ -75,8 +84,10 @@ public class MainActivity extends Activity {
                 Uri u = req.getUrl();
                 if (!HOST.equals(u.getHost())) return blocked();  // nothing leaves the phone
                 String path = u.getPath() == null || u.getPath().equals("/") ? "/index.html" : u.getPath();
+                if (path.contains("..")) return blocked();
                 try {
-                    InputStream in = getAssets().open("www" + path);
+                    File f = new File(getFilesDir(), "www" + path);  // a data update's copy first (no pictures in it)
+                    InputStream in = usePack && f.isFile() ? new FileInputStream(f) : getAssets().open("www" + path);
                     return new WebResourceResponse(mime(path), mime(path).startsWith("text") ? "utf-8" : null, in);
                 } catch (IOException e) {
                     return new WebResourceResponse("text/plain", "utf-8", 404, "Not found", null, null);
@@ -127,7 +138,7 @@ public class MainActivity extends Activity {
         return "application/octet-stream";
     }
 
-    /** Called from the page: pictures (PNG or GIF) go to the gallery or the share sheet, text to the clipboard. */
+    /** Called from the page: pictures (PNG or GIF) and links go to the gallery or the share sheet, text to the clipboard. */
     private class Bridge {
         @JavascriptInterface
         public void shareImage(String base64Png, String name, boolean share) { shareFile(base64Png, name, "image/png", share); }
@@ -143,6 +154,13 @@ public class MainActivity extends Activity {
                     .putExtra(Intent.EXTRA_STREAM, uri).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 startActivity(Intent.createChooser(i, "Share picture"));
             });
+        }
+
+        /** A line of text (a unit's bfcompanion.app link) to Android's share sheet. */
+        @JavascriptInterface
+        public void shareText(String text) {
+            runOnUiThread(() -> startActivity(Intent.createChooser(
+                new Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text), "Share link")));
         }
 
         @JavascriptInterface
@@ -213,18 +231,45 @@ public class MainActivity extends Activity {
     // GitHub's API names the newest release. "Download and install" streams its APK straight into Android's installer,
     // checks it against the SHA-256 GitHub gives for it, and Android asks before putting it over this version (it only
     // takes an APK signed with the same key). The page itself still can't load anything from the internet (above).
+    // A release also carries update.json (the app code and pictures it was built with) and BF-Companion-www.zip (its page,
+    // data and static files): an app built from the same code and pictures only needs that zip, a few MB.
     private static final String RELEASES = "https://api.github.com/repos/Nervequakes/BF-Companion/releases/latest";
     private static final String DOWNLOADS = "https://github.com/Nervequakes/BF-Companion/releases/download/";
-    private volatile String apkUrl, apkSha;  // from the last check
-    private volatile long apkSize;
-    private volatile boolean busy;
+    private static final Pattern PACK_FILE = Pattern.compile("(index\\.html|(data|static)/[A-Za-z0-9_./-]+)");
+    private volatile String apkUrl, apkSha, packUrl, packSha, latest;  // from the last check
+    private volatile long apkSize, packSize;
+    private volatile boolean busy, dataOnly;
     private boolean askedAllow;
     private Intent confirm;  // Android's "Update this app?" screen, when it came while the app was in the background
+
+    /** The version this app shows: a data update's, or the APK's own. */
+    private String haveVersion() throws Exception {
+        String apk = getPackageManager().getPackageInfo(getPackageName(), 0).versionName, pack = usePack ? packVersion() : null;
+        return pack != null && newer(pack, apk) ? pack : apk;
+    }
+
+    private String packVersion() {
+        try (InputStream in = new FileInputStream(new File(getFilesDir(), "www/data/version.json"))) {
+            return new JSONObject(read(in)).optString("version", null);
+        } catch (Exception e) { return null; }
+    }
+
+    /** A data update stays only while it's newer than the APK: an APK update of its version or later replaces it. */
+    private boolean keepPack() {
+        File dir = new File(getFilesDir(), "www");
+        if (!dir.isDirectory()) return false;
+        try {
+            String pack = packVersion(), apk = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+            if (pack != null && newer(pack, apk) && new File(dir, "index.html").isFile()) return true;
+        } catch (Exception ignored) {}
+        deleteAll(dir);
+        return false;
+    }
 
     private void check() {
         JSONObject r = new JSONObject();
         try {
-            String have = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+            String have = haveVersion();
             r.put("current", have);
             HttpURLConnection c = open(RELEASES);
             c.setRequestProperty("Accept", "application/vnd.github+json");
@@ -233,16 +278,34 @@ public class MainActivity extends Activity {
             if (code != 200) throw new IOException("GitHub answered with error " + code + ".");
             JSONObject rel = new JSONObject(read(c.getInputStream()));
             JSONArray assets = rel.getJSONArray("assets");
-            JSONObject apk = null;
-            for (int i = 0; i < assets.length(); i++)
-                if ("BF-Companion.apk".equals(assets.getJSONObject(i).optString("name"))) apk = assets.getJSONObject(i);
+            JSONObject apk = null, meta = null, pack = null;
+            for (int i = 0; i < assets.length(); i++) {
+                JSONObject a = assets.getJSONObject(i);
+                String n = a.optString("name");
+                if ("BF-Companion.apk".equals(n)) apk = a; else if ("update.json".equals(n)) meta = a; else if ("BF-Companion-www.zip".equals(n)) pack = a;
+            }
             if (apk == null) throw new IOException("The newest release on GitHub has no APK.");
-            String latest = rel.getString("tag_name").replaceFirst("^v", ""), body = rel.optString("body"), digest = apk.optString("digest");
+            latest = rel.getString("tag_name").replaceFirst("^v", "");
+            String body = rel.optString("body"), digest = apk.optString("digest");
             Matcher sha = Pattern.compile("\\b[0-9a-f]{64}\\b").matcher(body);  // the release notes carry it too
             apkSha = digest.startsWith("sha256:") ? digest.substring(7) : sha.find() ? sha.group() : null;
             apkUrl = apk.getString("browser_download_url");
             apkSize = apk.optLong("size");
-            r.put("latest", latest).put("newer", newer(latest, have)).put("size", apkSize)
+            dataOnly = false;
+            boolean isNewer = newer(latest, have);
+            if (isNewer && meta != null && pack != null) {
+                try {  // built from this app's code and pictures? Then its data is all that's new
+                    JSONObject m = new JSONObject(read(open(meta.getString("browser_download_url")).getInputStream()));
+                    JSONObject mine = new JSONObject(read(getAssets().open("www/data/version.json")));
+                    String pd = pack.optString("digest");
+                    packSha = pd.startsWith("sha256:") ? pd.substring(7) : m.optJSONObject("pack") != null ? m.getJSONObject("pack").optString("sha256", null) : null;
+                    packUrl = pack.getString("browser_download_url");
+                    packSize = pack.optLong("size");
+                    dataOnly = packSha != null && latest.equals(m.optString("version")) && !mine.optString("code").isEmpty()
+                        && mine.optString("code").equals(m.optString("code")) && mine.optString("thumbs").equals(m.optString("thumbs"));
+                } catch (Exception e) { dataOnly = false; }  // then the whole APK, as before
+            }
+            r.put("latest", latest).put("newer", isNewer).put("kind", dataOnly ? "data" : "apk").put("size", dataOnly ? packSize : apkSize)
              .put("date", rel.optString("published_at")).put("notes", notes(body));
         } catch (Exception e) {
             try { r.put("error", message(e)); } catch (Exception ignored) {}
@@ -252,6 +315,12 @@ public class MainActivity extends Activity {
 
     private void install() {
         if (busy || apkUrl == null) return;
+        if (dataOnly) {  // no install: nothing for Android to ask
+            busy = true;
+            state("download", null);
+            new Thread(this::downloadPack).start();
+            return;
+        }
         if (Build.VERSION.SDK_INT >= 26 && !getPackageManager().canRequestPackageInstalls()) {
             askedAllow = true;  // Android's own switch for this app, then onResume carries on
             state("allow", null);
@@ -302,6 +371,84 @@ public class MainActivity extends Activity {
             busy = false;
             state("error", message(e));
         }
+    }
+
+    /** A data update: the release's zip, checked against GitHub's SHA-256, unpacked next to the app (only the page, data
+     *  and static files: anything else in it stops it), then put in place in one step and the page reloaded. */
+    private void downloadPack() {
+        File dir = getFilesDir(), part = new File(dir, "www.zip.part"), fresh = new File(dir, "www.new"), live = new File(dir, "www"), old = new File(dir, "www.old");
+        try {
+            if (packSha == null) throw new IOException("GitHub gave no checksum for it, so it wasn't downloaded.");
+            if (!packUrl.startsWith(DOWNLOADS)) throw new IOException("The update isn't on BF Companion's GitHub page.");
+            HttpURLConnection c = open(packUrl);
+            if (c.getResponseCode() != 200) throw new IOException("GitHub answered with error " + c.getResponseCode() + ".");
+            long total = c.getContentLengthLong() > 0 ? c.getContentLengthLong() : packSize, got = 0;
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            try (InputStream in = c.getInputStream(); OutputStream out = new FileOutputStream(part)) {
+                byte[] buf = new byte[1 << 16];
+                int shown = -1;
+                for (int n; (n = in.read(buf)) > 0; ) {
+                    out.write(buf, 0, n);
+                    md.update(buf, 0, n);
+                    got += n;
+                    int pct = (int) (100 * got / Math.max(total, 1));
+                    if (pct != shown) { shown = pct; js("onProgress", got + "," + total); }
+                }
+            }
+            if (!hex(md.digest()).equals(packSha.toLowerCase())) throw new IOException("The download doesn't match GitHub's checksum, so it wasn't used.");
+            deleteAll(fresh);
+            unzip(part, fresh);
+            String v;
+            try (InputStream in = new FileInputStream(new File(fresh, "data/version.json"))) { v = new JSONObject(read(in)).optString("version"); }
+            if (!v.equals(latest) || !new File(fresh, "index.html").isFile()) throw new IOException("The update is incomplete, so it wasn't used.");
+            deleteAll(old);
+            if (live.exists() && !live.renameTo(old)) throw new IOException("Couldn't replace the guide's files.");
+            if (!fresh.renameTo(live)) { old.renameTo(live); throw new IOException("Couldn't put the guide's new files in place."); }
+            deleteAll(old);
+            usePack = true;
+            busy = false;
+            state("applied", null);
+            runOnUiThread(() -> web.postDelayed(() -> { web.clearCache(false); web.reload(); }, 1200));
+        } catch (Exception e) {
+            deleteAll(fresh);
+            busy = false;
+            state("error", message(e));
+        } finally {
+            part.delete();
+        }
+    }
+
+    private static void unzip(File zip, File to) throws IOException {
+        long total = 0;
+        try (ZipInputStream z = new ZipInputStream(new FileInputStream(zip))) {
+            byte[] buf = new byte[1 << 16];
+            for (ZipEntry e; (e = next(z)) != null; ) {
+                if (e.isDirectory()) continue;
+                String n = e.getName();
+                if (n.contains("..") || !PACK_FILE.matcher(n).matches()) throw new IOException("The update has a file it shouldn't (" + n + ").");
+                File f = new File(to, n);
+                File p = f.getParentFile();
+                if (p != null && !p.isDirectory() && !p.mkdirs()) throw new IOException("Couldn't unpack the update.");
+                try (OutputStream out = new FileOutputStream(f)) {
+                    for (int k; (k = z.read(buf)) > 0; ) {
+                        if ((total += k) > (64L << 20)) throw new IOException("The update is too big.");
+                        out.write(buf, 0, k);
+                    }
+                }
+            }
+        }
+    }
+
+    /** The zip's next file; Android itself refuses a name that climbs out of the folder ("../"): said the same way. */
+    private static ZipEntry next(ZipInputStream z) throws IOException {
+        try { return z.getNextEntry(); }
+        catch (java.util.zip.ZipException e) { throw new IOException("The update has a file it shouldn't (" + e.getMessage() + ")."); }
+    }
+
+    private static void deleteAll(File f) {
+        File[] in = f.listFiles();
+        if (in != null) for (File x : in) deleteAll(x);
+        f.delete();
     }
 
     /** Android's answer to an install: first "the user has to confirm" (its screen is shown), then how it ended. */

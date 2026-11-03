@@ -19,6 +19,9 @@ jobs:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github
       - id: pages
         uses: actions/configure-pages@v5
       - name: Take the site out of the newest APK
@@ -45,6 +48,8 @@ jobs:
           open(p, "w", encoding="utf-8").write(t.replace("</title>\n", "</title>\n" + tags, 1))
           EOF
           grep -c 'og:image' site/index.html
+      - name: A page per unit for shared links (bfcompanion.app/u/<id>), with the unit in the link preview
+        run: python3 .github/unit_pages.py site "${{ steps.pages.outputs.base_url }}"
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site

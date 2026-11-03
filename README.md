@@ -106,20 +106,23 @@ Yes, and you don't have to take my word for it:
   *Check for updates automatically* (tap the logo, then *Privacy*). Then the app asks GitHub's API for this repo's newest
   release. If you tap *Download and install*, it downloads that release's APK, checks it against the SHA-256 GitHub gives
   for it, and hands it to Android, which asks you before installing and only takes an APK signed with the same key.
+  When only the guide's data changed, it downloads just that release's small zip of the page and data instead (a few
+  MB), checks it against GitHub's SHA-256 the same way, and keeps it in the app's own storage until the next APK.
   The app's pages still can't load anything that isn't built in
-  ([MainActivity.java, line 76](app/src/sg/bf/companion/MainActivity.java#L76)).
+  ([MainActivity.java, line 85](app/src/sg/bf/companion/MainActivity.java#L85)).
 - **Two permissions, both only for updates.** *Internet*, to ask GitHub, and *Install unknown apps*, to hand the new
   version to Android's installer (Android asks you to allow it the first time). Android's own tool lists exactly these
   two for the APK (`aapt2 dump permissions`).
 - **It collects nothing.** No account, no ads, no analytics, no trackers. Your favorites and teams are saved only
   on your phone, in the app's own storage, and are gone when you uninstall it.
-- **The only file it ever writes** is a picture you choose to share or save (a unit or team card, or a sprite GIF), in
-  *Pictures/BF Companion*.
+- **The only files it writes** are a picture you choose to share or save (a unit or team card, or a sprite GIF), in
+  *Pictures/BF Companion*, and a data update you choose to download, in the app's own storage.
 - **Read the code.** The [`app`](app) folder holds everything that makes the APK:
   - [`AndroidManifest.xml`](app/AndroidManifest.xml): what the app is allowed to do (the two update permissions, nothing else).
-  - [`MainActivity.java`](app/src/sg/bf/companion/MainActivity.java): the whole Android part, about 390 lines. It
+  - [`MainActivity.java`](app/src/sg/bf/companion/MainActivity.java): the whole Android part, about 490 lines. It
     shows the app's pages, colours the phone's status and navigation bars, saves or shares a picture when you tap
-    *Share* or *Save GIF*, handles the back button, and checks for and installs updates when you ask.
+    *Share* or *Save GIF*, shares a unit's link, handles the back button, and checks for and installs updates when you ask
+    (the whole APK, or only new data).
   - [`www/index.html`](app/www/index.html): the app itself. An APK is a zip file: unzip it and you'll find this
     exact file as `assets/www/index.html`. The rest of the APK is the game data, artwork and sprites it shows.
   - [`build_apk.bat`](app/build_apk.bat): how the APK is built with Google's Android tools.
