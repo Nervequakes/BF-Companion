@@ -1,0 +1,53 @@
+# The website (GitHub Pages, on your own domain): built from each new release, so it always matches the app.
+# The page and everything it uses come out of the release's APK (assets/www); nothing else is needed.
+# Runs by itself on every release (yours and the daily data updates), or by hand: Actions > Website > Run workflow.
+name: Website
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: pages
+        uses: actions/configure-pages@v5
+      - name: Take the site out of the newest APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download --repo "$GITHUB_REPOSITORY" --pattern BF-Companion.apk
+          unzip -q BF-Companion.apk 'assets/www/*'
+          mv assets/www site
+          test -f site/index.html -a -f site/data/units.json
+      - name: Link previews (Discord, WhatsApp, X) with the site's own address
+        env:
+          BASE: ${{ steps.pages.outputs.base_url }}
+        run: |
+          python3 - <<'EOF'
+          import os
+          base = os.environ["BASE"].rstrip("/")
+          desc = "A guide to Brave Frontier Revived: every unit's stats, skills and SP builds, where to get units, spheres and items, Elgifs, quest drops and a team builder."
+          tags = "".join(f'<meta property="{k}" content="{v}">\n' for k, v in (
+              ("og:type", "website"), ("og:site_name", "BF Companion"), ("og:title", "BF Companion"), ("og:description", desc),
+              ("og:url", base + "/"), ("og:image", base + "/static/icon-512.png"))) + '<meta name="twitter:card" content="summary">\n'
+          p = "site/index.html"
+          t = open(p, encoding="utf-8").read()
+          open(p, "w", encoding="utf-8").write(t.replace("</title>\n", "</title>\n" + tags, 1))
+          EOF
+          grep -c 'og:image' site/index.html
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deploy
+        uses: actions/deploy-pages@v4

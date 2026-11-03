@@ -6,6 +6,8 @@ pocket, plus a team builder that shows your squad's numbers like the game's Mana
 No account, no ads, no internet needed: everything is inside the app. If you want, it checks GitHub for new versions
 and installs them for you.
 
+No Android phone? The same guide is a website too: **[bfcompanion.app](https://bfcompanion.app)**, in any browser, iPhone included. It's rebuilt from every release, so it always matches the app.
+
 **[⬇ Download the latest APK](../../releases/latest)** · ✅ Collects nothing · ✅ Offline (online only to check for updates, if you want) · ✅ [Code you can read](app) · ✅ [Scanned on VirusTotal (4.9)](https://www.virustotal.com/gui/file/4a0becfd3c7d33b522ca3ecc7b6105d0245334f8b0ad832bdbb7cdcc6cafebd6) · [Is it safe?](#is-it-safe)
 
 Slow download from GitHub? Get the APK from the **[Google Drive mirror](https://drive.google.com/file/d/1uFvBd24L8b5KQAOG_Wnh-q1i7tvH-koN/view)** (Google says it can't scan files this big for viruses: tap *Download anyway*).

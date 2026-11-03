@@ -4,7 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>BF Companion</title>
+<meta name="description" content="A guide to Brave Frontier Revived: every unit's stats, skills and SP builds, where to get units, spheres and items, Elgifs, quest drops and a team builder.">
 <meta name="theme-color" content="#161922">
+<!-- the website: its tab icon, and a phone's "Add to Home screen" -->
+<link rel="icon" type="image/png" sizes="192x192" href="/static/icon-192.png">
+<link rel="apple-touch-icon" href="/static/icon-192.png">
+<link rel="manifest" href="/static/site.webmanifest">
+<meta name="apple-mobile-web-app-title" content="BF Companion">
 <style>
 /* The phone app: a guide to every Brave Frontier unit, styled after the game (its textures and font in /static).
    Data: /data/units.json, details.json, items.json, drops.json and /data/w/<id>.json (from the wiki). */
@@ -142,7 +148,7 @@ main { padding-bottom: calc(var(--navh) + 20px); }
 .stars img.omni { width: 34px; height: 34px; margin: -5px 2px -5px -3px; }
 .stars .omnit { font-family: Rodin, Arial, sans-serif; font-size: 17px; letter-spacing: 1px; text-shadow: none; background: linear-gradient(#ff7a6b, #ffd84a 30%, #6bff8a 55%, #5ad7ff 75%, #c78bff); -webkit-background-clip: text; background-clip: text; color: transparent;
   filter: drop-shadow(1px 0 0 #000) drop-shadow(-1px 0 0 #000) drop-shadow(0 1px 0 #000) drop-shadow(0 -1px 0 #000); }
-.hero .meta { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; } .hero .meta .badge img { width: 18px; height: 18px; }
+.hero .meta { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; } #hmeta { display: contents; }  /* its badges line up with the others */ .hero .meta .badge img { width: 18px; height: 18px; }
 .favbtn { position: absolute; right: 12px; top: 12px; z-index: 2; width: 46px; height: 46px; border-radius: 50%; border: 2px solid var(--gold2); background: rgba(0,0,0,.6); display: grid; place-items: center; padding: 0; }
 .navarrows { position: absolute; right: 10px; bottom: 10px; z-index: 2; display: flex; align-items: center; gap: 6px; font-family: Rodin, Arial, sans-serif; font-size: 11px; text-shadow: var(--ol); }
 .navarrows button { width: 38px; height: 38px; border-radius: 50%; border: 2px solid var(--gold2); background: rgba(0,0,0,.6); font-size: 24px; line-height: 1; padding: 0 0 3px; }
@@ -394,6 +400,13 @@ body.boxedit .totop { bottom: calc(var(--navh) + 78px); } body.boxedit .toast { 
 }
 /* on a PC screen: one centered column, like a big phone */
 @media (min-width: 1000px) { main { max-width: 920px; margin: 0 auto; } .top { padding-left: calc(50vw - 460px); padding-right: calc(50vw - 460px); } }
+/* ...with the game's tab buttons up in the header (placeNav), so nothing sits fixed over the bottom of the page */
+@media (min-width: 1000px) {
+  :root { --navh: 0px; }
+  .top .nav { position: static; padding: 0; gap: 4px; background: none; border: 0; box-shadow: none; }
+  .top .nav button { width: 46px; } .top .nav button img { max-height: 42px; }
+  .top .nav button.on img { transform: scale(1.06); }
+}
 @media (min-width: 700px) { .grid { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); } .hero { min-height: 300px; } .list { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); } }
 /* a wide header: the picture under the glow (70% across), whole, instead of against the right edge and cut off */
 @media (min-width: 700px) { .hero .art { right: auto; left: 70%; transform: translateX(-50%); max-width: 56%; object-position: center bottom; } .hero .art.icon { transform: translate(-50%, 50%); } }
@@ -413,7 +426,7 @@ body.boxedit .totop { bottom: calc(var(--navh) + 78px); } body.boxedit .toast { 
 <main>
   <section class="view on" id="v-units">
     <div class="bar2">
-      <div class="searchrow"><input id="uq" type="search" placeholder="Name, skill or role…" autocomplete="off">
+      <div class="searchrow"><input id="uq" type="search" placeholder="Name, skill, role" autocomplete="off">
         <select id="usort"><option value="rarity">Rarity</option><option value="element">Element</option><option value="new">Newest</option><option value="name">Name</option><option value="atk">ATK</option><option value="hp">HP</option><option value="def">DEF</option><option value="rec">REC</option><option value="cost">Cost</option><option value="power">Strongest (role)</option></select>
         <button class="iconbtn fbtn" id="ufbtn" title="Filters" aria-label="Filters"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg><span id="ufn"></span></button></div>
       <div id="ufilters">
@@ -449,8 +462,8 @@ body.boxedit .totop { bottom: calc(var(--navh) + 78px); } body.boxedit .toast { 
 <nav class="nav">
   <button data-tab="units" class="on" aria-label="Units"><img src="/static/nav_unit.png" alt=""></button>
   <button data-tab="elgifs" aria-label="Elgifs"><img src="/static/nav_elgif.png" alt=""></button>
-  <button data-tab="spheres" aria-label="Spheres and items"><img src="/static/nav_item.png" alt=""></button>
-  <button data-tab="drops" aria-label="Drops"><img src="/static/nav_quest.png" alt=""></button>
+  <button data-tab="spheres" aria-label="Items"><img src="/static/nav_item.png" alt=""></button>
+  <button data-tab="drops" aria-label="Quests"><img src="/static/nav_quest.png" alt=""></button>
   <button data-tab="team" aria-label="Team builder"><img src="/static/nav_team.png" alt=""></button>
 </nav>
 <button class="gbtn blue cmpbar" id="cmpbar" hidden></button>
@@ -508,10 +521,13 @@ async function showAbout() {
       <label class="sw"><input type="checkbox" id="autoupd"${UPD.auto ? " checked" : ""}><span class="knob"></span><span><b>Check for updates automatically</b>
         <small>Asks GitHub for the newest release when BF Companion starts (at most every 6 hours). <i>Check for updates</i> still works when this is off.</small></span></label>
       <div class="upd" id="upd"></div></div>` : ""}
-    <p class="dim small">Data from the game's own files, <b>bfrevive.net</b> and the Brave Frontier Wiki.${canUpdate() ? "" : " No internet, no account, nothing collected."} Fan-made: not affiliated with gumi or the BF Revive team.</p>
-    <p class="small">New versions: <b>github.com/Nervequakes/BF-Companion</b></p>
-    <div class="btnrow" style="justify-content:center"><button class="gbtn blue" id="copylink">Copy link</button><button class="gbtn mclose">Close</button></div></div>`);
-  $("copylink").onclick = () => { window.BFApp ? BFApp.copyText(url) : navigator.clipboard?.writeText(url); toast("Link copied: open it in your browser"); };
+    <p class="dim small">Data from the game's own files, <b>bfrevive.net</b> and the Brave Frontier Wiki.${canUpdate() ? "" : window.BFApp ? " No internet, no account, nothing collected."
+      : " No account, no ads, nothing collected: your favorites, box and teams stay in this browser."} Fan-made: not affiliated with gumi or the BF Revive team.</p>
+    ${window.BFApp ? `<p class="small">New versions: <b>github.com/Nervequakes/BF-Companion</b></p>
+    <div class="btnrow" style="justify-content:center"><button class="gbtn blue" id="copylink">Copy link</button><button class="gbtn mclose">Close</button></div>`
+    : `<p class="small">Also as an Android app, that works without internet: <b>github.com/Nervequakes/BF-Companion</b></p>
+    <div class="btnrow" style="justify-content:center"><a class="gbtn blue" href="${url}/latest" target="_blank" rel="noopener">Get the Android app</a><button class="gbtn mclose">Close</button></div>`}</div>`);
+  if (window.BFApp) $("copylink").onclick = () => { BFApp.copyText(url); toast("Link copied: open it in your browser"); };
   if (canUpdate()) {
     $("autoupd").onchange = e => { UPD.auto = e.target.checked; store.set("bf.autoupd", UPD.auto); if (UPD.auto) checkUpdate(true); };
     drawUpdate();
@@ -1123,7 +1139,7 @@ async function evoChain(id) {
 }
 async function showUnit(id) {
   const u = UMAP[id], nav = NAV; if (!u) return showMissing();
-  setTitle(u.n, true); $("share").hidden = false; $("share").onclick = () => shareUnit(id);
+  setTitle(u.n, true); $("share").hidden = false; $("share").onclick = () => window.BFApp ? shareUnit(id) : shareMenu(id);
   const page = $("page");
   remember("u", id);
   const data = Promise.all([wiki(id), load("details"), load("items")]);  // read while the pictures load
@@ -1482,6 +1498,24 @@ async function renderFavs() {
 }
 
 // ---------------- share a unit as a picture ----------------
+// the website: a unit page has its own link, so share that or the picture
+async function copyText(t) {
+  try { await navigator.clipboard.writeText(t); return true; } catch {}
+  const a = document.createElement("textarea"); a.value = t; a.style.position = "fixed"; a.style.opacity = "0"; document.body.append(a); a.select();
+  const ok = document.execCommand("copy"); a.remove(); return ok;
+}
+function shareMenu(id) {
+  const u = UMAP[id], link = location.href, phone = navigator.share && matchMedia("(pointer: coarse)").matches;
+  modal(`<div class="about"><div class="big">${esc(u.n)}</div><p class="dim small" style="word-break:break-all">${esc(link)}</p>
+    <div class="btnrow" style="justify-content:center"><button class="gbtn blue" id="shlink">${phone ? "Share link" : "Copy link"}</button>
+    <button class="gbtn dark" id="shpic">Save picture</button><button class="gbtn mclose">Close</button></div></div>`);
+  $("shlink").onclick = async () => {
+    $("modal").hidden = true;
+    if (phone) { try { await navigator.share({ title: `${u.n} · BF Companion`, url: link }); } catch {} }
+    else toast(await copyText(link) ? "Link copied" : "Couldn't copy: copy it from the address bar");
+  };
+  $("shpic").onclick = () => { $("modal").hidden = true; shareUnit(id); };
+}
 async function shareUnit(id) {
   const u = UMAP[id], w = await wiki(id), S = 2, W = 720, H = 900;
   const cv = document.createElement("canvas"); cv.width = W * S; cv.height = H * S; const g = cv.getContext("2d"); g.scale(S, S);
@@ -2297,7 +2331,7 @@ async function showCompare() {
 }
 
 // ---------------- navigation ----------------
-const TABS = { units: "Units", elgifs: "Elgifs", spheres: "Spheres", drops: "Drops", team: "Team", favs: "Favorites & box" };
+const TABS = { units: "Units", elgifs: "Elgifs", spheres: "Items", drops: "Quests", team: "Team", favs: "Favorites & box" };  // as the game's buttons say
 let tab = "units", tabsDrawn = new Set();
 function setTitle(t, sub) {
   $("title").textContent = t; document.body.classList.toggle("sub", !!sub);
@@ -2334,14 +2368,22 @@ async function route() {
   requestAnimationFrame(() => window.scrollTo(0, scrollPos[tab] || 0));
 }
 addEventListener("scroll", () => { if (!document.body.classList.contains("sub")) scrollPos[tab] = scrollY; }, { passive: true });
-// ▲ back to the top of a long list or page
-function onScrollTop() { $("totop").hidden = scrollY < 1500; }
+// ▲ back to the top of a long list or page: shows while you scroll, then gets out of the way of the text
+let topTimer = 0;
+function onScrollTop() {
+  clearTimeout(topTimer); $("totop").hidden = scrollY < 1500;
+  if (scrollY >= 1500) topTimer = setTimeout(() => $("totop").hidden = true, 2500);
+}
 addEventListener("scroll", onScrollTop, { passive: true });
 $("totop").onclick = () => window.scrollTo({ top: 0, behavior: "smooth" });
 // Enter in a search box closes the keyboard, so the results can be seen
 document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.matches?.("input[type=search]")) e.target.blur(); });
 $("ebdone").onclick = () => { setBoxEdit(false); toast(`${mine.size} unit${mine.size === 1 ? "" : "s"} in your box`); };
 addEventListener("hashchange", route);
+// a computer screen: the tab buttons go up in the header, next to ★; back at the bottom on a phone
+const wide = matchMedia("(min-width: 1000px)"), navEl = document.querySelector(".nav");
+const placeNav = () => wide.matches ? $("favtab").before(navEl) : $("cmpbar").before(navEl);
+placeNav(); wide.onchange = placeNav;
 // tapping the tab you're on goes back to the top of its list
 document.querySelectorAll(".nav button").forEach(b => b.onclick = () =>
   b.dataset.tab === tab && !document.body.classList.contains("sub") ? window.scrollTo({ top: 0, behavior: "smooth" }) : go(`#/${b.dataset.tab}`));
