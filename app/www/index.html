@@ -20,7 +20,7 @@
   --gold: #e9c868; --gold2: #b8902f; --gold3: #5a3f12; --orange: #f7a21b; --blue: #3f8cff;
   --Fire: #ff6a47; --Water: #49a4ff; --Earth: #5fc56c; --Thunder: #ffd24a; --Light: #f2ecd8; --Dark: #b382ff;
   --ol: 0 0 2px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 2px 3px rgba(0,0,0,.7);
-  --steel: url(/static/iphx_footer.png); --navh: 78px;
+  --steel: url(/static/iphx_footer.png); --navh: 78px; --toph: 57px;  /* the header's height, for the bars that stick under it */
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 [hidden] { display: none !important; }
@@ -60,7 +60,7 @@ main { padding-bottom: calc(var(--navh) + 20px); }
 .view { display: none; } .view.on { display: block; }
 
 /* filters */
-.bar2 { position: sticky; top: 57px; z-index: 10; padding: 8px 12px; background: linear-gradient(rgba(11,10,20,.96), rgba(11,10,20,.86)); border-bottom: 1px solid var(--gold3); }
+.bar2 { position: sticky; top: var(--toph); z-index: 10; padding: 8px 12px; background: linear-gradient(rgba(11,10,20,.96), rgba(11,10,20,.86)); border-bottom: 1px solid var(--gold3); }
 .searchrow { display: flex; gap: 8px; } .searchrow input { flex: 1; min-width: 0; }
 .scroller { display: flex; gap: 6px; overflow-x: auto; padding: 8px 0 2px; scrollbar-width: none; } .scroller::-webkit-scrollbar { display: none; }
 .scroller.wrap { flex-wrap: wrap; overflow: visible; padding: 10px 12px 0; }  /* every chip on screen: no sideways row that cuts off */
@@ -303,12 +303,12 @@ select.gsel { height: 38px; font-size: 12.5px; padding: 0 10px; }
 .ctree, .ctree ul { list-style: none; margin: 4px 0 0; padding: 0; } .ctree ul { padding-left: 14px; border-left: 1px dashed var(--gold3); margin-left: 10px; }
 .ctree li { padding: 3px 0; } .ci { cursor: pointer; font-size: 12.5px; } .ci img { width: 22px; height: 22px; vertical-align: -6px; margin-right: 4px; object-fit: contain; }
 .ci b { color: var(--accent); } .ci small { color: var(--dim); font-size: 10px; }
-.jump { position: sticky; top: 57px; z-index: 9; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin-top: 10px; padding: 7px 10px;
+.jump { position: sticky; top: var(--toph); z-index: 9; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin-top: 10px; padding: 7px 10px;
   background: linear-gradient(rgba(11,10,20,.97), rgba(11,10,20,.9)); border-bottom: 1px solid var(--gold3); }
 .jump::-webkit-scrollbar { display: none; }
 .jump button { flex: none; height: 28px; padding: 0 11px; border-radius: 999px; border: 2px solid var(--gold2); background: linear-gradient(#1c2340, #0b1024);
   font-family: Rodin, Arial, sans-serif; font-size: 11.5px; text-shadow: var(--ol); }
-#ubody > .sec, #v-team > .sec { scroll-margin-top: 112px; }
+#ubody > .sec, #v-team > .sec { scroll-margin-top: calc(var(--toph) + 55px); }
 
 /* battle sprite stage and the team formation */
 .stage { position: relative; min-height: 170px; margin: -2px -2px 0; border-radius: 9px; overflow: hidden; background: #2b3a1c url(/static/battle_bg.jpg) center 62% / cover; display: grid; place-items: end center; padding: 10px 0 18px; }
@@ -402,10 +402,11 @@ body.boxedit .totop { bottom: calc(var(--navh) + 78px); } body.boxedit .toast { 
 @media (min-width: 1000px) { main { max-width: 920px; margin: 0 auto; } .top { padding-left: calc(50vw - 460px); padding-right: calc(50vw - 460px); } }
 /* ...with the game's tab buttons up in the header (placeNav), so nothing sits fixed over the bottom of the page */
 @media (min-width: 1000px) {
-  :root { --navh: 0px; }
+  :root { --navh: 0px; --toph: 73px; }
   .top .nav { position: static; padding: 0; gap: 4px; background: none; border: 0; box-shadow: none; }
-  .top .nav button { width: 46px; } .top .nav button img { max-height: 42px; }
+  .top .nav button { width: 62px; } .top .nav button img { max-height: 58px; }
   .top .nav button.on img { transform: scale(1.06); }
+  .top .iconbtn[hidden] { display: grid !important; visibility: hidden; }  /* keeps its room: the tabs don't move from page to page */
 }
 @media (min-width: 700px) { .grid { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); } .hero { min-height: 300px; } .list { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); } }
 /* a wide header: the picture under the glow (70% across), whole, instead of against the right edge and cut off */
@@ -1263,12 +1264,14 @@ async function showUnit(id) {
 }
 
 // ---------------- spheres ----------------
-let sType = store.get("bf.stype", "All"), sRev = store.get("bf.srev", false);  // sRev: only what Revived gives (with any type)
+// sType: "All" (spheres and items), "Spheres", "Items", "Craftable" or one sphere type; sRev: only what Revived gives
+let sType = store.get("bf.stype", "All"), sRev = store.get("bf.srev", false);
+if (sType === "Materials") sType = "Items";  // the chip's old name
 let sEl = store.get("bf.sel", "");  // only spheres whose effect names this element ("boost to Atk of Fire types"), "" any
 async function renderSpheres() {
   const [I, R] = await Promise.all([load("items"), load("recipes")]), q = $("sq").value.trim().toLowerCase();
   const all = Object.values(I).filter(s => s.name);
-  const types = ["All", "Craftable", ...[...new Set(all.filter(s => s.type).map(s => s.type))].sort(), "Materials"];
+  const types = ["All", "Spheres", "Items", "Craftable", ...[...new Set(all.filter(s => s.type).map(s => s.type))].sort()];
   if (!$("stype").children.length) {
     const r = document.createElement("button"); r.className = "chip rev" + (sRev ? " on" : ""); r.textContent = "Can get in Revived";
     r.onclick = () => { sRev = !sRev; store.set("bf.srev", sRev); r.classList.toggle("on", sRev); renderSpheres(); };
@@ -1285,16 +1288,24 @@ async function renderSpheres() {
     }
   }
   const craftable = s => s.cr ?? R[s.id];  // its recipe's materials can all be had
-  const pick = { All: s => s.type, Craftable: craftable, Materials: s => !s.type }[sType] || (s => s.type === sType);
+  const pick = { All: () => true, Spheres: s => s.type, Items: s => !s.type, Craftable: craftable }[sType] || (s => s.type === sType);
+  const label = { All: "spheres and items", Spheres: "spheres", Items: "items", Craftable: "craftable items" }[sType] || `${sType} spheres`;
   const elRe = sEl && new RegExp(`\\b${sEl}\\b`, "i");
-  const list = all.filter(s => (!q || s.name.toLowerCase().includes(q)) && (q || pick(s)) && (!sRev || s.ok === 1) && (!elRe || elRe.test(s.desc || "")))
-    .sort((a, b) => (b.rarity || 0) - (a.rarity || 0) || a.name.localeCompare(b.name) || (b.ok || 0) - (a.ok || 0));  // two of a name: Revived's first
-  if (q && !list.length) list.push(...closeNames(q, sRev ? all.filter(s => s.ok === 1) : all, s => s.name, s => s.rarity || 0).slice(0, 12));
-  $("scount").textContent = q && list.length && !list.some(s => s.name.toLowerCase().includes(q)) ? `No exact match for “${$("sq").value.trim()}”. Did you mean:`
-    : `${list.length} ${q ? "results" : sType === "Materials" ? "materials" : sType === "Craftable" ? "items you can craft in Synthesis" : sType === "All" ? "spheres" : `${sType} spheres`}${
-      sRev && sType !== "Craftable" ? " you can get in Revived" : ""}${sEl ? ` that name ${sEl}` : ""}`;
+  const match = s => (!q || s.name.toLowerCase().includes(q)) && (!sRev || s.ok === 1) && (!elRe || elRe.test(s.desc || ""));
+  // a search looks through the chip's own list; when that has none, through everything (said so)
+  let list = all.filter(s => match(s) && pick(s)), wider = false;
+  if (q && !list.length && sType !== "All") { list = all.filter(match); wider = list.length > 0; }
+  list.sort((a, b) => (b.rarity || 0) - (a.rarity || 0) || a.name.localeCompare(b.name) || (b.ok || 0) - (a.ok || 0));  // two of a name: Revived's first
+  const guess = !!q && !list.length;  // nothing anywhere: the closest names
+  if (guess) list.push(...closeNames(q, sRev ? all.filter(s => s.ok === 1) : all, s => s.name, s => s.rarity || 0).slice(0, 12));
+  const n = list.length, res = `${n} result${n === 1 ? "" : "s"}`, typed = $("sq").value.trim();
+  const only = `${sRev && sType !== "Craftable" ? " you can get in Revived" : ""}${sEl ? ` that name ${sEl}` : ""}`;
+  $("scount").textContent = guess && n ? `No exact match for “${typed}”${only}. Did you mean:`
+    : wider ? `No ${label} with “${typed}”${only}: ${res} in all spheres and items`
+    : q ? `${res}${sType === "All" ? "" : ` in ${label}`}${only}`
+    : `${n} ${sType === "Craftable" ? "items you can craft in Synthesis" : label}${only}`;
   paged($("slist"), list, s => { const d = document.createElement("div"); d.className = "item"; d.onclick = () => go(`#/item/${s.id}`);
-    d.innerHTML = `<img loading="lazy" decoding="async" src="${iImg(s.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1"><div class="t">${esc(s.name)} <span class="dim small">${s.rarity ? `${s.rarity}${STAR}` : ""}</span>${craftable(s) ? `<span class="craft">craftable</span>` : nogTag(s)}</div><div class="s">${esc(s.type ? s.type + " · " : "")}${esc(s.desc)}</div></div>`;
+    d.innerHTML = `<img loading="lazy" decoding="async" src="${iImg(s.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1"><div class="t">${esc(s.name)} <span class="dim small">${s.rarity ? `${s.rarity}${STAR}` : ""}</span>${craftable(s) ? `<span class="craft">craftable</span>` : nogTag(s)}</div><div class="s">${esc(s.type ? s.type + " · " : "Item · ")}${esc(s.desc)}</div></div>`;
     return d; }, "");
 }
 // Elgifs: extra skills a unit learns when an Imbued Tablet Elgif carrying one is fused into it (the game's own list)
