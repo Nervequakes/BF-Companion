@@ -1,10 +1,9 @@
-# The website (GitHub Pages, on your own domain): built from each new release, so it always matches the app.
+# The website (bfcompanion.app, GitHub Pages): built from the newest release, so it always matches the app.
 # The page and everything it uses come out of the release's APK (assets/www); nothing else is needed.
-# Runs by itself on every release (yours and the daily data updates), or by hand: Actions > Website > Run workflow.
+# Started from main after every release by the publish step (auto_update.rebuild_website), since github-pages
+# deploys only from main; or by hand: Actions > Website > Run workflow.
 name: Website
 on:
-  release:
-    types: [published]
   workflow_dispatch:
 permissions:
   contents: read
