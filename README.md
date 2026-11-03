@@ -28,7 +28,7 @@ Slow download from GitHub? Get the APK from the **[Google Drive mirror](https://
 **Units**
 - All 2,292 units with artwork and their **animated battle sprite**, taken from the game's own files. Save the sprite
   as a **GIF** to share, on the app's battle background or see-through.
-- Stats for every type (Lord, Anima, Breaker, Guardian, Oracle) of every unit, Imps, max level.
+- Stats for every type (Lord, Anima, Breaker, Guardian, Oracle, Rex) of every unit, Imps, max level.
 - Leader Skill, BB, SBB, UBB, Extra Skill and Dual BB with BC cost, hits and the exact numbers.
 - Roles with how strong they are ("Mitigation 50%", "BB ATK 600%"), evolution line and materials, lore.
 - SP enhancements with the players' suggested SP builds from the Brave Frontier Wiki, the build's options ticked.

@@ -873,15 +873,22 @@ const TYPE_DIFF = {
   6: { anima: [743, 0, 0, -198], breaker: [0, 198, -198, 0], guardian: [0, -198, 198, -99], oracle: [-297, 0, -99, 297] },
   7: { anima: [892, 0, 0, -238], breaker: [0, 238, -238, 0], guardian: [0, 0, 238, -119], oracle: [0, 0, -119, 357] },
   8: { anima: [1117, 0, 0, -298], breaker: [0, 298, -298, 0], guardian: [0, 0, 298, -149], oracle: [0, 0, -149, 447] } };
+// Rex (type 6, from a Rex frog): every level up adds HP 10–15 and ATK, DEF, REC 1–2 each (the game's unit type table;
+// the other types' ranges there give exactly the changes above). The wiki lists no Rex stats, so a max-level Rex is
+// Lord's stats plus the middle of those ranges for every level gained; the game rolls each level, so a unit can differ.
+const REX_LV = [[10, 15], [1, 2], [1, 2], [1, 2]];
+const rexStats = (u, lord) => { const n = (MAXLV[u.r] || 0) - 1; return n > 0 ? lord.map((v, k) => v + Math.round(n * (REX_LV[k][0] + REX_LV[k][1]) / 2)) : null; };
 function typeStats(u, T = {}) {
   const lord = T.lord || (u.hp ? [u.hp, u.atk, u.def, u.rec] : null);
-  if (!lord || !TYPE_DIFF[u.r] || ["anima", "breaker", "guardian", "oracle"].some(t => T[t])) return T;
-  return { ...T, lord, ...Object.fromEntries(Object.entries(TYPE_DIFF[u.r]).map(([t, d]) => [t, lord.map((v, k) => v + d[k])])), derived: true };
+  if (!lord) return T;
+  const rex = T.rex || rexStats(u, lord);
+  if (!TYPE_DIFF[u.r] || ["anima", "breaker", "guardian", "oracle"].some(t => T[t])) return rex ? { ...T, rex } : T;
+  return { ...T, lord, ...Object.fromEntries(Object.entries(TYPE_DIFF[u.r]).map(([t, d]) => [t, lord.map((v, k) => v + d[k])])), rex, derived: true };
 }
 const statRows = (u, w) => {
   const rows = [["Lv 1", [u.h1, u.a1, u.d1, u.r1]], ["Max level", [u.hp, u.atk, u.def, u.rec]]];
   const T = typeStats(u, w.stats);
-  for (const [k, l] of [["lord", "Lord"], ["anima", "Anima"], ["breaker", "Breaker"], ["guardian", "Guardian"], ["oracle", "Oracle"]]) {
+  for (const [k, l] of [["lord", "Lord"], ["anima", "Anima"], ["breaker", "Breaker"], ["guardian", "Guardian"], ["oracle", "Oracle"], ["rex", "Rex"]]) {
     if (!T[k]) continue;
     const base = T.lord || rows[1][1];  // types only list the stats they change; the rest are Lord's
     rows.push([l, T[k].map((v, i) => v || base[i])]);
@@ -895,7 +902,8 @@ function statTable(u, w) {
   return `<table class="tbl"><tr><th></th><th>HP</th><th>ATK</th><th>DEF</th><th>REC</th></tr>${rows.map(([l, v]) =>
     `<tr><td>${l}</td>${v.map((x, i) => `<td class="${typed.length > 2 && +x === best[i] && l !== "Lv 1" ? "best" : ""}">${typeof x === "number" ? x ? fmt(x) : "–" : x || "–"}</td>`).join("")}</tr>`).join("")}</table>
     ${typed.length > 2 ? `<p class="dim small" style="margin:6px 0 0">Gold = best value among the unit's types (Lord, Anima…). Imps raise stats further.</p>` : ""}
-    ${typeStats(u, w.stats).derived ? `<p class="dim small" style="margin:4px 0 0">The wiki lists only Lord for this unit: the other types are Lord with the changes every ${u.r === 8 ? "Omni" : u.r + "★"} unit has.</p>` : ""}`;
+    ${typeStats(u, w.stats).derived ? `<p class="dim small" style="margin:4px 0 0">The wiki lists only Lord for this unit: the other types are Lord with the changes every ${u.r === 8 ? "Omni" : u.r + "★"} unit has.</p>` : ""}
+    ${rows.some(r => r[0] === "Rex") ? `<p class="dim small" style="margin:4px 0 0">Rex (from a Rex frog): every level up adds HP 10–15 and ATK, DEF, REC 1–2 each, so a max-level Rex has about this much; each unit rolls its own.</p>` : ""}`;
 }
 function skillBlock(s) {
   const cls = { "Leader Skill": "ls", "Extra Skill": "es", "Dual BB": "dbb", "UBB": "ubb", "SBB": "sbb", "BB": "" }[s.kind] ?? "";
@@ -1754,7 +1762,7 @@ function autoFill(team, el, S) {
   return added;
 }
 // ---------------- squad numbers, like the game's Manage Squad screen ----------------
-const STATK = ["hp", "atk", "def", "rec"], TYPES = ["lord", "anima", "breaker", "guardian", "oracle"];
+const STATK = ["hp", "atk", "def", "rec"], TYPES = ["lord", "anima", "breaker", "guardian", "oracle", "rex"];
 const EL_RE = "(?:fire|water|earth|thunder|light|dark)", EL_LIST = `${EL_RE}(?:(?:,\\s*(?:and\\s+)?|\\s+and\\s+)${EL_RE})*`;
 const STAT_LIST = "((?:(?:all parameters|max hp|atk|def|rec)\\b(?:\\s*,\\s*(?:and\\s+)?|\\s+and\\s+|\\s*&\\s*)?)+)";
 const BOOST_A = new RegExp(`(\\d+)%\\s*(?:boost\\s*(?:to\\s*)?)?${STAT_LIST}`, "g");                       // "150% boost to Atk, Def"
