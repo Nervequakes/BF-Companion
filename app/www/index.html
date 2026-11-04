@@ -186,6 +186,9 @@ main { padding-bottom: calc(var(--navh) + 20px); }
 .sphc { display: flex; align-items: center; gap: 4px; min-width: 0; height: 34px; padding: 0 6px; border-radius: 8px; border: 1px solid var(--gold2); background: rgba(0,0,0,.4); font-size: 11px; text-align: left; }
 .sphc img { width: 26px; height: 26px; flex: none; object-fit: contain; } .sphc span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sphc.none { color: var(--dim); justify-content: center; border-style: dashed; }
+/* the unit's Elgif: one per unit, under its two spheres */
+.sphc.elg { grid-column: 1 / -1; border-color: #b98ae6; } .sphc.elg .er { flex: none; margin-right: 2px; font-family: Rodin, Arial, sans-serif; color: var(--accent); text-shadow: var(--ol); white-space: nowrap; }
+.sphc.elg .er .sti { width: 13px; height: 13px; vertical-align: -2px; } .sphc.elg .er .omi { width: 20px; height: 20px; vertical-align: middle; }
 .sca { display: flex; justify-content: flex-end; gap: 6px; margin-top: 6px; }
 .bcrow { display: flex; gap: 8px; align-items: center; padding: 6px 0; border-top: 1px solid rgba(255,255,255,.07); } .bcrow img { width: 40px; height: 40px; flex: none; cursor: pointer; }
 .bcl { font-size: 12.5px; } .bcl b { font-family: Rodin, Arial, sans-serif; text-shadow: var(--ol); } .bcd { font-size: 12px; color: var(--dim); } .bcd b { color: var(--accent); font-weight: normal; font-family: Rodin, Arial, sans-serif; }
@@ -2125,12 +2128,18 @@ function boostText(clauses) {
 const MAXLV = { 8: 150, 7: 120, 6: 100, 5: 80, 4: 60, 3: 40, 2: 30, 1: 15 };
 let TTYPE = store.get("bf.ttype", null) || TEAMS.map(() => Array(6).fill("lord"));
 let TSPH = store.get("bf.tsph", null) || TEAMS.map(() => Array.from({ length: 6 }, () => [null, null]));
-TEAMS.forEach((_, t) => { TTYPE[t] ??= Array(6).fill("lord"); TSPH[t] ??= Array.from({ length: 6 }, () => [null, null]); });  // teams added later
+// each squad unit's Elgif (its id in elgifs.json): one per unit, as in the game, where a unit holds a single added
+// extra skill (UserUnitInfo's AddExtraPassiveSkillID) and a new Elgif replaces the old one
+let TELG = store.get("bf.telg", null) || TEAMS.map(() => Array(6).fill(null));
+TEAMS.forEach((_, t) => { TTYPE[t] ??= Array(6).fill("lord"); TSPH[t] ??= Array.from({ length: 6 }, () => [null, null]); TELG[t] ??= Array(6).fill(null); });  // teams added later
+// the Elgifs by id, once elgifs.json has loaded (the squad numbers count the stat boosts of the one a unit carries)
+let ELGMAP = null;
+const elgifMap = async () => { if (!ELGMAP) { const E = await load("elgifs"); ELGMAP = Object.fromEntries((Array.isArray(E) ? E : []).map(e => [e.id, e])); } return ELGMAP; };
 // what counts in the numbers; like the game's squad screen by default: leader skill and extra skills, no friend
 let SQ = { imps: true, lead: true, friend: false, es: true, maxcost: "", ...store.get("bf.sq", {}) };
-const saveSquad = () => { store.set("bf.ttype", TTYPE); store.set("bf.tsph", TSPH); store.set("bf.sq", SQ); };
-// a new unit in a slot starts as Lord without spheres
-const resetSlot = i => { TTYPE[TCUR][i] = "lord"; TSPH[TCUR][i] = [null, null]; saveSquad(); };
+const saveSquad = () => { store.set("bf.ttype", TTYPE); store.set("bf.tsph", TSPH); store.set("bf.telg", TELG); store.set("bf.sq", SQ); };
+// a new unit in a slot starts as Lord without spheres or an Elgif
+const resetSlot = i => { TTYPE[TCUR][i] = "lord"; TSPH[TCUR][i] = [null, null]; TELG[TCUR][i] = null; saveSquad(); };
 const lsText = (id, w, D) => D[id]?.leader?.desc || (w?.skills || []).find(s => s.kind === "Leader Skill")?.desc || "";
 // one unit's numbers: max-level stats of its type, + imps, × (1 + leader / friend skill, own extra skill and sphere boosts)
 function unitNumbers(i, team, W, D, I) {
@@ -2146,8 +2155,10 @@ function unitNumbers(i, team, W, D, I) {
   const esText = D[id]?.extra || (w.skills || []).find(s => s.kind === "Extra Skill")?.desc || "";
   const hasEsSphere = mine.some(s => (D[id]?.es_spheres || []).includes(s) || esText.toLowerCase().includes(I[s].name.toLowerCase()));
   const es = SQ.es ? statBoosts(esText).filter(c => !(c.cond && /equipped/i.test(esText)) || hasEsSphere) : [];
+  // the Elgif it carries is an extra skill too: it counts with "Extra skills"
+  const elg = SQ.es && ELGMAP?.[TELG[TCUR][i]], egs = elg ? statBoosts(elg.desc) : [];
   const el = (u.e || "").toLowerCase(), pct = [0, 0, 0, 0]; let cond = false;
-  for (const c of [...leaders, ...es, ...spheres]) if (!c.els || c.els.includes(el)) { c.stats.forEach(s => pct[STATK.indexOf(s)] += c.pct); cond = cond || c.cond; }
+  for (const c of [...leaders, ...es, ...egs, ...spheres]) if (!c.els || c.els.includes(el)) { c.stats.forEach(s => pct[STATK.indexOf(s)] += c.pct); cond = cond || c.cond; }
   return { types, ty, lv: w.maxlv || MAXLV[u.r] || "", base, pct, cond, s: base.map((v, k) => Math.round(v * (1 + pct[k] / 100))) };
 }
 
@@ -2363,7 +2374,7 @@ function matchupHtml(team) {
 }
 async function renderTeam() {
   const v = $("v-team"), team = TEAMS[TCUR];
-  const [D, I] = await Promise.all([load("details"), load("items")]);
+  const [D, I, EG] = await Promise.all([load("details"), load("items"), elgifMap()]);
   const W = await Promise.all(team.map(id => id ? wiki(id) : {}));
   const ls = (id, w) => { const s = (w.skills || []).find(s => s.kind === "Leader Skill"); return [s?.name || D[id]?.leader?.name || "", s?.desc || D[id]?.leader?.desc || ""]; };
   const cost = team.slice(0, 5).reduce((a, id) => a + (UMAP[id]?.c || 0), 0);
@@ -2371,6 +2382,8 @@ async function renderTeam() {
   const info = id => { const u = UMAP[id]; return `${u.r === 8 ? "Omni" : u.r + "★"} ${u.e || ""}`; };
   const sphereChip = (i, n) => { const s = TSPH[TCUR][i][n], it = s && I[s];
     return `<button class="sphc ${it ? "" : "none"}" data-sph="${i}/${n}">${it ? `<img src="${iImg(s)}" alt="" onerror="this.style.visibility='hidden'"><span>${esc(it.name)}</span>` : `＋ Sphere ${n + 1}`}</button>`; };
+  const elgifChip = i => { const e = EG[TELG[TCUR][i]];
+    return `<button class="sphc elg ${e ? "" : "none"}" data-elg="${i}">${e ? `<span class="er">${elgifRarity(e.r)}</span><span>${esc(e.name)}</span>` : "＋ Elgif"}</button>`; };
   const NUMS = team.map((id, i) => id && UMAP[id] ? unitNumbers(i, team, W, D, I) : null);
   const card = (id, i) => { const u = UMAP[id], N = NUMS[i];
     return `<div class="scard" style="--el:var(--${u.e || "Light"})">
@@ -2379,7 +2392,7 @@ async function renderTeam() {
       <div class="scs"><div><i>Lv.</i>${N.lv}</div><div><i>HP</i>${fmt(N.s[0])}</div><div><i class="c">COST</i>${u.c || "?"}</div>
         <div><i>ATK</i>${fmt(N.s[1])}</div><div><i>DEF</i>${fmt(N.s[2])}</div><div><i>REC</i>${fmt(N.s[3])}</div></div>
       ${N.pct.some(Boolean) ? `<div class="spct">Boosts: ${N.pct.map((p, k) => p ? `${["HP", "ATK", "DEF", "REC"][k]} +${p}%` : "").filter(Boolean).join(" · ")}${N.cond ? " ✱" : ""}</div>` : ""}
-      <div class="ssph">${sphereChip(i, 0)}${sphereChip(i, 1)}</div>
+      <div class="ssph">${sphereChip(i, 0)}${sphereChip(i, 1)}${elgifChip(i)}</div>
       <div class="sca">${i > 0 && i < 5 ? `<button class="gbtn small" data-lead="${i}">Lead</button>` : ""}<button class="gbtn small dark" data-s="${i}">Change</button><button class="gbtn small red" data-x="${i}" aria-label="Remove">✕</button></div>
     </div>`; };
   v.innerHTML = `<div class="sec" style="padding:8px" data-jump="Field">
@@ -2397,8 +2410,8 @@ async function renderTeam() {
         <button class="chip ${SQ.imps ? "on" : ""}" data-opt="imps">Imps max</button><button class="chip ${SQ.lead ? "on" : ""}" data-opt="lead">Leader skill</button><button class="chip ${SQ.friend ? "on" : ""}" data-opt="friend">Friend skill</button><button class="chip ${SQ.es ? "on" : ""}" data-opt="es">Extra skills</button></div>
       ${team.some(Boolean) ? `<div class="scards">${team.map((id, i) => id && UMAP[id] ? card(id, i) : "").join("")}</div>`
         : `<p class="dim">No units yet: tap the + spots above or <b>Fill empty slots</b>.</p>`}
-      <p class="small dim" style="margin:8px 0 0">Max level stats of the chosen type${SQ.imps ? ", max imps" : ""}${SQ.lead ? ", the leader's skill" : ""}${SQ.friend ? ", the friend's skill" : ""}${SQ.es ? ", each unit's extra skill" : ""} and the spheres you pick (the app can't see yours). Like the game's squad screen, the friend is off by default.
-        Tap a sphere to choose it. ✱ = a boost with a condition (counted). Cost: friend not counted. ${elems.map(([e, n]) => `<span class="badge">${orb(e)}×${n}</span>`).join(" ")}</p></div>
+      <p class="small dim" style="margin:8px 0 0">Max level stats of the chosen type${SQ.imps ? ", max imps" : ""}${SQ.lead ? ", the leader's skill" : ""}${SQ.friend ? ", the friend's skill" : ""}${SQ.es ? ", each unit's extra skill and Elgif" : ""} and the spheres you pick (the app can't see yours). Like the game's squad screen, the friend is off by default.
+        Tap a sphere or Elgif to choose it (a unit holds one Elgif). ✱ = a boost with a condition (counted). Cost: friend not counted. ${elems.map(([e, n]) => `<span class="badge">${orb(e)}×${n}</span>`).join(" ")}</p></div>
     ${battleHtml(battleCheck(team, W, NUMS, D))}
     ${team[0] || team[5] ? `<div class="sec"><h3 class="blue">Leader skills</h3>${[0, 5].filter(i => team[i]).map(i => { const [n, d] = ls(team[i], W[i]); const b = boostText(statBoosts(lsText(team[i], W[i], D)));
         return `<div class="sk"><div class="kn"><span class="tag ls">${i ? "Friend" : "Leader"}</span><span class="nm">${esc(n || UMAP[team[i]]?.n)}</span></div><p>${d ? hl(d) : `<span class="dim">No leader skill</span>`}</p>${b ? `<div class="pills"><span class="pill">Counted: ${esc(b)}</span></div>` : ""}</div>`; }).join("")}</div>` : ""}
@@ -2411,7 +2424,7 @@ async function renderTeam() {
   jumpBar(v, [...v.querySelectorAll(":scope > .sec")]);
   v.querySelectorAll("[data-t]").forEach(b => b.onclick = () => { if (+b.dataset.t === TCUR) return teamMenu(); TCUR = +b.dataset.t; saveTeams(); renderTeam(); });
   if ($("tnew")) $("tnew").onclick = () => {
-    const n = TEAMS.length; TEAMS[n] = Array(6).fill(null); TTYPE[n] = Array(6).fill("lord"); TSPH[n] = Array.from({ length: 6 }, () => [null, null]); TNAMES[n] = null;
+    const n = TEAMS.length; TEAMS[n] = Array(6).fill(null); TTYPE[n] = Array(6).fill("lord"); TSPH[n] = Array.from({ length: 6 }, () => [null, null]); TELG[n] = Array(6).fill(null); TNAMES[n] = null;
     TCUR = n; saveTeams(); saveSquad(); renderTeam(); toast(`${teamName(n)} added: tap its tab to name it`);
   };
   const tabs = v.querySelector(".tabs2"); tabs.scrollLeft = tabs.querySelector(".on").offsetLeft - 40;
@@ -2423,12 +2436,13 @@ async function renderTeam() {
     go(`#/pick/${s}?role=${b.dataset.find}`);
   });
   v.querySelectorAll("[data-lead]").forEach(b => b.onclick = () => {
-    const i = +b.dataset.lead, T = TTYPE[TCUR], S = TSPH[TCUR];  // the unit keeps its type and spheres
-    [team[0], team[i]] = [team[i], team[0]]; [T[0], T[i]] = [T[i], T[0]]; [S[0], S[i]] = [S[i], S[0]];
+    const i = +b.dataset.lead, T = TTYPE[TCUR], S = TSPH[TCUR], E = TELG[TCUR];  // the unit keeps its type, spheres and Elgif
+    [team[0], team[i]] = [team[i], team[0]]; [T[0], T[i]] = [T[i], T[0]]; [S[0], S[i]] = [S[i], S[0]]; [E[0], E[i]] = [E[i], E[0]];
     saveTeams(); saveSquad(); renderTeam(); toast(`${UMAP[team[0]]?.n} leads the team`);
   });
   v.querySelectorAll("[data-ty]").forEach(s => s.onchange = () => { TTYPE[TCUR][+s.dataset.ty] = s.value; saveSquad(); renderTeam(); });
   v.querySelectorAll("[data-sph]").forEach(b => b.onclick = () => go(`#/sphere/${b.dataset.sph}`));
+  v.querySelectorAll("[data-elg]").forEach(b => b.onclick = () => go(`#/elgif/${b.dataset.elg}`));
   v.querySelectorAll("[data-opt]").forEach(b => b.onclick = () => { SQ[b.dataset.opt] = !SQ[b.dataset.opt]; saveSquad(); renderTeam(); });
   $("maxcost").onchange = e => { SQ.maxcost = e.target.value.replace(/\D/g, ""); saveSquad(); renderTeam(); };
   $("tfillel").onchange = e => { fillEl = e.target.value; store.set("bf.fillel", fillEl); };
@@ -2453,13 +2467,13 @@ function teamMenu() {
   $("tname").onkeydown = e => { if (e.key === "Enter") $("tsave").click(); };
   $("tcopy").onclick = () => {
     const t = TCUR, n = TEAMS.length, name = `${teamName(t)} copy`.slice(0, 24);
-    TEAMS[n] = [...TEAMS[t]]; TTYPE[n] = [...TTYPE[t]]; TSPH[n] = TSPH[t].map(x => [...x]); TNAMES[n] = name; TCUR = n;
+    TEAMS[n] = [...TEAMS[t]]; TTYPE[n] = [...TTYPE[t]]; TSPH[n] = TSPH[t].map(x => [...x]); TELG[n] = [...TELG[t]]; TNAMES[n] = name; TCUR = n;
     done(`Copied as ${name}`);
   };
   if ($("tdel")) $("tdel").onclick = e => {
     const b = e.currentTarget; if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = "Tap again to delete"; return; }
     const name = teamName(TCUR);
-    for (const a of [TEAMS, TTYPE, TSPH, TNAMES]) a.splice(TCUR, 1);
+    for (const a of [TEAMS, TTYPE, TSPH, TELG, TNAMES]) a.splice(TCUR, 1);
     TCUR = Math.min(TCUR, TEAMS.length - 1); done(`${name} deleted`);
   };
 }
@@ -2478,13 +2492,15 @@ async function shareTeam(team, W) {
     return [i ? "Friend" : "Leader", s?.name || D[ids[i]]?.leader?.name || "", s?.desc || D[ids[i]]?.leader?.desc || ""];
   });
   const members = ids.map((id, i) => [id, i]).filter(([id]) => id), rows = Math.ceil(members.length / 2);
+  // each member's Elgif under its stats: the rows are a line taller when one carries an Elgif
+  const EG = await elgifMap(), elgOf = i => EG[TELG[TCUR][i]], RH = members.some(([, i]) => elgOf(i)) ? 104 : 88;
   // word-wrapped lines of a text, measured before the canvas exists so the picture is exactly as tall as it needs
   const lines = (ctx, text, maxw, px) => { ctx.font = `${px}px Arial`; const out = []; let line = "";
     for (const w of String(text).split(" ")) { if (ctx.measureText(line + w).width > maxw && line) { out.push(line); line = ""; } line += w + " "; }
     return [...out, line]; };
   const probe = document.createElement("canvas").getContext("2d");
   const lsH = lss.reduce((a, [, , desc]) => a + 36 + lines(probe, desc, WD - 40, 14).length * 18.2, 0);
-  const H = Math.ceil(FH + 74 + rows * 88 + lsH + 44);
+  const H = Math.ceil(FH + 74 + rows * RH + lsH + 44);
   const cv = document.createElement("canvas"); cv.width = WD * S; cv.height = H * S;
   const g = cv.getContext("2d"); g.scale(S, S);
   const ot = (t, x, y, px, fill = "#fff", maxw) => { g.font = `${px}px Rodin, Arial`; g.lineJoin = "round"; g.lineWidth = Math.max(3, px * .18); g.strokeStyle = "#000"; g.strokeText(t, x, y, maxw); g.fillStyle = fill; g.fillText(t, x, y, maxw); };
@@ -2504,15 +2520,16 @@ async function shareTeam(team, W) {
   ot(teamName(TCUR), 20, FH + 42, 28, "#fff", WD - 200); ot(`Cost ${cost}`, WD - 150, FH + 42, 20, col("--orange"));
   const I = await load("items");
   members.forEach(([id, i], n) => {
-    const u = UMAP[id], x = 20 + (n % 2) * 350, y = FH + 64 + Math.floor(n / 2) * 88, N = unitNumbers(i, ids, W, D, I);
+    const u = UMAP[id], x = 20 + (n % 2) * 350, y = FH + 64 + Math.floor(n / 2) * RH, N = unitNumbers(i, ids, W, D, I), e = elgOf(i);
     if (icons[i]) g.drawImage(icons[i], x, y, 64, 64);
     ot(u.n, x + 74, y + 20, 16, "#fff", 262);
     g.font = "12px Arial"; g.fillStyle = col("--dim");
     g.fillText(`${SLOTS[i]} · Lv.${N.lv} · ${u.r === 8 ? "Omni" : u.r + "★"} ${u.e || ""} · Cost ${u.c || "?"}`, x + 74, y + 40, 262);
     ot(`HP ${N.s[0].toLocaleString("en")}  ATK ${N.s[1].toLocaleString("en")}`, x + 74, y + 58, 13, col("--accent"), 262);
     ot(`DEF ${N.s[2].toLocaleString("en")}  REC ${N.s[3].toLocaleString("en")}`, x + 74, y + 75, 13, col("--accent"), 262);
+    if (e) ot(`Elgif · ${e.name} · ${e.r === 8 ? "Omni" : e.r + "★"}`, x + 74, y + 93, 13, "#d7a6ff", 262);
   });
-  let y = FH + 74 + rows * 88 + 10;
+  let y = FH + 74 + rows * RH + 10;
   for (const [label, name, desc] of lss) { ot(`${label} · ${name}`, 20, y, 17, col("--accent"), WD - 40); y = wrap(desc, 20, y + 24, WD - 40, 14, "#ece6d6") + 12; }
   ot("BF Companion", WD - 170, H - 14, 14, col("--dim"));
   const blob = await new Promise(r => cv.toBlob(r, "image/png"));
@@ -2551,6 +2568,40 @@ async function showSpherePick(slot, n) {
     paged($("splist"), list, s => { const d = document.createElement("div"); d.innerHTML = row(s); return d.firstElementChild; }, "");
   };
   $("spq").oninput = e => { clearTimeout(showSpherePick.t); showSpherePick.t = setTimeout(() => { sphQ = e.target.value; draw(); }, 200); };
+  window.scrollTo(0, 0);
+  draw();
+}
+
+// choosing a squad unit's Elgif (one per unit, as in the game): the Elgifs tab's list, the ones that suit what it does first
+let elgQ = "", elgRev = false;
+async function showElgifPick(slot) {
+  const nav = NAV, id = TEAMS[TCUR][slot], u = UMAP[id], EG = await elgifMap();
+  if (nav !== NAV) return;  // left the page while it loaded
+  if (!u) return go("#/team");
+  setTitle(`Elgif · ${u.n}`, true); $("share").hidden = true;
+  // how well each one suits this unit, weighed as for spheres (what it does, its stat boosts, rarity)
+  const focus = unitFocus(id), fit = new Map(), all = Object.values(EG), cur = EG[TELG[TCUR][slot]];
+  const gain = e => { if (!fit.has(e.id)) fit.set(e.id, sphereFit({ desc: e.desc, rarity: e.r }, id, focus, [])); return fit.get(e.id); };
+  const row = e => { const b = boostText(statBoosts(e.desc));
+    return `<div class="item" data-pick="${e.id}"><div class="er">${elgifRarity(e.r)}</div><div style="min-width:0;flex:1">
+      <div class="t">${esc(e.name)}${elgifGets(e) ? `<span class="craft got">in Revived</span>` : ""}</div>${b ? `<div class="sb">${esc(b)}</div>` : ""}<div class="eff">${hl(e.desc)}</div></div></div>`; };
+  $("page").innerHTML = `<div id="elgpage"><div class="bar2"><div class="searchrow"><input id="elq" type="search" placeholder="Search Elgifs: name or effect…" value="${esc(elgQ)}" autocomplete="off"></div>
+      <div class="scroller"><button class="chip on" id="elnone">No Elgif</button><button class="chip rev ${elgRev ? "on" : ""}" id="elrev">Can get in Revived (${all.filter(elgifGets).length})</button></div></div>
+    ${cur ? `<div class="count">${esc(u.n)} has <b>${esc(cur.name)}</b>. A unit holds one Elgif: the one you pick replaces it.</div>` : ""}
+    <div class="count" id="elcount"></div><div id="ellist" style="padding-top:8px"></div></div>`;
+  let picked = false;
+  const pick = eid => { if (picked) return; picked = true; TELG[TCUR][slot] = eid; saveSquad(); history.back(); };
+  $("elgpage").onclick = e => { const r = e.target.closest("[data-pick]"); if (r) pick(r.dataset.pick); };
+  $("elnone").onclick = () => pick(null);
+  const draw = () => {
+    const q = elgQ.trim().toLowerCase();
+    const list = all.filter(e => (!elgRev || elgifGets(e)) && (!q || `${e.name} ${e.desc}`.toLowerCase().includes(q)))
+      .map(e => [e, gain(e)]).sort((a, b) => b[1] - a[1] || b[0].r - a[0].r || a[0].name.localeCompare(b[0].name)).map(x => x[0]);
+    $("elcount").textContent = `${list.length} Elgif${list.length === 1 ? "" : "s"}, the ones suggested for what it does (${focus.label}) first`;
+    paged($("ellist"), list, e => { const d = document.createElement("div"); d.innerHTML = row(e); return d.firstElementChild; }, "");
+  };
+  $("elq").oninput = e => { clearTimeout(showElgifPick.t); showElgifPick.t = setTimeout(() => { elgQ = e.target.value; draw(); }, 200); };
+  $("elrev").onclick = () => { elgRev = !elgRev; $("elrev").classList.toggle("on", elgRev); draw(); };
   window.scrollTo(0, 0);
   draw();
 }
@@ -2643,6 +2694,7 @@ async function route() {
   if ((m = h.match(/^#\/item\/(\d+)/))) return showItem(m[1]);
   if ((m = h.match(/^#\/pick\/(\d)(?:\?role=(\w+))?/))) return showPick(+m[1], m[2]);
   if ((m = h.match(/^#\/sphere\/(\d)\/(\d)/))) return showSpherePick(+m[1], +m[2]);
+  if ((m = h.match(/^#\/elgif\/(\d)/))) return showElgifPick(+m[1]);
   if ((m = h.match(/^#\/gate\/(\d+)/))) return showGate(m[1]);
   if (h === "#/compare") return showCompare();
   if (h === "#/tiers") return showTiers();
