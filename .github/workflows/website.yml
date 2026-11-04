@@ -32,6 +32,16 @@ jobs:
           unzip -q BF-Companion.apk 'assets/www/*'
           mv assets/www site
           test -f site/index.html -a -f site/data/units.json
+      - name: Sharper artwork and banners for the website (the site-pictures prerelease; without it, the APK's)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release download site-pictures --repo "$GITHUB_REPOSITORY" --pattern site-pictures.zip; then
+            unzip -q -o site-pictures.zip -d site/thumbs
+            echo "artwork: $(ls site/thumbs/ahd | wc -l) · banners: $(ls site/thumbs/bhd | wc -l)"
+          else
+            echo "no site-pictures release: the APK's pictures only"
+          fi
       - name: Link previews (Discord, WhatsApp, X) with the site's own address
         env:
           BASE: ${{ steps.pages.outputs.base_url }}
