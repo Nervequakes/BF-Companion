@@ -291,6 +291,9 @@ details > summary::before { content: "▸ "; } details[open] > summary::before {
 .rowlbl { flex: none; align-self: center; font-size: 11px; color: var(--dim); }
 .qlist.drops li { padding: 4px 0; } .qlist.drops li + li { border-top: 1px solid rgba(255,255,255,.06); }
 .chance { font-size: 10.5px; padding: 0 7px; border-radius: 999px; line-height: 17px; background: linear-gradient(#7ad67a, #2a8f3a); font-family: Rodin, Arial, sans-serif; text-shadow: var(--ol); }
+.rot { font-size: 10px; padding: 0 6px; border-radius: 999px; line-height: 16px; margin-left: 4px; white-space: nowrap; vertical-align: 1px; cursor: help; background: linear-gradient(#7fd3ff, #2a6fb8); color: #fff; font-family: Rodin, Arial, sans-serif; font-weight: normal; text-shadow: var(--ol); }
+/* on a computer, the explanation shows while the pointer is on the tag */
+@media (hover: hover) and (pointer: fine) { .rot { position: relative; } .rot:hover::after { content: attr(data-tip); position: absolute; left: 0; top: calc(100% + 4px); z-index: 20; width: 260px; white-space: normal; padding: 6px 8px; border-radius: 6px; border: 1px solid #7fd3ff; background: #0d1830; color: #e8f4ff; font-size: 12px; line-height: 1.35; text-shadow: none; font-family: Arial, sans-serif; } }
 .boss { font-size: 10px; padding: 0 6px; border-radius: 999px; line-height: 16px; background: linear-gradient(#ff7a6b, #b8232a); text-shadow: var(--ol); }
 .ichip small { color: #9ff09f; font-family: Rodin, Arial, sans-serif; margin-left: 2px; }
 .qlist { list-style: none; margin: 0; padding: 0; } .qlist li { padding: 1px 0; } .qlist b { font-weight: normal; color: #fff; }
@@ -308,7 +311,8 @@ details > summary::before { content: "▸ "; } details[open] > summary::before {
 .ichip { display: inline-flex; align-items: center; gap: 5px; margin: 0 6px 6px 0; padding: 3px 10px 3px 4px; border-radius: 999px; border: 2px solid var(--gold2); background: linear-gradient(#0a1020, #121a36); font-size: 12.5px; text-shadow: var(--ol); }
 .ichip img { width: 24px; height: 24px; object-fit: contain; }
 .toast { position: fixed; left: 50%; bottom: calc(var(--navh) + 24px); transform: translate(-50%, 10px); background: linear-gradient(#ffe38a, #e0a22a); padding: 9px 18px; border-radius: 10px; font-family: Rodin, Arial, sans-serif; text-shadow: var(--ol); border: 2px solid #fff3c4; opacity: 0; transition: .2s; pointer-events: none; z-index: 30; }
-.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+.toast.long { width: max-content; max-width: min(92vw, 520px); line-height: 1.35; text-align: center; }
 
 /* game-style buttons, my box, roles */
 .gbtn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 38px; padding: 0 16px; border-radius: 9px; border: 2px solid #ffd37a; font-family: Rodin, Arial, sans-serif; font-size: 13px; text-shadow: var(--ol);
@@ -532,7 +536,8 @@ const store = { get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? 
 // the text size chosen in About (viewportFor, in <head>); again after turning the phone, which changes its width
 const applyZoom = () => { document.querySelector("meta[name=viewport]").content = viewportFor(store.get("bf.zoom", "normal")); };
 addEventListener("orientationchange", () => setTimeout(applyZoom, 300));
-function toast(m) { $("toast").textContent = m; $("toast").classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => $("toast").classList.remove("show"), 1800); }
+function toast(m, ms = 1800) { if (ms <= 1800) $("toast").classList.remove("long"); $("toast").textContent = m; $("toast").classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => $("toast").classList.remove("show"), ms); }
+$("toast").onclick = () => { clearTimeout(toast.t); $("toast").classList.remove("show"); };  // a tap closes it sooner
 // numbers and dates look the same on every phone, whatever its language: "25,330", "31 October 2026"
 const fmt = n => n.toLocaleString("en");
 const day = t => new Date(t).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
@@ -1195,7 +1200,14 @@ let BAN = {};
 const banOf = p => { const parts = p.split(/ [›>] /).map(s => s.trim().replace(/\s+/g, " "));
   for (let i = parts.length; i > 0; i--) { const b = BAN[parts.slice(0, i).join(" › ")]; if (b) return b; } return ""; };
 // a quest path as HTML: "Area › Dungeon › Quest", with its banner on the left when it has one
-const qpath = p => { const b = banOf(p), t = esc(p.replace(/ > /g, " › "));
+// a quest in one of the Vortex's event areas (events.json, from the game's area table): Revived opens them in turns
+let EVT = new Set();
+const rotTag = p => EVT.has(String(p || "").split(/ [›>] /)[0].trim()) ? ` <span class="rot" role="button" tabindex="0" data-tip="Revived opens its Vortex events in turns, so this quest isn't always there. Check the Vortex in the game.">Rotating event</span>` : "";
+const ROT_INFO = "Rotating event: Revived opens its Vortex events in turns, so this quest isn't always there. Check the Vortex in the game.";
+// a computer shows it while the pointer is on the tag (CSS); a phone, on a tap
+const HOVER = matchMedia("(hover: hover) and (pointer: fine)");
+document.addEventListener("click", e => { if (e.target.closest?.(".rot")) { e.stopPropagation(); e.preventDefault(); if (!HOVER.matches) { $("toast").classList.add("long"); toast(ROT_INFO, 4000); } } }, true);
+const qpath = p => { const b = banOf(p), t = esc(p.replace(/ > /g, " › ")) + rotTag(p);
   return b ? `<span class="qpath"><img class="qban" src="/thumbs/b/${b}.webp" alt="" loading="lazy" onerror="this.remove()"><span>${t}</span></span>` : t; };
 // a tap on a banner shows it big with its quest (before the row's own tap, if it has one)
 document.addEventListener("click", e => {
@@ -1228,7 +1240,7 @@ const craftShort = g => (g.mats || []).map(m => [m, mostOf(m)]).filter(([m, n]) 
 const shortNote = short => short.length ? `<div class="note short">Not enough to craft it in Revived: ${short.map(([m, n]) =>
   `it needs ${m.count} ${esc(m.name)}, and the ways listed give only ${n} (once each)`).join("; ")}.</div>` : "";
 const getLine = g => { const short = g.mats ? craftShort(g) : [];
-  return `<li><span class="gtag ${slug(g.kind)}">${esc(g.kind)}</span><div>${g.drops ? dropsHtml(g) : esc(g.text)}${shortNote(short)}${
+  return `<li><span class="gtag ${slug(g.kind)}">${esc(g.kind)}</span><div>${g.drops ? dropsHtml(g) : esc(g.text) + (g.kind === "Clear reward" ? rotTag(g.text.replace(/^First clear of /, "")) : "")}${shortNote(short)}${
   g.mats ? `<ul class="mlist">${g.mats.map(m => { const s = short.find(([x]) => x === m);
     return `<li><b>${m.count}× ${esc(m.name)}</b>${s ? `<span class="nog">only ${s[1]} to get</span>` : ""}${revGet(m).length ? `<ul class="get">${revGet(m).map(getLine).join("")}</ul>` : ""}</li>`; }).join("")}</ul>` : ""}</div></li>`; };
 // the ways Revived has to get an item: its server's quest drops, clear rewards and shops (bfrevive.net's item finder),
@@ -2555,13 +2567,18 @@ async function showSpherePick(slot, n) {
   const best = esSpheres(id, D[id], w, I);
   // a unit can't hold two spheres of one Sphere Type (GitHub issue 3): the other slot's type is greyed out here
   const other = I[TSPH[TCUR][slot][1 - n]], clash = s => !!(other?.type && s.type === other.type);
+  // its extra skill: already switched on by the other sphere (one it names, or one of the type it names)? Else the
+  // ones that switch it on and can go with the other sphere
+  const esOn = !!other && (best.includes(other.id) || bonusTypes(D[id]).includes(other.type)), bestOk = best.filter(x => !clash(I[x]));
   const row = s => { const b = boostText(statBoosts(s.desc)), no = clash(s);
     return `<div class="item${no ? " clash" : ""}" ${no ? "" : `data-pick="${s.id}"`}><img loading="lazy" src="${iImg(s.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1">
       <div class="t">${esc(s.name)} <span class="dim small">${s.rarity ? `${s.rarity}${STAR}` : ""} ${esc(s.type || "")}</span></div>${
       no ? `<div class="clashw">Can't go with ${esc(other.name)}: a unit can't hold two ${esc(s.type)} spheres</div>` : ""}${b ? `<div class="sb">${esc(b)}</div>` : ""}<div class="s">${esc(s.desc)}</div></div></div>`; };
   $("page").innerHTML = `<div id="sphpage"><div class="bar2"><div class="searchrow"><input id="spq" type="search" placeholder="Search spheres…" value="${esc(sphQ)}" autocomplete="off"></div>
       <div class="scroller"><button class="chip on" id="spnone">No sphere</button></div></div>
-    ${best.length ? `<div class="count">These switch on ${esc(u.n)}'s extra skill</div><div style="padding-top:8px">${best.map(x => row(I[x])).join("")}</div>` : ""}
+    ${!best.length ? "" : esOn ? `<div class="count">${esc(other.name)} (sphere ${2 - n}) already switches on ${esc(u.n)}'s extra skill</div>`
+      : bestOk.length ? `<div class="count">These switch on ${esc(u.n)}'s extra skill</div><div style="padding-top:8px">${bestOk.map(x => row(I[x])).join("")}</div>`
+      : `<div class="count">${esc(u.n)}'s extra skill needs ${best.map(x => esc(I[x].name)).join(" or ")}, which can't go with ${esc(other.name)} (both ${esc(other.type)}): put it in sphere ${2 - n} instead to switch it on</div>`}
     <div class="count" id="spcount"></div><div id="splist" style="padding-top:8px"></div></div>`;
   let picked = false;
   const pick = sid => { if (picked) return; picked = true; TSPH[TCUR][slot][n] = sid; saveSquad(); history.back(); };
@@ -2571,8 +2588,8 @@ async function showSpherePick(slot, n) {
     const q = sphQ.trim().toLowerCase();
     const list = Object.values(I).filter(s => s.type && s.name && (!q || s.name.toLowerCase().includes(q) || s.desc.toLowerCase().includes(q)))
       .map(s => [s, gain(s)]).sort((a, b) => clash(a[0]) - clash(b[0]) || b[1] - a[1] || (b[0].rarity || 0) - (a[0].rarity || 0) || a[0].name.localeCompare(b[0].name)).map(x => x[0]);
-    $("spcount").textContent = `${list.length} spheres, the ones suggested for what it does (${focus.label}) first${
-      other?.type ? ` · ${other.type} spheres are greyed out at the end: it already holds ${other.name}, and a unit can't hold two of one type` : ""}`;
+    $("spcount").textContent = `${list.length} spheres, the best for what it does (${focus.label}) first${
+      other?.type ? `. ${other.type} spheres are greyed out at the end: it already holds ${other.name}` : ""}`;
     paged($("splist"), list, s => { const d = document.createElement("div"); d.innerHTML = row(s); return d.firstElementChild; }, "");
   };
   $("spq").oninput = e => { clearTimeout(showSpherePick.t); showSpherePick.t = setTimeout(() => { sphQ = e.target.value; draw(); }, 200); };
@@ -2776,7 +2793,7 @@ window.BFBack = () => {
 };
 
 (async () => {
-  const [U, T] = await Promise.all([load("units"), load("tags"), load("banners").then(b => { BAN = b; })]);
+  const [U, T] = await Promise.all([load("units"), load("tags"), load("banners").then(b => { BAN = b; }), load("events").then(e => { EVT = new Set(e?.rotating || []); })]);
   TAGS = { labels: {}, units: {}, power: {}, powerUnit: {}, ...T };
   for (const p of Object.values(TAGS.power)) for (const [c, [v]] of Object.entries(p)) POWER_MAX[c] = Math.max(POWER_MAX[c] || 0, c === "heal" ? Math.min(v, 10000) : v);
   UNITS = Object.entries(U).map(([id, [n, r, e, c, h1, a1, d1, r1, hm, am, dm, rm, no]]) =>
