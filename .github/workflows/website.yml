@@ -32,13 +32,19 @@ jobs:
           unzip -q BF-Companion.apk 'assets/www/*'
           mv assets/www site
           test -f site/index.html -a -f site/data/units.json
-      - name: Sharper artwork and banners for the website (the site-pictures prerelease; without it, the APK's)
+      - name: Sharper artwork, banners and unit icons for the website (the site-pictures prerelease; without it, the APK's)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           if gh release download site-pictures --repo "$GITHUB_REPOSITORY" --pattern site-pictures.zip; then
             unzip -q -o site-pictures.zip -d site/thumbs
             echo "artwork: $(ls site/thumbs/ahd | wc -l) · banners: $(ls site/thumbs/bhd | wc -l)"
+            # the sharp icons (204 px, made from the artwork) take the place of the APK's 102 px ones: the page shows
+            # icons at a set size, so it needs no change; units without one keep theirs
+            if [ -d site/thumbs/uhd ]; then
+              cp -f site/thumbs/uhd/*.webp site/thumbs/u/ && echo "sharp icons: $(ls site/thumbs/uhd | wc -l)"
+              rm -rf site/thumbs/uhd
+            fi
           else
             echo "no site-pictures release: the APK's pictures only"
           fi
