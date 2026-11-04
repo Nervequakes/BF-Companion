@@ -186,6 +186,8 @@ main { padding-bottom: calc(var(--navh) + 20px); }
 .sphc { display: flex; align-items: center; gap: 4px; min-width: 0; height: 34px; padding: 0 6px; border-radius: 8px; border: 1px solid var(--gold2); background: rgba(0,0,0,.4); font-size: 11px; text-align: left; }
 .sphc img { width: 26px; height: 26px; flex: none; object-fit: contain; } .sphc span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sphc.none { color: var(--dim); justify-content: center; border-style: dashed; }
+.sphwarn { margin-top: 6px; padding: 5px 8px; border-radius: 6px; border-left: 3px solid #e8a33d; background: rgba(0,0,0,.45); color: #ffe0b0; font-size: 12px; }
+#sphpage .item.clash { opacity: .5; cursor: not-allowed; } .clashw { color: #ffb38a; font-size: 11.5px; margin: 2px 0; }
 /* the unit's Elgif: one per unit, under its two spheres */
 .sphc.elg { grid-column: 1 / -1; border-color: #b98ae6; } .sphc.elg .er { flex: none; margin-right: 2px; font-family: Rodin, Arial, sans-serif; color: var(--accent); text-shadow: var(--ol); white-space: nowrap; }
 .sphc.elg .er .sti { width: 13px; height: 13px; vertical-align: -2px; } .sphc.elg .er .omi { width: 20px; height: 20px; vertical-align: middle; }
@@ -2380,6 +2382,8 @@ async function renderTeam() {
   const cost = team.slice(0, 5).reduce((a, id) => a + (UMAP[id]?.c || 0), 0);
   const elems = ELS.map(e => [e, team.filter(id => UMAP[id]?.e === e).length]).filter(x => x[1]);
   const info = id => { const u = UMAP[id]; return `${u.r === 8 ? "Omni" : u.r + "★"} ${u.e || ""}`; };
+  // a team saved before the picker checked it may hold two spheres of one type on a unit (GitHub issue 3)
+  const sameType = i => { const [a, b] = TSPH[TCUR][i].map(s => I[s]?.type); return a && a === b ? a : ""; };
   const sphereChip = (i, n) => { const s = TSPH[TCUR][i][n], it = s && I[s];
     return `<button class="sphc ${it ? "" : "none"}" data-sph="${i}/${n}">${it ? `<img src="${iImg(s)}" alt="" onerror="this.style.visibility='hidden'"><span>${esc(it.name)}</span>` : `＋ Sphere ${n + 1}`}</button>`; };
   const elgifChip = i => { const e = EG[TELG[TCUR][i]];
@@ -2392,7 +2396,7 @@ async function renderTeam() {
       <div class="scs"><div><i>Lv.</i>${N.lv}</div><div><i>HP</i>${fmt(N.s[0])}</div><div><i class="c">COST</i>${u.c || "?"}</div>
         <div><i>ATK</i>${fmt(N.s[1])}</div><div><i>DEF</i>${fmt(N.s[2])}</div><div><i>REC</i>${fmt(N.s[3])}</div></div>
       ${N.pct.some(Boolean) ? `<div class="spct">Boosts: ${N.pct.map((p, k) => p ? `${["HP", "ATK", "DEF", "REC"][k]} +${p}%` : "").filter(Boolean).join(" · ")}${N.cond ? " ✱" : ""}</div>` : ""}
-      <div class="ssph">${sphereChip(i, 0)}${sphereChip(i, 1)}${elgifChip(i)}</div>
+      <div class="ssph">${sphereChip(i, 0)}${sphereChip(i, 1)}${elgifChip(i)}</div>${sameType(i) ? `<div class="sphwarn">Two ${esc(sameType(i))} spheres: the game doesn't let a unit hold two of one type. Change one.</div>` : ""}
       <div class="sca">${i > 0 && i < 5 ? `<button class="gbtn small" data-lead="${i}">Lead</button>` : ""}<button class="gbtn small dark" data-s="${i}">Change</button><button class="gbtn small red" data-x="${i}" aria-label="Remove">✕</button></div>
     </div>`; };
   v.innerHTML = `<div class="sec" style="padding:8px" data-jump="Field">
@@ -2549,9 +2553,12 @@ async function showSpherePick(slot, n) {
   const focus = unitFocus(id), bonus = bonusTypes(D[id]), fit = new Map();
   const gain = s => { if (!fit.has(s.id)) fit.set(s.id, sphereFit(s, id, focus, bonus)); return fit.get(s.id); };
   const best = esSpheres(id, D[id], w, I);
-  const row = s => { const b = boostText(statBoosts(s.desc));
-    return `<div class="item" data-pick="${s.id}"><img loading="lazy" src="${iImg(s.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1">
-      <div class="t">${esc(s.name)} <span class="dim small">${s.rarity ? `${s.rarity}${STAR}` : ""} ${esc(s.type || "")}</span></div>${b ? `<div class="sb">${esc(b)}</div>` : ""}<div class="s">${esc(s.desc)}</div></div></div>`; };
+  // a unit can't hold two spheres of one Sphere Type (GitHub issue 3): the other slot's type is greyed out here
+  const other = I[TSPH[TCUR][slot][1 - n]], clash = s => !!(other?.type && s.type === other.type);
+  const row = s => { const b = boostText(statBoosts(s.desc)), no = clash(s);
+    return `<div class="item${no ? " clash" : ""}" ${no ? "" : `data-pick="${s.id}"`}><img loading="lazy" src="${iImg(s.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1">
+      <div class="t">${esc(s.name)} <span class="dim small">${s.rarity ? `${s.rarity}${STAR}` : ""} ${esc(s.type || "")}</span></div>${
+      no ? `<div class="clashw">Can't go with ${esc(other.name)}: a unit can't hold two ${esc(s.type)} spheres</div>` : ""}${b ? `<div class="sb">${esc(b)}</div>` : ""}<div class="s">${esc(s.desc)}</div></div></div>`; };
   $("page").innerHTML = `<div id="sphpage"><div class="bar2"><div class="searchrow"><input id="spq" type="search" placeholder="Search spheres…" value="${esc(sphQ)}" autocomplete="off"></div>
       <div class="scroller"><button class="chip on" id="spnone">No sphere</button></div></div>
     ${best.length ? `<div class="count">These switch on ${esc(u.n)}'s extra skill</div><div style="padding-top:8px">${best.map(x => row(I[x])).join("")}</div>` : ""}
@@ -2563,8 +2570,9 @@ async function showSpherePick(slot, n) {
   const draw = () => {
     const q = sphQ.trim().toLowerCase();
     const list = Object.values(I).filter(s => s.type && s.name && (!q || s.name.toLowerCase().includes(q) || s.desc.toLowerCase().includes(q)))
-      .map(s => [s, gain(s)]).sort((a, b) => b[1] - a[1] || (b[0].rarity || 0) - (a[0].rarity || 0) || a[0].name.localeCompare(b[0].name)).map(x => x[0]);
-    $("spcount").textContent = `${list.length} spheres, the ones suggested for what it does (${focus.label}) first`;
+      .map(s => [s, gain(s)]).sort((a, b) => clash(a[0]) - clash(b[0]) || b[1] - a[1] || (b[0].rarity || 0) - (a[0].rarity || 0) || a[0].name.localeCompare(b[0].name)).map(x => x[0]);
+    $("spcount").textContent = `${list.length} spheres, the ones suggested for what it does (${focus.label}) first${
+      other?.type ? ` · ${other.type} spheres are greyed out at the end: it already holds ${other.name}, and a unit can't hold two of one type` : ""}`;
     paged($("splist"), list, s => { const d = document.createElement("div"); d.innerHTML = row(s); return d.firstElementChild; }, "");
   };
   $("spq").oninput = e => { clearTimeout(showSpherePick.t); showSpherePick.t = setTimeout(() => { sphQ = e.target.value; draw(); }, 200); };
