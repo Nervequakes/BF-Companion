@@ -663,7 +663,9 @@ let USRC = null;
 const GETS = [["w", "This week"], ["g", "Summon"], ["c", "Capture"], ["rs", "Reward / shop"]];
 // the featured summon gate a unit is in this week (bit 1 of the gate's flags), if any: [gate id, % per pull]
 const weekGate = id => (USRC?.u?.[id]?.g || []).find(([g]) => USRC.g[g]?.[1] & 1);
-const hasSrc = id => { const s = USRC?.u?.[id]; return !!s && [...uState.get].some(k => k === "w" ? weekGate(id) : k === "rs" ? s.r || s.s : s[k]); };
+// Reward / shop also counts a game mode's reward (details.json "modes": Frontier, Hunter Rank, Grand Quest, achievement)
+let UDET = null;
+const hasSrc = id => { const s = USRC?.u?.[id] || {}; return [...uState.get].some(k => k === "w" ? weekGate(id) : k === "rs" ? s.r || s.s || UDET?.[id]?.modes : s[k]); };
 
 function unitBadges(u) {
   return `${u.r === 8 ? `<span class="badge star">${OMNI}OMNI</span>` : `<span class="badge star">${u.r}${starFor(u)}</span>`}${u.e ? `<span class="badge">${orb(u.e)}${u.e}</span>` : ""}${u.c ? `<span class="badge cost">COST ${u.c}</span>` : ""}`;
@@ -809,6 +811,7 @@ async function renderUnits() {
   const q = uState.q.trim().toLowerCase();
   if (q.length >= 3) await skillText();
   if (uState.get.size) USRC = await load("usrc");
+  if (uState.get.has("rs")) UDET = await load("details");
   const list = filteredUnits(), bySkill = q ? list.filter(u => !u.n.toLowerCase().includes(q)).length : 0, role = activeRole();
   NAV_LIST = list.map(u => u.id);
   const asRole = q && canonQ(q) !== q ? ` (read as “${canonQ(q)}”)` : "";
@@ -1267,9 +1270,12 @@ async function showUnit(id) {
   // how to get it: Revived's own data only (the wiki's ways are the global game's); else the nearest earlier form
   // Revived gives (get that one and evolve it), else the unit it evolves from
   const clearOf = c => D[c]?.clear && !USRC?.u?.[c]?.r ? D[c].clear : null;
-  const clear = clearOf(id), from = chain[chain.indexOf(id) - 1];
-  const back = src || clear ? null : chain.slice(0, chain.indexOf(id)).reverse().find(c => unitSrcHtml(USRC, c) || clearOf(c));
+  const modesOf = c => D[c]?.modes?.length ? D[c].modes : null;  // Frontier milestones, Hunter Ranks, Grand Quest, achievements
+  const clear = clearOf(id), modes = modesOf(id), from = chain[chain.indexOf(id) - 1];
+  const back = src || clear || modes ? null : chain.slice(0, chain.indexOf(id)).reverse().find(c => unitSrcHtml(USRC, c) || clearOf(c) || modesOf(c));
   const clearNote = cl => `<div class="note" style="border-color:var(--gold2);margin:0 0 8px">In Revived, first clear reward of:<ul class="qlist" style="margin-top:4px">${cl.map(p => `<li><b>${esc(p)}</b></li>`).join("")}</ul></div>`;
+  const modeNote = ms => `<div class="note" style="border-color:var(--gold2);margin:0 0 8px">In Revived, a reward in:<ul class="qlist" style="margin-top:4px">${ms.map(p => `<li><b>${esc(p)}</b></li>`).join("")}</ul></div>`;
+  const gives = c => `${clearOf(c) ? clearNote(clearOf(c)) : ""}${modesOf(c) ? modeNote(modesOf(c)) : ""}`;
   if (wk) { $("hmeta").insertAdjacentHTML("afterbegin", `<span class="badge wk" data-gate="${wk[0]}">This week: ${esc(USRC.g[wk[0]][0])} ›</span>`); $("hmeta").querySelector(".wk").onclick = () => go(`#/gate/${wk[0]}`); }
   $("ubody").innerHTML = `
     ${spr ? `<div class="sec"><h3 class="green">In battle</h3><div class="stage"><img class="spr" id="spr" src="${sImg(id)}" alt=""></div>
@@ -1284,9 +1290,9 @@ async function showUnit(id) {
     ${id === ELGIF || id === EMGIF ? `<div class="sec"><h3 class="purple">Elgifs</h3><p class="small" style="margin:0 0 8px">${id === ELGIF
       ? "Fuse this tablet into a unit to give it the Elgif (an extra skill) the tablet carries."
       : "Fuse this tablet into a unit to take its Elgif back out: the Elgif comes back to your Gift Box."}</p><button class="gbtn small blue" id="toelgifs">See all Elgifs</button></div>` : ""}
-    <div class="sec"><h3 class="green">How to get</h3>${src}${clear ? clearNote(clear) : ""}${
-      src || clear ? "" : back ? `<p class="small" style="margin:0 0 8px">Not given directly in Revived right now: get ${unitLink(back)} and evolve it${
-        back !== from ? ` (${chain.indexOf(id) - chain.indexOf(back)} evolutions)` : ""}.</p>${unitSrcHtml(USRC, back)}${clearOf(back) ? clearNote(clearOf(back)) : ""}`
+    <div class="sec"><h3 class="green">How to get</h3>${src}${gives(id)}${
+      src || clear || modes ? "" : back ? `<p class="small" style="margin:0 0 8px">Not given directly in Revived right now: get ${unitLink(back)} and evolve it${
+        back !== from ? ` (${chain.indexOf(id) - chain.indexOf(back)} evolutions)` : ""}.</p>${unitSrcHtml(USRC, back)}${gives(back)}`
       : from ? `<p class="small" style="margin:0">Not given directly in Revived right now, and neither are the units it evolves from. It evolves from ${unitLink(from)}.</p>`
       : `<p class="small dim" style="margin:0">Not in Revived's summons, quests, clear rewards or event shops right now (bfrevive.net).</p>`}</div>
     ${foe ? `<div class="sec"><h3>Fights as an enemy</h3><div class="src">✓ Revived's live game data (bfrevive.net, ${day(USRC.built * 1000)})</div>${foe}</div>` : ""}
