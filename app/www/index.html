@@ -1283,7 +1283,7 @@ function skillBlock(s) {
   return `<div class="sk"><div class="kn"><span class="tag ${cls}">${s.kind}</span><span class="nm">${esc(s.name)}</span></div>
     <p>${hl(s.desc)}</p>${pills.length ? `<div class="pills">${pills.map(p => `<span class="pill">${esc(p)}</span>`).join("")}</div>` : ""}
     ${s.item ? `<div class="note" style="border-color:#b382ff">Needs: ${esc(s.item)}</div>` : ""}
-    ${s.fx?.length ? `<details><summary>Numbers</summary><ul class="fx">${s.fx.map(e => `<li>${esc(e.p)}${e.d || e.t ? `<span class="fxm">${e.d ? `<span class="fxd">${esc(e.d)}</span>` : ""}${e.t ? `<span class="fxt">${esc(e.t)}</span>` : ""}</span>` : ""}</li>`).join("")}</ul></details>`
+    ${s.fx?.length ? `<details><summary>Numbers</summary><ul class="fx">${s.fx.map(e => `<li>${esc(e.p)}${e.d || e.t ? `<span class="fxm">${e.d ? `<span class="fxd">${esc(/^9{3,}\s*turns?$/i.test(e.d.trim()) ? (/\bko\b/i.test(e.p) ? "until used" : "whole battle") : e.d)}</span>` : ""}${e.t ? `<span class="fxt">${esc(e.t)}</span>` : ""}</span>` : ""}</li>`).join("")}</ul></details>`
       : s.note ? `<details><summary>Numbers</summary><div class="note">${esc(s.note)}</div></details>` : ""}</div>`;
 }
 const slug = k => k.toLowerCase().replace(/[^a-z]/g, "");
@@ -2231,7 +2231,15 @@ const CAST_L = { BB: "B", SBB: "S", UBB: "U" }, SRC_NAME = { L: "LS", E: "ES", B
 // a Dual BB (tags.json "dbb": unit -> {p: its partner's ids, n: its name, r: role codes}), only with the partner in the
 // squad; like a UBB it isn't what the battle check has the unit cast, so its buffs show but don't count
 const dbbWith = (team, id) => { const d = TAGS.dbb?.[id]; return d && d.p.some(p => p !== id && team.includes(p)) ? d : null; };
-let TEAM_D = null;  // details.json, once the Team tab has it
+let TEAM_D = null, TEAM_I = null;  // details.json and items.json, once the Team tab has them
+// a sphere's cut to its unit's BB cost: its number, else its words the way SP notes give them numbers ("Slightly reduces
+// BB gauge required for BB": 10% reduction; "Considerably …": 25%); Elder Hat "Small reduction in BB gauge required"
+const CUT_PART = /bb gauge (?:required|req\b|consum)|consumption of bb gauge|bb (?:activation )?cost|bc cost/;
+function sphereCut(sid) {
+  const parts = String(TEAM_I?.[sid]?.desc || "").toLowerCase().split(/,|&|\band\b/).filter(x => CUT_PART.test(x));
+  return Math.max(0, ...parts.map(x => { const m = x.match(/(\d+(?:\.\d+)?)\s*%/);
+    return m ? +m[1] : /slight|small/.test(x) ? 10 : /considerabl/.test(x) ? 25 : /great|huge|enorm|massive/.test(x) ? 30 : 15; }));
+}
 function castNow(i, id, fresh) {  // fresh: a unit not in the slot yet casts its default skill
   const has = (TEAM_D?.[id]?.skills || []).map(s => CAST_L[s.label]).filter(Boolean).join("") || (UMAP[id]?.r >= 6 ? "BS" : "B"), set = !fresh && CAST_L[TCAST[TCUR]?.[i]];
   return "E" + (i === 0 || i === 5 ? "L" : "") + (set && has.includes(set) ? set : has.includes("S") ? "S" : "B");
@@ -2662,7 +2670,12 @@ function battleCheck(team, W, NUMS, D) {
       return [k, k === "UBB" ? "uses the OD gauge" : cost(sk) ? `${cost(sk)} BC` : "BC cost not listed", w]; });
     return { i, id, s, has, info, chosen, cost: cost(s), f: fills(s), bbCost: sbb ? cost(bb) : 0, bf: sbb && bb ? fills(bb) : null, sDmg: dmg(s), uDmg: s?.kind === "UBB" ? 0 : dmg(u), aoe: s?.aoe === "A",
       esSpark: Math.max(...sparkFill(es)), esSparkAll: forAll(es, SPARK_TOPIC), esTurn: turnFill(es), esTurnAll: forAll(es, TURN_TOPIC),
-      esCut: costCut(es), esCutAll: forAll(es, CUT_TOPIC) };
+      esCut: costCut(es), esCutAll: forAll(es, CUT_TOPIC),
+      // its own spheres and SP: "reduces BB gauge required for BB"
+      sphCut: (TSPH[TCUR]?.[i] || []).reduce((a, sid) => a + (sid ? sphereCut(sid) : 0), 0),
+      spCut: Math.max(0, ...(TSPE[TCUR]?.[i]?.k || []).map(k => { const [c, o] = k.split(":").map(Number), x = W[i]?.sp?.[c]?.opts?.[o];
+        if (!x || !CUT_PART.test(String(x.desc || "").toLowerCase())) return 0;
+        const m = `${x.desc} ${x.note || ""}`.match(/(\d+(?:\.\d+)?)(?:\s*[~-]\s*\d+(?:\.\d+)?)?\s*%/); return m ? +m[1] : 0; })) };
   }).filter(Boolean);
   // the leader's and the friend's leader skills (as the squad's chips say): BC each turn and on each spark, for everyone;
   // plus extra skills' BC each turn and per spark for all allies (a unit's own one counts only for itself)
@@ -2675,7 +2688,7 @@ function battleCheck(team, W, NUMS, D) {
   for (const r of rows) {
     const m = spark?.members.find(m => m.r === r), k = m ? spark.members.indexOf(m) : -1;
     r.sparks = m ? Math.round(spark.best.per[k] * m.sp.reduce((a, x) => a + x.length - 2, 0)) : 0;
-    r.cut = Math.min(75, lsCut + Math.max(esCut, r.esCut));
+    r.cut = Math.min(75, lsCut + Math.max(esCut, r.esCut) + r.sphCut + r.spCut);
     r.need = Math.round(r.cost * (1 - r.cut / 100));
   }
   // BC each unit gets when everyone casts with these fills (F(r): the fills of what r casts): instant fills add up; a
@@ -2741,7 +2754,7 @@ function matchupHtml(team) {
 }
 async function renderTeam() {
   const v = $("v-team"), team = TEAMS[TCUR];
-  const [D, I, EG] = await Promise.all([load("details"), load("items"), elgifMap()]); TEAM_D = D;
+  const [D, I, EG] = await Promise.all([load("details"), load("items"), elgifMap()]); TEAM_D = D; TEAM_I = I;
   const W = await Promise.all(team.map(id => id ? wiki(id) : {}));
   const ls = (id, w) => { const s = (w.skills || []).find(s => s.kind === "Leader Skill"); return [s?.name || D[id]?.leader?.name || "", s?.desc || D[id]?.leader?.desc || ""]; };
   const cost = team.slice(0, 5).reduce((a, id) => a + (UMAP[id]?.c || 0), 0);
@@ -3127,19 +3140,24 @@ async function bestSpFor(id, budget, need = [], leaderToo = false, lv = 0, now =
 }
 
 // choosing a unit for a team slot
-let pickQ = "", pickMine = store.get("bf.pmine", false);
+let pickQ = "", pickMine = store.get("bf.pmine", false), pickEl = store.get("bf.pickel", ""), pickRar = store.get("bf.pickrar", "");
+const PICK_RAR = [["", "Any rarity"], ["8", "Omni"], ["7", "7★"], ["6", "6★"], ["5", "≤5★"]];
+const pickRarOk = u => !pickRar || (pickRar === "5" ? u.r <= 5 : u.r === +pickRar);
 async function showPick(slot, role) {
   const nav = NAV, lead = slot === 0 || slot === 5, D = lead ? await load("details") : {};
   if (nav !== NAV) return;  // left the page while it loaded
   setTitle(slot === 0 ? "Choose the leader" : slot === 5 ? "Choose the friend" : "Choose a unit", true); $("share").hidden = true;
   $("page").innerHTML = `<div class="bar2"><div class="searchrow"><input id="pq" type="search" placeholder="Search name, skill or role…" value="${esc(pickQ)}" autocomplete="off"></div>
-      <div class="scroller"><button class="chip ${pickMine ? "on" : ""}" id="pmine">✓ My box</button>${role ? `<button class="chip on" id="prole">${esc(TAGS.labels[role] || role)} ✕</button>` : ""}</div></div>
+      <div class="scroller"><button class="chip ${pickMine ? "on" : ""}" id="pmine">✓ My box</button>${role ? `<button class="chip on" id="prole">${esc(TAGS.labels[role] || role)} ✕</button>` : ""}</div>
+      <div class="scroller" id="pel">${["", ...ELS].map(e => `<button class="chip ${pickEl === e ? "on" : ""}" data-pel="${e}">${e ? `${orb(e)}${e}` : "All elements"}</button>`).join("")}</div>
+      <div class="scroller" id="prar">${PICK_RAR.map(([k, l]) => `<button class="chip ${pickRar === k ? "on" : ""}" data-prar="${k}">${l}</button>`).join("")}</div></div>
     <div class="count" id="pcount"></div><div id="plist"></div>`;
   const draw = async () => {
     const q = pickQ.trim().toLowerCase();
     if (q.length >= 3) await skillText();
-    const list = UNITS.filter(u => (pickMine ? mine.has(u.id) : !u.f) && (!role || roleOf(u.id, role, slot === 0 || slot === 5)) && searchHit(u, q)).sort(role ? byPower(role) : SORTS.rarity);
-    $("pcount").textContent = `${list.length} units${role ? ` with ${TAGS.labels[role]}, strongest first` : ""}`;
+    const list = UNITS.filter(u => (pickMine ? mine.has(u.id) : !u.f) && (!pickEl || u.e === pickEl) && pickRarOk(u) && (!role || roleOf(u.id, role, slot === 0 || slot === 5)) && searchHit(u, q)).sort(role ? byPower(role) : SORTS.rarity);
+    const which = [pickEl, PICK_RAR.find(([k]) => k === pickRar && k)?.[1]].filter(Boolean).join(" ");
+    $("pcount").textContent = `${list.length} ${which ? which + " " : ""}units${role ? ` with ${TAGS.labels[role]}, strongest first` : ""}`;
     const take = x => { if (TEAMS[TCUR][slot] !== x.id) resetSlot(slot); TEAMS[TCUR][slot] = x.id; saveTeams(); history.back(); };
     // for the leader and the friend: each unit's leader skill, as the stat boosts it gives when it has them
     const make = u => { const d = listRow(u, take, role), t = lead && lsText(u.id, null, D);
@@ -3150,6 +3168,11 @@ async function showPick(slot, role) {
   $("pq").oninput = e => { clearTimeout(showPick.t); showPick.t = setTimeout(() => { pickQ = e.target.value; draw(); }, 200); };
   if ($("prole")) $("prole").onclick = () => location.replace(`#/pick/${slot}`);
   $("pmine").onclick = () => { pickMine = !pickMine; store.set("bf.pmine", pickMine); $("pmine").classList.toggle("on", pickMine); draw(); };
+  // one element, one rarity (tap again for all)
+  $("page").querySelectorAll("[data-pel]").forEach(b => b.onclick = () => { pickEl = pickEl === b.dataset.pel ? "" : b.dataset.pel; store.set("bf.pickel", pickEl);
+    $("page").querySelectorAll("[data-pel]").forEach(x => x.classList.toggle("on", x.dataset.pel === pickEl)); draw(); });
+  $("page").querySelectorAll("[data-prar]").forEach(b => b.onclick = () => { pickRar = pickRar === b.dataset.prar ? "" : b.dataset.prar; store.set("bf.pickrar", pickRar);
+    $("page").querySelectorAll("[data-prar]").forEach(x => x.classList.toggle("on", x.dataset.prar === pickRar)); draw(); });
   window.scrollTo(0, 0);
   draw();
 }
