@@ -279,7 +279,7 @@ details > summary::before { content: "▸ "; } details[open] > summary::before {
 .gate { display: flex; align-items: center; gap: 8px; padding: 9px 4px; border-top: 1px solid rgba(255,255,255,.07); cursor: pointer; } .gate b { flex: 1; font-weight: normal; }
 .gate .n { font-size: 11px; color: var(--dim); white-space: nowrap; }
 .ulink { color: var(--accent); text-decoration: underline; cursor: pointer; }
-.tierlink { float: right; background: none; border: 0; padding: 0 0 0 10px; font: inherit; text-shadow: inherit; }
+.tierlink, .boxlink { float: right; background: none; border: 0; padding: 0 0 0 10px; font: inherit; text-shadow: inherit; } #uedit.on { color: #9ff09f; text-decoration: none; } .gu, .lu, .tier .eu { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .tier { display: flex; gap: 8px; margin: 10px 12px; border: 1px solid var(--gold3); border-radius: 10px; background: rgba(11,10,20,.6); overflow: hidden; }
 .tier .tl { flex: none; width: 40px; display: grid; place-items: center; font: 24px Rodin, "Arial Black", Arial, sans-serif; color: #fff; text-shadow: var(--ol); }
 .tl.tS { background: linear-gradient(#ff8a5c, #b8321a); } .tl.tA { background: linear-gradient(#ffd36b, #b97d0e); } .tl.tB { background: linear-gradient(#7fd27f, #2b7d35); } .tl.tC { background: linear-gradient(#86a9de, #33558c); } .tl.tD { background: linear-gradient(#a98ad8, #573a8a); }
@@ -316,7 +316,7 @@ details > summary::before { content: "▸ "; } details[open] > summary::before {
 .ichip { display: inline-flex; align-items: center; gap: 5px; margin: 0 6px 6px 0; padding: 3px 10px 3px 4px; border-radius: 999px; border: 2px solid var(--gold2); background: linear-gradient(#0a1020, #121a36); font-size: 12.5px; text-shadow: var(--ol); }
 .ichip img { width: 24px; height: 24px; object-fit: contain; }
 .toast { position: fixed; left: 50%; bottom: calc(var(--navh) + 24px); transform: translate(-50%, 10px); background: linear-gradient(#ffe38a, #e0a22a); padding: 9px 18px; border-radius: 10px; font-family: Rodin, Arial, sans-serif; text-shadow: var(--ol); border: 2px solid #fff3c4; opacity: 0; transition: .2s; pointer-events: none; z-index: 30; }
-.toast.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; } .toast .tundo { margin-left: 8px; padding: 2px 10px; border-radius: 8px; border: 1px solid #000; background: #1d2440; color: var(--accent); font: inherit; text-shadow: var(--ol); cursor: pointer; }
 .toast.long { width: max-content; max-width: min(92vw, 520px); line-height: 1.35; text-align: center; }
 
 /* game-style buttons, my box, roles */
@@ -373,10 +373,16 @@ select.gsel { height: 38px; font-size: 12.5px; padding: 0 10px; }
 .mem img.ic { width: 44px; height: 44px; flex: none; cursor: pointer; } .mem .mn { flex: 1; min-width: 0; font-family: Rodin, Arial, sans-serif; font-size: 13px; text-shadow: var(--ol); cursor: pointer; }
 .mem .mn small { display: block; font-family: Arial, sans-serif; font-size: 11px; color: var(--dim); }
 .cov { display: grid; grid-template-columns: 1fr; gap: 0; }
-.cov > div { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-top: 1px solid rgba(255,255,255,.06); min-height: 36px; }
-.cov .cl { width: 118px; flex: none; font-family: Rodin, Arial, sans-serif; font-size: 12px; text-shadow: var(--ol); }
-.cov .ok { color: #7ad67a; } .cov .no { color: #ff8a7a; } .cov .cl small { color: var(--accent); font-size: 10.5px; }
-.cov .who { display: flex; gap: 2px; flex-wrap: wrap; flex: 1; } .cov .who img { width: 26px; height: 26px; } .cov .who img.viasp { outline: 2px solid #6fd17a; outline-offset: -2px; border-radius: 4px; }
+/* one column per squad slot, so a unit stays in its column on every row; under it, where it gets the role */
+.cov > div { display: grid; grid-template-columns: 100px repeat(6, minmax(0, 1fr)); align-items: center; column-gap: 2px; padding: 5px 0; border-top: 1px solid rgba(255,255,255,.06); min-height: 40px; }
+.cov > .covh { min-height: 0; padding: 0 0 4px; border-top: 0; font-size: 10px; color: var(--dim); text-align: center; text-shadow: var(--ol); }
+.cov .cl { font-family: Rodin, Arial, sans-serif; font-size: 12px; line-height: 1.2; text-shadow: var(--ol); overflow-wrap: anywhere; } .cov .cl .cfind { display: block; margin-top: 4px; } .cov .cfrow { grid-column: 2 / -1; }
+.cov .ok { color: #7ad67a; } .cov .no { color: #ff8a7a; } .cov .part { color: #ff8a7a; } .cov .cl small { color: var(--accent); font-size: 10.5px; }
+.cov .src { display: flex; flex-direction: column; align-items: center; min-width: 0; } .cov .src img { width: 28px; height: 28px; cursor: pointer; } .cov .src img.viasp { outline: 2px solid #6fd17a; outline-offset: -2px; border-radius: 4px; }
+.cov .src small { margin-top: 1px; font-size: 9px; line-height: 1.1; color: var(--dim); text-align: center; text-shadow: var(--ol); } .cov .src.off img { opacity: .4; filter: grayscale(.7); } .cov .src em { font-style: normal; font-size: 9px; line-height: 1.1; color: var(--accent); text-shadow: var(--ol); text-align: center; } .cov .src { position: relative; }
+.covkey { margin: 0 0 6px; font-size: 12px; color: var(--dim); text-shadow: var(--ol); } .covkey b { color: #fff; font-weight: normal; } .covkey b.dbbok { color: #9ff09f; } .covkey b.gold { color: #ffd76a; }
+@media (min-width: 700px) { .cov > div { grid-template-columns: 170px repeat(6, minmax(0, 76px)); column-gap: 6px; } .cov > .covh { font-size: 12px; } .cov .cl { font-size: 14px; } .cov .cl small { font-size: 12px; }
+  .cov .src img { width: 40px; height: 40px; } .cov .src small, .cov .src em { font-size: 11.5px; } .covkey { font-size: 13px; } }
 .mu { display: grid; grid-template-columns: 96px repeat(6, 1fr); align-items: center; text-align: center; font-family: Rodin, Arial, sans-serif; font-size: 14px; text-shadow: var(--ol); }
 .mu > div { padding: 5px 0; border-top: 1px solid rgba(255,255,255,.06); } .mu > div:nth-child(-n+7) { border-top: 0; }
 .mut img { width: 18px; height: 18px; vertical-align: -4px; margin-right: 2px; } .mu .k { text-align: left; font-size: 11px; color: var(--orange); } .mu img { width: 26px; height: 26px; vertical-align: middle; filter: drop-shadow(0 1px 1px #000); }
@@ -422,7 +428,7 @@ select.gsel { height: 38px; font-size: 12.5px; padding: 0 10px; }
 .nb { font-weight: bold; color: #ffdf8f; }
 .editbar { position: fixed; left: 10px; right: 10px; bottom: calc(var(--navh) + 10px); z-index: 25; display: flex; align-items: center; gap: 10px; padding: 8px 10px 8px 14px; border-radius: 12px;
   border: 2px solid var(--gold); background: linear-gradient(#20305c, #0f1733); box-shadow: 0 4px 14px #000; }
-.editbar div { flex: 1; min-width: 0; font-size: 12px; text-shadow: var(--ol); } .editbar b { display: block; font-family: Rodin, Arial, sans-serif; font-weight: normal; font-size: 14px; color: #9ff09f; }
+.editbar div { flex: 1; min-width: 0; font-size: 12px; text-shadow: var(--ol); } .editbar #eball { flex: none; } .editbar b { display: block; font-family: Rodin, Arial, sans-serif; font-weight: normal; font-size: 14px; color: #9ff09f; }
 body.boxedit main { padding-bottom: calc(var(--navh) + 90px); }
 body.boxedit #v-units .gu:not(.got) > img:first-child, body.boxedit #v-units .lu:not(.got) > img { filter: grayscale(.85) brightness(.5); }
 .totop { position: fixed; right: 12px; bottom: calc(var(--navh) + 14px); z-index: 25; width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--gold2); background: rgba(10,16,32,.92); font-size: 15px; box-shadow: 0 2px 6px #000; }
@@ -479,7 +485,7 @@ body.boxedit .totop { bottom: calc(var(--navh) + 78px); } body.boxedit .toast { 
       </div>
       <div class="fsum" id="usum" hidden></div>
     </div>
-    <div class="count"><button class="ulink tierlink" onclick="go('#/tiers')">🏆 Tier list</button><span id="ucount"></span></div>
+    <div class="count"><button class="ulink tierlink" onclick="go('#/tiers')">🏆 Tier list</button><button class="ulink boxlink" id="uedit">✎ Edit box</button><span id="ucount"></span></div>
     <div id="ulist"></div>
   </section>
   <section class="view" id="v-elgifs">
@@ -509,7 +515,7 @@ body.boxedit .totop { bottom: calc(var(--navh) + 78px); } body.boxedit .toast { 
   <button data-tab="team" aria-label="Team builder"><img src="/static/nav_team.png" alt=""></button>
 </nav>
 <button class="gbtn blue cmpbar" id="cmpbar" hidden></button>
-<div class="editbar" id="editbar" hidden><div><b>Editing your box</b>Tap the units you have · <span id="ebn">0</span> in your box</div><button class="gbtn green" id="ebdone">Done</button></div>
+<div class="editbar" id="editbar" hidden><div><b>Editing your box</b>Tap the units you have · <span id="ebn">0</span> in your box</div><button class="gbtn blue small" id="eball">All shown</button><button class="gbtn green" id="ebdone">Done</button></div>
 <button class="totop" id="totop" hidden aria-label="Back to top">▲</button>
 <div class="modal" id="modal" hidden><div class="mbox" id="mbox"></div></div>
 <div class="toast" id="toast"></div>
@@ -543,6 +549,11 @@ const store = { get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? 
 const applyZoom = () => { document.querySelector("meta[name=viewport]").content = viewportFor(store.get("bf.zoom", "normal")); };
 addEventListener("orientationchange", () => setTimeout(applyZoom, 300));
 function toast(m, ms = 1800) { if (ms <= 1800) $("toast").classList.remove("long"); $("toast").textContent = m; $("toast").classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => $("toast").classList.remove("show"), ms); }
+// a toast with an Undo button, after a change that's easy to make by mistake (clearing a team, taking units out of the box)
+function undoToast(m, undo, ms = 6000) {
+  const el = $("toast"), b = document.createElement("button"); toast(m, ms); el.classList.add("long"); el.append(" ", b);
+  b.className = "tundo"; b.textContent = "Undo"; b.onclick = () => { clearTimeout(toast.t); el.classList.remove("show"); undo(); };
+}
 $("toast").onclick = () => { clearTimeout(toast.t); $("toast").classList.remove("show"); };  // a tap closes it sooner
 // numbers and dates look the same on every phone, whatever its language: "25,330", "31 October 2026"
 const fmt = n => n.toLocaleString("en");
@@ -661,7 +672,8 @@ const roleOf = (id, code, leaderToo) => { const s = TAGS.units[id]?.[code] || ""
 const SKILL_NAMES = { L: "LS", E: "ES", B: "BB", S: "SBB", U: "UBB" };
 // how strong a role is on the unit's BB/SBB: [value, skill letter], e.g. mitigation [50, "B"]
 const powerOf = (id, c) => TAGS.power[id]?.[c];
-const fmtPower = (c, p) => !p ? "" : c === "heal" && p[0] >= 10000 ? "full heal" : `${p[0].toLocaleString("en")}${TAGS.powerUnit[c] || ""}`;
+const fmtPower = (c, p) => !p ? "" : c === "heal" && p[0] >= 10000 ? "full heal" : `${p[0].toLocaleString("en")}${TAGS.powerUnit[c] || (c === "critrate" ? "%" : "")}`;
+const fmtShort = (c, p) => c === "heal" ? p[0] >= 10000 ? "full" : `${+(p[0] / 1000).toFixed(1)}k HP` : fmtPower(c, p);  // under a unit's icon
 // SP options that add to or improve a skill (tags.json's "sp", from unit_tags.py): {"category:option": [SP with the option
 // it needs first, the skills it changes (L B S U), "role codes", {tier role: value}, [defense tools and debuffs]]}
 const spRoleOpts = id => TAGS.sp?.[id] || {};
@@ -671,10 +683,10 @@ const spRolesOf = (id, keys, leaderToo) => new Set((keys || []).flatMap(k => { c
 // the biggest number those picks give a role: [value, "SP"]
 const spPowerOf = (id, keys, c) => (keys || []).reduce((b, k) => { const x = spRoleOpts(id)[k], v = spFor(x, true) && x[3]?.[c]; return v && (!b || v > b[0]) ? [v, "SP"] : b; }, null);
 // the roles a unit's SP options can add that its skills don't give: {code: the least SP for it}
-function spAdds(id, leaderToo) {
-  const out = {};
-  for (const x of Object.values(spRoleOpts(id))) if (spFor(x, leaderToo)) for (const c of x[2].split(" ").filter(Boolean))
-    if (!roleOf(id, c, leaderToo) && !(out[c] <= x[0])) out[c] = x[0];
+function spAdds(id, leaderToo, now) {
+  const out = {}, has = c => now ? [...(TAGS.units[id]?.[c] || "")].some(l => now.includes(l)) : roleOf(id, c, leaderToo);
+  for (const x of Object.values(spRoleOpts(id))) if (spFor(x, leaderToo) && (!now || onSkill(x, now))) for (const c of x[2].split(" ").filter(Boolean))
+    if (!has(c) && !(out[c] <= x[0])) out[c] = x[0];
   return out;
 }
 
@@ -892,7 +904,7 @@ async function showTiers() {
     if (me !== drawing || nav !== NAV) return;  // another chip was tapped, or the page left
     const rows = tierRows(DET, P, el, tierRole).map(([t, us]) => [t, us.filter(s => shown(s.u))]), n = rows.reduce((k, [, us]) => k + us.length, 0);
     $("tcount").textContent = `${n} ${el} Omni units${tierGet === "rv" ? " you can get in Revived" : tierGet === "box" ? " in your box" : ""}${tierRole === "all" ? "" : ` · ranked on ${label[tierRole]}`}`;
-    $("tiers").innerHTML = tierGet === "box" && !mine.size ? `<div class="empty"><b>Your box is empty</b>Mark the units you own (Units tab, ✎ Edit my box, or ＋ My box on a unit) to see where yours stand.</div>`
+    $("tiers").innerHTML = tierGet === "box" && !mine.size ? `<div class="empty"><b>Your box is empty</b>Mark the units you own (Units tab: ✎ Edit box, hold a unit in any list, or ＋ My box on a unit) to see where yours stand.</div>`
       : rows.map(([t, us]) => `<div class="tier"><div class="tl t${t}">${t}</div><div class="tu">${us.length ? us.map(({ u, why }) =>
         `<div class="eu${mine.has(u.id) ? " got" : ""}" data-id="${u.id}" onclick="go('#/unit/${u.id}')"><img src="${uImg(u.id)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'"><div class="gname">${esc(u.n)}</div><small class="twhy">${why.map(esc).join("<br>")}</small></div>`).join("")
         : `<span class="dim small">none</span>`}</div></div>`).join("");
@@ -1044,6 +1056,7 @@ const PLAYER_WORDS = [
   [/\b(?:status|ailment) ?(?:null|cure|cleanse)\b|\bcleansers?\b|\bcleanse\b/g, "status cure / null"],
   [/\bdebuffers?\b/g, "debuffs"], [/\btaunters?\b/g, "taunt"], [/\bdodge\b|\bevade\b/g, "evasion"],
   [/\brevivers?\b|\bko resist\b/g, "revive / ko resist"], [/\batk (?:buffer|up)\b|\battack buff\b/g, "atk buff"],
+  [/\bcrit(?:ical)? ?(?:dmg|damage)\b/g, "critical damage"], [/\bcrit(?:ical)? ?(?:hit )?rate\b|\bcrit chance\b/g, "critical rate"],
 ];
 const canonQ = q => PLAYER_WORDS.reduce((s, [re, to]) => s.replace(re, to), q);
 function searchHit(u, q) {
@@ -1126,7 +1139,7 @@ async function renderUnits() {
   }
   if (!list.length) {
     const close = q ? closeNames(q, UNITS, u => u.n, u => u.r).slice(0, 12) : [];
-    $("ulist").innerHTML = uState.mine && !mine.size ? `<div class="empty"><b>Your box is empty</b>Your box is the units you own in the game: mark them here, or open one and tap <b>＋ My box</b>. The app then shows a ✓ on them, can fill teams from them and tells you which gate units you're missing.<div class="btnrow" style="justify-content:center"><button class="gbtn green" id="ueditnow">✎ Edit my box</button></div></div>`
+    $("ulist").innerHTML = uState.mine && !mine.size ? `<div class="empty"><b>Your box is empty</b>Your box is the units you own in the game: mark them here, hold one in any list for a moment, or open one and tap <b>＋ My box</b>. The app then shows a ✓ on them, can fill teams from them and tells you which gate units you're missing.<div class="btnrow" style="justify-content:center"><button class="gbtn green" id="ueditnow">✎ Edit my box</button></div></div>`
       : `<div class="empty"><b>No units match</b>${close.length ? "Did you mean one of these? (any element or rarity)" : "Try another name or turn filters back on."}</div>`;
     if ($("ueditnow")) $("ueditnow").onclick = () => setBoxEdit(true);
     if (close.length) { NAV_LIST = close.map(u => u.id); const g = document.createElement("div"); g.className = "grid"; g.append(...close.map(u => gridCell(u))); $("ulist").append(g); }
@@ -1204,9 +1217,8 @@ function setupUnitFilters() {
   rar.prepend(rb);  // first, so it's visible without scrolling the row
   const mb = chip("✓ My box", uState.mine); mb.id = "umine";
   mb.onclick = () => { uState.mine = !uState.mine; mb.classList.toggle("on", uState.mine); renderUnits(); };
-  const eb = chip("✎ Edit box", false); eb.id = "uedit";
-  eb.onclick = () => setBoxEdit(!boxEdit);
-  rb.after(mb, eb);
+  $("uedit").onclick = () => setBoxEdit(!boxEdit);  // on the count line, so it's there with the filters folded too
+  rb.after(mb);
   roles.hidden = !uState.showRoles;
   for (const [c, label] of Object.entries(TAGS.labels)) {
     const b = chip(esc(label), uState.roles.has(c));
@@ -1334,7 +1346,7 @@ const nogTag = s => s?.ok === 0 ? `<span class="nog">not in Revived now</span>` 
 // a raid material BF Revive is still looking for (only gumi's server knew where it dropped)
 const huntNote = s => s?.hunt ? ` BF Revive is still looking for where it dropped (bfrevive.net/bounty, ${esc(s.hunt)}).` : "";
 const getHtml = s => revGet(s).length ? `<ul class="get">${revGet(s).map(getLine).join("")}</ul>`
-  : `<p class="dim small">${NOGET}: Revived has no quest drop, clear reward, shop, raid drop, Arena rank reward, achievement or Synthesis recipe for it.${huntNote(s)}</p>`;
+  : `<p class="dim small">${NOGET}: Revived has no quest drop, clear reward, shop, raid drop, Arena rank reward, achievement, Synthesis or Forge Sphere recipe for it.${huntNote(s)}</p>`;
 const sphereCard = s => `<div class="item" style="margin:0 0 8px;cursor:default;align-items:flex-start"><img src="${iImg(s.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1">
   <div class="t">${esc(s.name)} <span class="dim small">${s.type ? `${s.type} sphere` : "item"}${s.rarity ? ` · ${s.rarity}${STAR}` : ""}</span>${nogTag(s)}</div>
   <div class="small" style="color:#ece6d6;margin:3px 0">${hl(s.desc)}</div><details><summary>Where to get it</summary>${getHtml(s)}</details></div></div>`;
@@ -1366,7 +1378,7 @@ function sphereParts(s, el, skip) {
 // A unit's damage and support roles on its BB/SBB/UBB/extra skill, as shares (the weights a sphere's parts get)
 const OFF_ROLES = ["atk", "bbatk", "spark", "crit", "elem", "defign", "hits"], SUP_ROLES = ["mit", "emit", "heal", "bbf", "od", "snull", "ko", "barrier", "taunt"];
 function unitFocus(id, extra) {  // extra: the damage and support parts of its extra skill and SP (sphereCtx), half a role each
-  const off = OFF_ROLES.filter(c => roleOf(id, c)).length + (extra?.off || 0) / 2, sup = SUP_ROLES.filter(c => roleOf(id, c)).length + (extra?.sup || 0) / 2, all = off + sup || 1;
+  const off = OFF_ROLES.filter(c => roleOf(id, c) || c === "crit" && roleOf(id, "critrate")).length + (extra?.off || 0) / 2, sup = SUP_ROLES.filter(c => roleOf(id, c)).length + (extra?.sup || 0) / 2, all = off + sup || 1;
   return { off: off / all, sup: sup / all, label: off > sup * 1.5 ? "damage" : sup > off * 1.5 ? "support" : "damage and support" };
 }
 // What a unit already has, for its sphere suggestions: its extra skill, the SP picked for it (or its suggested build)
@@ -1378,7 +1390,7 @@ const SPH_NEG = [/negates all status|status ailments? (?:null|immun)|negates [\w
 function sphereCtx(id, texts) {
   const t = texts.filter(Boolean).join(", ").toLowerCase(), el = (UMAP[id]?.e || "").toLowerCase(), p = sphereParts({ desc: t }, el);
   const plain = t.replace(/negates[^,;]*|reduction[^,;]*|resist[^,;]*/g, "");
-  return { covered: SPH_NEG.filter(re => re.test(t)), themes: Object.keys(SPH_THEME).filter(k => roleOf(id, k) || SPH_THEME[k].test(plain)),
+  return { covered: SPH_NEG.filter(re => re.test(t)), themes: Object.keys(SPH_THEME).filter(k => roleOf(id, k) || k === "crit" && roleOf(id, "critrate") || SPH_THEME[k].test(plain)),
     extra: { off: p.dmg, sup: p.def + p.heal + p.bc } };
 }
 // the parts of a sphere about those themes (not ones for other elements, a condition or a defence)
@@ -1752,7 +1764,7 @@ async function renderSpheres() {
   $("scount").textContent = guess && n ? `No exact match for “${typed}”${only}. Did you mean:`
     : wider ? `No ${label} with “${typed}”${only}: ${res} in all spheres and items`
     : q ? `${res}${sType === "All" ? "" : ` in ${label}`}${only}`
-    : `${n} ${sType === "Craftable" ? "items you can craft in Synthesis" : label}${only}`;
+    : `${n} ${sType === "Craftable" ? "you can make in town (items at Synthesis, spheres at Sphere)" : label}${only}`;
   paged($("slist"), list, s => { const d = document.createElement("div"); d.className = "item"; d.onclick = () => go(`#/item/${s.id}`);
     d.innerHTML = `<img loading="lazy" decoding="async" src="${iImg(s.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1"><div class="t">${esc(s.name)} <span class="dim small">${s.rarity ? `${s.rarity}${STAR}` : ""}</span>${craftable(s) ? `<span class="craft">craftable</span>` : nogTag(s)}</div><div class="s">${esc(s.type ? s.type + " · " : "Item · ")}${esc(s.desc)}</div></div>`;
     return d; }, "");
@@ -1866,7 +1878,7 @@ async function showItem(id) {
     ${s.desc ? `<div class="sec"><h3 class="blue">Effect</h3><div class="lore">${hl(s.desc)}</div></div>` : ""}
     <div class="sec"><h3 class="green">Where to get it</h3>${getHtml(s)}</div>
     ${R[id] ? `<div class="sec"><h3>Crafting plan</h3><div class="qty"><button class="gbtn small dark" id="cminus" aria-label="Fewer">−</button><b id="cq">1</b><button class="gbtn small dark" id="cplus" aria-label="More">+</button><span class="small dim">to craft</span></div>${
-      s.cr === 0 ? `<p class="small" style="margin:0 0 8px;color:var(--warn)">Synthesis can't make it right now: some materials have no way to get in Revived (below).</p>` : ""}<div id="cplan"></div></div>` : ""}
+      s.cr === 0 ? `<p class="small" style="margin:0 0 8px;color:var(--warn)">${s.type ? "Forge Sphere" : "Synthesis"} can't make it right now: some materials have no way to get in Revived (below).</p>` : ""}<div id="cplan"></div></div>` : ""}
     ${usedIn.length ? `<div class="sec"><h3 class="blue">Used to craft</h3><div class="need">${usedIn.map(r => `<div class="ni" data-i="${r}"><img src="${iImg(r)}" alt="" onerror="this.style.visibility='hidden'"><span>${esc(I[r].name)}</span><small>needs ${R[r][1].find(([m]) => m === id)[1]}</small></div>`).join("")}</div></div>` : ""}
     ${users.length ? `<div class="sec"><h3 class="purple">Best on</h3><div class="mats">${users.map(u => unitMini(u)).join("")}</div></div>` : ""}`;
   $("page").querySelectorAll(".sec > .need [data-i]").forEach(el => el.onclick = () => go(`#/item/${el.dataset.i}`));
@@ -1948,7 +1960,7 @@ async function renderFavs() {
       <li>Team builder: <b>✓ Fill from my box only</b> builds a team from units you really have, and the unit picker has a My box filter too.</li>
       <li>Summon gates show how many of their units you already have, and can hide those so you see what you're missing.</li>
       <li>On a unit page, Similar units shows yours first: alternatives you can use right away.</li>
-      <li>Mark many at once with <b>✎ Edit my box</b>, or one at a time with <b>＋ My box</b> on a unit page. It stays on this phone only.</li></ul></details>
+      <li>Mark many at once with <b>✎ Edit my box</b> (its <b>All shown</b> marks every unit the filters show), or one at a time: hold a unit in any list for a moment (hold it again to take it out), or tap <b>＋ My box</b> on its page. It stays on this phone only.</li></ul></details>
     <div class="btnrow" style="margin-bottom:0">${box.length ? `<button class="gbtn blue small" id="fshow">Show my box</button>` : ""}<button class="gbtn green small" id="fedit">✎ Edit my box</button></div></div>`;
   if ($("fshow")) $("fshow").onclick = () => { uState.mine = true; uState.q = ""; $("uq").value = ""; $("umine").classList.add("on"); tabsDrawn.add("units"); go("#/units"); renderUnits(); };
   $("fedit").onclick = () => { go("#/units"); setBoxEdit(true); };
@@ -2211,11 +2223,29 @@ let TNAMES = store.get("bf.tnames", []);
 if (!TEAMS[TCUR]) TCUR = 0;
 const teamName = i => TNAMES[i] || `Team ${i + 1}`;
 const saveTeams = () => { store.set("bf.teams", TEAMS); store.set("bf.tcur", TCUR); store.set("bf.tnames", TNAMES); };
-const COVER = ["mit", "heal", "bbf", "atk", "bbatk", "spark", "crit", "elem", "snull", "ko", "defign", "debuff"];
-// who gives a role: BB/SBB/UBB/extra skill and the SP picked for them for everyone, the leader skill (and SP for it) only
-// for the leader and the friend
-const viaSp = (team, i, code) => !roleOf(team[i], code, i === 0 || i === 5) && spRolesOf(team[i], TSPE[TCUR]?.[i]?.k, i === 0 || i === 5).has(code);
-const providers = (team, code) => team.filter((id, i) => id && (roleOf(id, code, i === 0 || i === 5) || viaSp(team, i, code)));
+const COVER = ["mit", "heal", "bbf", "atk", "bbatk", "spark", "crit", "critrate", "elem", "snull", "ko", "defign", "debuff"];
+// what a squad unit uses all the time: its extra skill, its leader skill as the leader or the friend, and the one skill
+// it casts in the battle check (its SBB unless set there, else its BB). A buff only on its other skills (a BB's, while it
+// casts its SBB every turn; a UBB's) isn't counted for the team.
+const CAST_L = { BB: "B", SBB: "S", UBB: "U" }, SRC_NAME = { L: "LS", E: "ES", B: "BB", S: "SBB", U: "UBB", P: "SP", D: "DBB" };
+// a Dual BB (tags.json "dbb": unit -> {p: its partner's ids, n: its name, r: role codes}), only with the partner in the
+// squad; like a UBB it isn't what the battle check has the unit cast, so its buffs show but don't count
+const dbbWith = (team, id) => { const d = TAGS.dbb?.[id]; return d && d.p.some(p => p !== id && team.includes(p)) ? d : null; };
+let TEAM_D = null;  // details.json, once the Team tab has it
+function castNow(i, id, fresh) {  // fresh: a unit not in the slot yet casts its default skill
+  const has = (TEAM_D?.[id]?.skills || []).map(s => CAST_L[s.label]).filter(Boolean).join("") || (UMAP[id]?.r >= 6 ? "BS" : "B"), set = !fresh && CAST_L[TCAST[TCUR]?.[i]];
+  return "E" + (i === 0 || i === 5 ? "L" : "") + (set && has.includes(set) ? set : has.includes("S") ? "S" : "B");
+}
+const onSkill = (x, now) => [...x[1]].some(l => now.includes(l));  // an SP option for a skill it uses
+// where a squad unit gets a role: on = from what it uses (skill letters, P: the SP picked for it), off = only from the rest
+function roleSrc(team, i, code) {
+  const id = team[i], lead = i === 0 || i === 5, now = castNow(i, id), own = [...(TAGS.units[id]?.[code] || "")].filter(l => l !== "L" || lead).sort((x, y) => "LEBSU".indexOf(x) - "LEBSU".indexOf(y));
+  const sp = (TSPE[TCUR]?.[i]?.k || []).map(k => spRoleOpts(id)[k]).filter(x => spFor(x, lead) && x[2].split(" ").includes(code)), spOn = sp.some(x => onSkill(x, now));
+  const dbb = dbbWith(team, id)?.r.split(" ").includes(code);
+  return { now, on: [...own.filter(l => now.includes(l)), ...(spOn ? ["P"] : [])], off: [...own.filter(l => !now.includes(l)), ...(sp.length && !spOn ? ["P"] : []), ...(dbb ? ["D"] : [])] };
+}
+const viaSp = (team, i, code) => roleSrc(team, i, code).on.join("") === "P";
+const providers = (team, code) => team.filter((id, i) => id && roleSrc(team, i, code).on.length);
 
 // with more than one team: a list of them to add the unit to (the open one first), each with its members
 function chooseTeam(id) {
@@ -2238,8 +2268,8 @@ function addToTeam(id) {
 // from your box, or the 7★ and Omni units you can get in Revived (S = usrc.json, "o": evolving one you get counts)
 let fillEl = store.get("bf.fillel", "");
 // the missing roles an SP build can add to a unit's skills within cap SP, the cheapest first
-function spFill(id, roles, leaderToo, cap) {
-  const adds = spAdds(id, leaderToo), out = []; let used = 0;
+function spFill(id, roles, leaderToo, cap, now) {
+  const adds = spAdds(id, leaderToo, now), out = []; let used = 0;
   for (const c of roles.filter(c => adds[c] != null).sort((a, b) => adds[a] - adds[b])) if (used + adds[c] <= cap) { used += adds[c]; out.push(c); }
   return out;
 }
@@ -2248,7 +2278,7 @@ function autoFill(team, el, S) {
   // units without skills (the custom ones, Summoner, Rainbow Crystal…) don't help a team
   const pool = UNITS.filter(u => (SQ.mineOnly ? mine.has(u.id) : u.r >= 7 && !u.f && (!can.size || can.has(u.id))) && (!el || u.e === el) && TAGS.units[u.id] && !/\(custom\)/i.test(u.n));
   // newer units outdo older ones with the same roles (power creep): 0 for the oldest to 1 for the newest, by release
-  // order, worth about one more role covered
+  // order, worth about one and a half roles covered
   const order = [...pool].sort((a, b) => a.no - b.no), newness = new Map(order.map((u, i) => [u.id, u.no ? i / Math.max(1, order.length - 1) : 0]));
   let added = 0; const spNeed = {};  // slot -> the roles Fill counts on its SP for
   for (let s = 0; s < 6; s++) {
@@ -2257,17 +2287,17 @@ function autoFill(team, el, S) {
     let best = null, bestScore = -1, bestSp = [];
     for (const u of pool) {
       if (team.includes(u.id)) continue;
-      const got = missing.filter(c => roleOf(u.id, c, lead));
+      const now = castNow(s, u.id, true), got = missing.filter(c => [...(TAGS.units[u.id]?.[c] || "")].some(l => now.includes(l)));
       // each missing role it brings counts, more when it's strong at it (compared with the strongest unit for that role)
       const covers = got.length + got.reduce((a, c) => a + (powerOf(u.id, c)?.[0] || 0) / (POWER_MAX[c] || 1) * .6, 0);
       // an Omni unit's SP options that add a missing role to its skills, the cheapest first, within the SP its Omni+
       // allows: each counts like a role its skills give, a little less (it takes SP)
-      const sp = u.r === 8 ? spFill(u.id, missing.filter(c => !got.includes(c)), lead, cap) : [];
-      const ls = lead ? ["atk", "mit", "bbf", "crit", "elem", "spark", "heal"].filter(c => (TAGS.units[u.id]?.[c] || "").includes("L")).length : 0;
-      const score = (covers + sp.length * .8) * 10 + ls * 3 + newness.get(u.id) * 10 + u.r + u.atk / 1e5;
+      const sp = u.r === 8 ? spFill(u.id, missing.filter(c => !got.includes(c)), lead, cap, now) : [];
+      const ls = lead ? ["atk", "mit", "bbf", "crit", "critrate", "elem", "spark", "heal"].filter(c => (TAGS.units[u.id]?.[c] || "").includes("L")).length : 0;
+      const score = (covers + sp.length * .8) * 10 + ls * 3 + newness.get(u.id) * 15 + u.r + u.atk / 1e5;
       if (score > bestScore) { bestScore = score; best = u; bestSp = sp; }
     }
-    if (best) { team[s] = best.id; added++; if (bestSp.length) spNeed[s] = bestSp; }
+    if (best) { if (team === TEAMS[TCUR]) resetSlot(s); team[s] = best.id; added++; if (bestSp.length) spNeed[s] = bestSp; }
   }
   return { added, spNeed };
 }
@@ -2345,6 +2375,13 @@ const elgifMap = async () => { if (!ELGMAP) { const E = await load("elgifs"); EL
 let SQ = { imps: true, lead: true, friend: false, es: true, maxcost: "", ...store.get("bf.sq", {}) };
 const saveSquad = () => { store.set("bf.ttype", TTYPE); store.set("bf.tsph", TSPH); store.set("bf.telg", TELG); store.set("bf.tspe", TSPE); store.set("bf.tomni", TOMNI); store.set("bf.tcast", TCAST); store.set("bf.sq", SQ); };
 // a new unit in a slot starts as Lord without spheres or an Elgif
+// one team and everything set on its slots, kept as text to put back (Undo)
+const teamSnap = (t = TCUR) => JSON.stringify([TEAMS[t], TTYPE[t], TSPH[t], TELG[t], TSPE[t], TOMNI[t], TCAST[t], TNAMES[t] ?? null]);
+function teamRestore(t, s, insert) {
+  if (insert) for (const a of [TEAMS, TTYPE, TSPH, TELG, TSPE, TOMNI, TCAST, TNAMES]) a.splice(t, 0, null);
+  [TEAMS[t], TTYPE[t], TSPH[t], TELG[t], TSPE[t], TOMNI[t], TCAST[t], TNAMES[t]] = JSON.parse(s); TCUR = t;
+  saveTeams(); saveSquad(); if (location.hash === "#/team") renderTeam(); else go("#/team");
+}
 const resetSlot = i => { TTYPE[TCUR][i] = "lord"; TSPH[TCUR][i] = [null, null]; TELG[TCUR][i] = null; TSPE[TCUR][i] = null; TOMNI[TCUR][i] = 0; TCAST[TCUR][i] = null; saveSquad(); };
 const lsText = (id, w, D) => D[id]?.leader?.desc || (w?.skills || []).find(s => s.kind === "Leader Skill")?.desc || "";
 // one unit's numbers: max-level stats of its type, + imps, × (1 + leader / friend skill, own extra skill and sphere boosts)
@@ -2489,10 +2526,10 @@ function sparkHtml(S) {
 // battle, on the OD gauge) stays yours to set
 async function bestCasts(team, added) {
   const [D, W] = await Promise.all([load("details"), Promise.all(team.map(id => id ? wiki(id) : {}))]);
-  const can = () => battleCheck(team, W, [], D).can;
+  const can = () => battleCheck(team, W, [], D).can, covered = () => COVER.filter(c => providers(team, c).length).length, cov = covered();
   for (let cur = can(); ;) {
     let best = -1, n = cur;
-    for (const i of added) { if (TCAST[TCUR][i]) continue; TCAST[TCUR][i] = "BB"; const x = can(); TCAST[TCUR][i] = null; if (x > n) { n = x; best = i; } }
+    for (const i of added) { if (TCAST[TCUR][i]) continue; TCAST[TCUR][i] = "BB"; const x = can(), y = covered(); TCAST[TCUR][i] = null; if (x > n && y >= cov) { n = x; best = i; } }
     if (best < 0) break;
     TCAST[TCUR][best] = "BB"; cur = n;
   }
@@ -2621,7 +2658,7 @@ function matchupHtml(team) {
 }
 async function renderTeam() {
   const v = $("v-team"), team = TEAMS[TCUR];
-  const [D, I, EG] = await Promise.all([load("details"), load("items"), elgifMap()]);
+  const [D, I, EG] = await Promise.all([load("details"), load("items"), elgifMap()]); TEAM_D = D;
   const W = await Promise.all(team.map(id => id ? wiki(id) : {}));
   const ls = (id, w) => { const s = (w.skills || []).find(s => s.kind === "Leader Skill"); return [s?.name || D[id]?.leader?.name || "", s?.desc || D[id]?.leader?.desc || ""]; };
   const cost = team.slice(0, 5).reduce((a, id) => a + (UMAP[id]?.c || 0), 0);
@@ -2672,10 +2709,24 @@ async function renderTeam() {
     ${battleHtml(battleCheck(team, W, NUMS, D))}
     ${team[0] || team[5] ? `<div class="sec"><h3 class="blue">Leader skills</h3>${[0, 5].filter(i => team[i]).map(i => { const [n, d] = ls(team[i], W[i]); const b = boostText(statBoosts(lsText(team[i], W[i], D)));
         return `<div class="sk"><div class="kn"><span class="tag ls">${i ? "Friend" : "Leader"}</span><span class="nm">${esc(n || UMAP[team[i]]?.n)}</span></div><p>${d ? hl(d) : `<span class="dim">No leader skill</span>`}</p>${b ? `<div class="pills"><span class="pill">Counted: ${esc(b)}</span></div>` : ""}</div>`; }).join("")}</div>` : ""}
-    <div class="sec"><h3 class="green">What the team covers</h3><div class="cov">${COVER.map(c => { const p = providers(team, c), slot = id => team.indexOf(id);
-        const best = p.flatMap(id => [powerOf(id, c), spPowerOf(id, TSPE[TCUR][slot(id)]?.k, c)]).filter(Boolean).sort((a, b) => b[0] - a[0])[0];
-        return `<div><span class="cl ${p.length ? "ok" : "no"}">${p.length ? "✓" : "✗"} ${esc(TAGS.labels[c] || c)}${best ? `<small> ${fmtPower(c, best)}</small>` : ""}</span><span class="who">${p.map(id => `<img src="${uImg(id)}" alt="" data-u="${id}"${viaSp(team, slot(id), c) ? ` class="viasp" title="From its SP"` : ""}>`).join("")}</span>${p.length ? "" : `<button class="gbtn small blue" data-find="${c}">Find</button>`}</div>`; }).join("")}</div>
-      <p class="small dim" style="margin:8px 0 0">From the units' BB, SBB, UBB and extra skills, and the SP picked for them (green ring: only from its SP); leader skills count for the leader and the friend.</p></div>
+    <div class="sec"><h3 class="green">What the team covers</h3><p class="covkey">Under each unit: where it gets it (LS, ES, BB, SBB, UBB, SP) and how much (self: only for itself); next to the role: the highest number in the team. <b>Dimmed</b>: it has it only on a skill it doesn't cast, so it doesn't count; change its skill on its battle check row.</p>${(() => {
+      const seen = new Set(), pairs = team.flatMap(id => { const d = id && dbbWith(team, id), p = d && d.p.find(x => team.includes(x)), k = p && [id, p].sort().join();
+        if (!k || seen.has(k)) return []; seen.add(k); return [`<b class="dbbok">${esc(UMAP[id]?.n || "")}</b> + <b class="dbbok">${esc(UMAP[p]?.n || "")}</b>${d.n ? ` (${esc(d.n)})` : ""}`]; });
+      return pairs.length ? `<p class="covkey dbbkey">Dual BB ready: ${pairs.join(", ")}. Its buffs show as <b>DBB</b>: the battle check has each unit cast its own skill, so they don't count.</p>` : ""; })()}<div class="cov"><div class="covh"><span></span>${team.map((id, i) => `<span>${id ? (i === 0 ? "Leader" : i === 5 ? "Friend" : `Unit ${i + 1}`) : ""}</span>`).join("")}</div>${COVER.map(c => {
+        const src = team.map((id, i) => id ? { i, id, ...roleSrc(team, i, c) } : null).filter(r => r && (r.on.length || r.off.length)), on = src.filter(r => r.on.length), off = src.filter(r => !r.on.length);
+        // each unit's number from what it uses (a BB/SBB value only from the skill it casts, SP only for those skills);
+        // for each skill it uses: the game's number for the team, else the skill text's (ES and LS too), else the game's
+        // number for the unit itself ("self"); and the SP picked for those skills
+        const valOf = r => {
+          const vals = r.on.filter(l => l !== "P").map(l => { const g = (TEAM_D?.[r.id]?.skills || []).find(s => CAST_L[s.label] === l), team = g?.buffs?.[c], txt = TAGS.powerAll?.[r.id]?.[c]?.[l], own = g?.own?.[c];
+            return team ? [team, l] : txt ? [txt, l, 0, TAGS.powerAll[r.id][c]["~" + l] || 0] : own ? [own, l, 1] : null; });
+          const sp = (TSPE[TCUR][r.i]?.k || []).map(k => spRoleOpts(r.id)[k]).filter(x => spFor(x, r.i === 0 || r.i === 5) && onSkill(x, r.now) && x[3]?.[c]);
+          return [...vals, ...sp.map(x => [x[3][c], "SP"])].filter(Boolean).sort((a, b) => b[0] - a[0] || (a[2] || 0) - (b[2] || 0))[0] || null; };
+        on.forEach(r => r.v = valOf(r));
+        const nums = on.filter(r => r.v && !(r.v[3] && on.some(x => x.v && !x.v[3]))), best = nums.map(r => r.v).sort((a, b) => b[0] - a[0])[0];
+        const pic = (r, dim) => `<span class="src${dim ? " off" : ""}" title="${esc(UMAP[r.id]?.n || "")}: ${dim ? `only on its ${(dim ? r.off : r.on).map(l => SRC_NAME[l]).join(", ")}, not the skill it casts` : `from its ${r.on.map(l => SRC_NAME[l]).join(", ")}${r.v ? `: ${fmtPower(c, r.v)}${r.v[3] ? " per spark" : ""}${r.v[2] ? " for itself" : ""}` : ""}`}"><img src="${uImg(r.id)}" alt="" data-u="${r.id}"${!dim && r.on.join("") === "P" ? ` class="viasp"` : ""}><small>${(dim ? r.off : r.on).map(l => SRC_NAME[l]).join(" ")}</small>${!dim && r.v ? `<em>${fmtShort(c, r.v)}${r.v[3] ? " per spark" : ""}${r.v[2] ? " self" : ""}</em>` : ""}</span>`;
+        return `<div><span class="cl ${on.length ? "ok" : off.length ? "part" : "no"}">${on.length ? "✓" : "✗"} ${esc(TAGS.labels[c] || c)}${best ? `<small> ${fmtPower(c, best)}${best[3] ? " per spark" : ""}${best[2] ? " self" : ""}</small>` : ""}${off.length && !on.length ? `<button class="gbtn small blue cfind" data-find="${c}">Find</button>` : ""}</span>${src.length ? team.map((id, i) => { const r = src.find(x => x.i === i); return r ? pic(r, !r.on.length) : `<span class="nos"></span>`; }).join("") : `<span class="cfrow"><button class="gbtn small blue" data-find="${c}">Find</button></span>`}</div>`; }).join("")}</div>
+      <p class="small dim" style="margin:8px 0 0">It counts the units' extra skills, the skill each one casts in the battle check (its SBB unless you change it there) and the SP picked for them; leader skills for the leader and the friend. A BB's buff while the unit casts its SBB, or a UBB's, doesn't count. Green ring: only from its SP.</p></div>
     ${matchupHtml(team)}`;
   if ($("muchart")) $("muchart").onclick = elementChart;
   jumpBar(v, [...v.querySelectorAll(":scope > .sec")]);
@@ -2686,7 +2737,8 @@ async function renderTeam() {
   };
   const tabs = v.querySelector(".tabs2"); tabs.scrollLeft = tabs.querySelector(".on").offsetLeft - 40;
   v.querySelectorAll("[data-s]").forEach(b => b.onclick = () => go(`#/pick/${b.dataset.s}`));
-  v.querySelectorAll("[data-x]").forEach(b => b.onclick = () => { const i = +b.dataset.x; team[i] = null; resetSlot(i); saveTeams(); renderTeam(); });
+  v.querySelectorAll("[data-x]").forEach(b => b.onclick = () => { const i = +b.dataset.x, s = teamSnap(), t = TCUR, n = UMAP[team[i]]?.n;
+    team[i] = null; resetSlot(i); saveTeams(); renderTeam(); undoToast(`${n || "Unit"} taken out`, () => teamRestore(t, s)); });
   v.querySelectorAll("[data-u]").forEach(b => b.onclick = () => go(`#/unit/${b.dataset.u}`));
   v.querySelectorAll("[data-find]").forEach(b => b.onclick = () => {
     let s = team.findIndex((x, i) => !x && i !== 5); if (s < 0) s = team[5] ? 4 : 5;
@@ -2713,15 +2765,16 @@ async function renderTeam() {
   $("tfillel").onchange = e => { fillEl = e.target.value; store.set("bf.fillel", fillEl); };
   $("tfill").onclick = async () => {
     if (!team.includes(null)) return toast("No empty slots");
-    if (SQ.mineOnly && !mine.size) return toast("Your box is empty: open a unit you have and tap ＋ My box");
-    const before = [...team], { added: n, spNeed } = autoFill(team, fillEl, await load("usrc"));
-    await Promise.all(team.map(async (id, i) => { if (id && !before[i] && UMAP[id]?.r === 8) TSPE[TCUR][i] = await bestSpFor(id, omniOf(i)[1], spNeed[i], i === 0 || i === 5, TOMNI[TCUR][i] || 0); }));
+    if (SQ.mineOnly && !mine.size) return toast("Your box is empty: hold a unit you have in a list, or open it and tap ＋ My box", 3000);
+    const snap = teamSnap(), at = TCUR, before = [...team], { added: n, spNeed } = autoFill(team, fillEl, await load("usrc"));
+    await Promise.all(team.map(async (id, i) => { if (id && !before[i] && UMAP[id]?.r === 8) TSPE[TCUR][i] = await bestSpFor(id, omniOf(i)[1], spNeed[i], i === 0 || i === 5, TOMNI[TCUR][i] || 0, castNow(i, id)); }));
     await bestCasts(team, team.map((id, i) => id && !before[i] ? i : -1).filter(i => i >= 0));
     saveTeams(); saveSquad(); renderTeam();
-    toast(n ? `Added ${n} unit${n > 1 ? "s" : ""}` : `No ${fillEl ? fillEl + " " : ""}units left to add`);
+    n ? undoToast(`Added ${n} unit${n > 1 ? "s" : ""}`, () => teamRestore(at, snap)) : toast(`No ${fillEl ? fillEl + " " : ""}units left to add`);
   };
   $("tshare").onclick = () => shareTeam(team, W);
-  $("tclear").onclick = () => { TEAMS[TCUR] = Array(6).fill(null); for (let i = 0; i < 6; i++) resetSlot(i); saveTeams(); renderTeam(); };
+  $("tclear").onclick = () => { if (!team.some(Boolean)) return; const s = teamSnap(), t = TCUR;
+    TEAMS[TCUR] = Array(6).fill(null); for (let i = 0; i < 6; i++) resetSlot(i); saveTeams(); renderTeam(); undoToast(`${teamName(t)} cleared`, () => teamRestore(t, s)); };
 }
 
 // the open team's tab: rename, copy or delete the team
@@ -2740,9 +2793,9 @@ function teamMenu() {
   };
   if ($("tdel")) $("tdel").onclick = e => {
     const b = e.currentTarget; if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = "Tap again to delete"; return; }
-    const name = teamName(TCUR);
+    const name = teamName(TCUR), s = teamSnap(), at = TCUR;
     for (const a of [TEAMS, TTYPE, TSPH, TELG, TSPE, TOMNI, TCAST, TNAMES]) a.splice(TCUR, 1);
-    TCUR = Math.min(TCUR, TEAMS.length - 1); done(`${name} deleted`);
+    TCUR = Math.min(TCUR, TEAMS.length - 1); done(); undoToast(`${name} deleted`, () => teamRestore(at, s, true));
   };
 }
 
@@ -2952,16 +3005,17 @@ async function showSpPick(slot) {
 // Fill's SP for a unit it adds: the players' build that suits what it does best (its options' worth, as the app's pick
 // weighs them; a leader skill option counts only for the Leader and the Friend) within its SP, with what its notes add
 // at its Omni+ (lv) and the roles Fill picked it for (need); without one, the app's pick with them
-async function bestSpFor(id, budget, need = [], leaderToo = false, lv = 0) {
+async function bestSpFor(id, budget, need = [], leaderToo = false, lv = 0, now = "") {
   const w = await wiki(id);
   if (!w?.sp?.length) return null;
   const { opts } = spOptions(id, w.sp, leaderToo), by = Object.fromEntries(opts.map(o => [o.key, o]));
   const sum = (keys, f) => [...keys].reduce((a, k) => a + (by[k]?.[f] || 0), 0);
-  const has = keys => { const r = spRolesOf(id, [...keys], leaderToo); return need.every(c => r.has(c)); };
+  // the roles Fill counts on: from options for the skills it uses (now), if it's given
+  const has = keys => { const r = new Set([...keys].flatMap(k => { const x = spRoleOpts(id)[k]; return spFor(x, leaderToo) && (!now || onSkill(x, now)) ? x[2].split(" ").filter(Boolean) : []; })); return need.every(c => r.has(c)); };
   const fits = (w.builds || []).map((b, n) => ({ name: b.name || `Build ${n + 1}`, k: buildKeys(b, w.sp), b })).filter(x => x.k.size && sum(x.k, "cost") <= budget)
     .map(x => ({ ...x, k: buildAt(x.b, w.sp, x.k, lv, budget, by).keys })).filter(x => has(x.k));
   if (fits.length) { const best = fits.reduce((a, x) => sum(x.k, "v") > sum(a.k, "v") + 1e-9 ? x : a); return { k: [...best.k], b: best.name }; }
-  const cheapest = c => Object.entries(spRoleOpts(id)).filter(([k, x]) => by[k] && spFor(x, leaderToo) && x[2].split(" ").includes(c)).sort((a, b) => a[1][0] - b[1][0])[0]?.[0];
+  const cheapest = c => Object.entries(spRoleOpts(id)).filter(([k, x]) => by[k] && spFor(x, leaderToo) && (!now || onSkill(x, now)) && x[2].split(" ").includes(c)).sort((a, b) => a[1][0] - b[1][0])[0]?.[0];
   const p = spPicks(id, w.sp, budget, new Set(need.map(cheapest).filter(Boolean)), leaderToo);
   return p.keys.size ? { k: [...p.keys], b: "app" } : null;
 }
@@ -3085,6 +3139,44 @@ $("totop").onclick = () => window.scrollTo({ top: 0, behavior: "smooth" });
 // Enter in a search box closes the keyboard, so the results can be seen
 document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.matches?.("input[type=search]")) e.target.blur(); });
 $("ebdone").onclick = () => { setBoxEdit(false); toast(`${mine.size} unit${mine.size === 1 ? "" : "s"} in your box`); };
+// box editing: every unit the filters and search show, in the box at once (or out), then tap the few that are wrong
+$("eball").onclick = () => {
+  const ids = filteredUnits().map(u => u.id), out = ids.filter(id => !mine.has(id)).length, inn = ids.length - out;
+  if (!ids.length) return toast("No units shown");
+  const what = `${esc(filterSummary())}${uState.q ? ` · “${esc(uState.q)}”` : ""}`;
+  modal(`<div class="about"><div class="big">All ${ids.length} units shown</div><p class="small dim" style="margin:6px 0 10px">${what}<br>${inn} of them are in your box.</p>
+    <div class="btnrow" style="justify-content:center">${out ? `<button class="gbtn green" id="eballin">✓ Put all ${ids.length} in</button>` : ""}${inn ? `<button class="gbtn red" id="eballout">Take all ${ids.length} out</button>` : ""}<button class="gbtn dark mclose">Cancel</button></div></div>`);
+  const set = add => { const before = [...mine]; ids.forEach(id => add ? mine.add(id) : mine.delete(id)); saveMine(); $("modal").hidden = true;
+    refreshMarks($("ulist")); $("ebn").textContent = mine.size;
+    undoToast(add ? `${out} put in your box` : `${inn} taken out of your box`, () => { mine = new Set(before); saveMine(); refreshMarks($("ulist")); $("ebn").textContent = mine.size; }); };
+  if ($("eballin")) $("eballin").onclick = () => set(true);
+  if ($("eballout")) $("eballout").onclick = () => set(false);
+};
+// hold a unit in a list for a moment (or right-click it) to put it in your box or take it out, without opening it
+(() => {
+  let t = 0, at = null, el = null, swallow = false;
+  const cell = e => e.target.closest?.(".gu[data-id], .lu[data-id], .eu[data-id]");
+  const stop = () => { clearTimeout(t); t = 0; el = null; };
+  const flip = c => {
+    const id = c.dataset.id, u = UMAP[id]; if (!u) return;
+    const add = !mine.has(id); add ? mine.add(id) : mine.delete(id); saveMine(); swallow = true;
+    if (c.redraw) c.replaceWith(c.redraw()); else c.classList.toggle("got", add);
+    $("ebn").textContent = mine.size;
+    toast(add ? `✓ ${u.n} is in your box` : `${u.n} is out of your box`);
+  };
+  addEventListener("pointerdown", e => {
+    stop(); swallow = false; const c = cell(e); if (!c || e.button > 0) return;
+    el = c; at = [e.clientX, e.clientY]; t = setTimeout(() => { const c2 = el; stop(); if (c2?.isConnected) flip(c2); }, 500);
+  }, { passive: true });
+  addEventListener("pointermove", e => { if (t && Math.hypot(e.clientX - at[0], e.clientY - at[1]) > 10) stop(); }, { passive: true });
+  addEventListener("pointerup", stop, { passive: true }); addEventListener("pointercancel", stop, { passive: true });
+  addEventListener("scroll", stop, { passive: true, capture: true });
+  // a held touch also opens the browser's menu, a right-click too: here it's the same shortcut, with no menu
+  addEventListener("contextmenu", e => { const c = cell(e); if (!c) return; e.preventDefault(); if (t) { stop(); flip(c); } else if (!swallow) flip(c); });
+  // the tap that ends a hold doesn't also open the unit (or pick it in the team picker)
+  addEventListener("click", e => { if (!swallow) return; swallow = false;
+    if (cell(e) || !e.target.closest?.("button, a, input, select, label")) { e.stopPropagation(); e.preventDefault(); } }, true);
+})();
 addEventListener("hashchange", route);
 // a computer screen: the tab buttons go up in the header, next to ★; back at the bottom on a phone
 const wide = matchMedia("(min-width: 1000px)"), navEl = document.querySelector(".nav");
