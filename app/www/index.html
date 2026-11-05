@@ -193,7 +193,7 @@ main { padding-bottom: calc(var(--navh) + 20px); }
 .sphc.elg .er .sti { width: 13px; height: 13px; vertical-align: -2px; } .sphc.elg .er .omi { width: 20px; height: 20px; vertical-align: middle; }
 .sca { display: flex; justify-content: flex-end; gap: 6px; margin-top: 6px; }
 .bcrow { display: flex; gap: 8px; align-items: center; padding: 6px 0; border-top: 1px solid rgba(255,255,255,.07); } .bcrow img { width: 40px; height: 40px; flex: none; cursor: pointer; }
-.bcl { font-size: 12.5px; } .bcl b { font-family: Rodin, Arial, sans-serif; text-shadow: var(--ol); } .bcd { font-size: 12px; color: var(--dim); } .bcd b { color: var(--accent); font-weight: normal; font-family: Rodin, Arial, sans-serif; }
+.bcl { font-size: 12.5px; } .bcast { font: inherit; font-family: Rodin, Arial, sans-serif; font-size: 12px; padding: 1px 6px; border-radius: 6px; background: #1d2440; color: var(--accent); border: 1px solid rgba(255,255,255,.25); text-shadow: var(--ol); cursor: pointer; } .bcast::after { content: " ▾"; color: var(--dim); } .bcl b { font-family: Rodin, Arial, sans-serif; text-shadow: var(--ol); } .bcd { font-size: 12px; color: var(--dim); } .bcd b { color: var(--accent); font-weight: normal; font-family: Rodin, Arial, sans-serif; }
 .okc { color: #7ad67a; } .noc { color: #ff8a7a; } .bcl .okc, .bcl .noc { margin-left: 4px; font-size: 11px; }
 .spark { margin-top: 8px; padding: 7px 9px; border-radius: 7px; background: rgba(0,0,0,.35); border-left: 3px solid #f2c94c; }
 .spark .bcl b { color: var(--accent); }
@@ -2317,6 +2317,8 @@ let TELG = store.get("bf.telg", null) || TEAMS.map(() => Array(6).fill(null));
 // each squad unit's SP enhancements ({k: its picked "category:option" keys, b: the build they came from, "app" for the
 // app's pick, null for the player's own}) and Omni+ level (OMNI_PLUS: 0 Omni … 3 Omni+3, 4-5 Omni+3 with Omni Emperors)
 let TSPE = store.get("bf.tspe", null) || TEAMS.map(() => Array(6).fill(null)), TOMNI = store.get("bf.tomni", null) || TEAMS.map(() => Array(6).fill(0));
+// the skill each squad unit casts in the battle check: null for its SBB (else its BB), or "BB", "SBB", "UBB" as you set it
+let TCAST = store.get("bf.tcast", null) || TEAMS.map(() => Array(6).fill(null));
 // Omni+ Boost (Unit > Evolve Unit): each level raises the SP limit and the imps' limits (HP, ATK, DEF, REC); an Omni
 // Emperor fused into an Omni+3 unit adds 5 SP, up to 130 (the Brave Frontier wiki's Omni+ Boost and Omni Emperor pages)
 const OMNI_PLUS = [["Omni", 100, 0], ["Omni+1", 105, 1], ["Omni+2", 110, 2], ["Omni+3", 120, 3], ["Omni+3 · 1 Emperor", 125, 3], ["Omni+3 · 2 Emperors", 130, 3]];
@@ -2335,15 +2337,15 @@ function paradigm(team) {
   }
   return best;
 }
-TEAMS.forEach((_, t) => { TTYPE[t] ??= Array(6).fill("lord"); TSPH[t] ??= Array.from({ length: 6 }, () => [null, null]); TELG[t] ??= Array(6).fill(null); TSPE[t] ??= Array(6).fill(null); TOMNI[t] ??= Array(6).fill(0); });  // teams added later
+TEAMS.forEach((_, t) => { TTYPE[t] ??= Array(6).fill("lord"); TSPH[t] ??= Array.from({ length: 6 }, () => [null, null]); TELG[t] ??= Array(6).fill(null); TSPE[t] ??= Array(6).fill(null); TOMNI[t] ??= Array(6).fill(0); TCAST[t] ??= Array(6).fill(null); });  // teams added later
 // the Elgifs by id, once elgifs.json has loaded (the squad numbers count the stat boosts of the one a unit carries)
 let ELGMAP = null;
 const elgifMap = async () => { if (!ELGMAP) { const E = await load("elgifs"); ELGMAP = Object.fromEntries((Array.isArray(E) ? E : []).map(e => [e.id, e])); } return ELGMAP; };
 // what counts in the numbers; like the game's squad screen by default: leader skill and extra skills, no friend
 let SQ = { imps: true, lead: true, friend: false, es: true, maxcost: "", ...store.get("bf.sq", {}) };
-const saveSquad = () => { store.set("bf.ttype", TTYPE); store.set("bf.tsph", TSPH); store.set("bf.telg", TELG); store.set("bf.tspe", TSPE); store.set("bf.tomni", TOMNI); store.set("bf.sq", SQ); };
+const saveSquad = () => { store.set("bf.ttype", TTYPE); store.set("bf.tsph", TSPH); store.set("bf.telg", TELG); store.set("bf.tspe", TSPE); store.set("bf.tomni", TOMNI); store.set("bf.tcast", TCAST); store.set("bf.sq", SQ); };
 // a new unit in a slot starts as Lord without spheres or an Elgif
-const resetSlot = i => { TTYPE[TCUR][i] = "lord"; TSPH[TCUR][i] = [null, null]; TELG[TCUR][i] = null; TSPE[TCUR][i] = null; TOMNI[TCUR][i] = 0; saveSquad(); };
+const resetSlot = i => { TTYPE[TCUR][i] = "lord"; TSPH[TCUR][i] = [null, null]; TELG[TCUR][i] = null; TSPE[TCUR][i] = null; TOMNI[TCUR][i] = 0; TCAST[TCUR][i] = null; saveSquad(); };
 const lsText = (id, w, D) => D[id]?.leader?.desc || (w?.skills || []).find(s => s.kind === "Leader Skill")?.desc || "";
 // one unit's numbers: max-level stats of its type, + imps, × (1 + leader / friend skill, own extra skill and sphere boosts)
 function unitNumbers(i, team, W, D, I) {
@@ -2482,6 +2484,19 @@ function sparkHtml(S) {
       S.guessed.length ? ` No measured teleport delay for ${S.guessed.map(name).join(", ")} (counted as none).` : ""}${
       S.untimed.length ? ` Not counted, no timing data: ${S.untimed.map(r => esc(UMAP[r.id].n)).join(", ")}.` : ""}</p></div>`;
 }
+// Fill: the skill each unit it added casts in the battle check: its SBB, or its BB where that lets more of the team cast
+// every turn (a BB that fills more BC for everyone, or costs less), the swap that helps most first; a UBB (once a
+// battle, on the OD gauge) stays yours to set
+async function bestCasts(team, added) {
+  const [D, W] = await Promise.all([load("details"), Promise.all(team.map(id => id ? wiki(id) : {}))]);
+  const can = () => battleCheck(team, W, [], D).can;
+  for (let cur = can(); ;) {
+    let best = -1, n = cur;
+    for (const i of added) { if (TCAST[TCUR][i]) continue; TCAST[TCUR][i] = "BB"; const x = can(); TCAST[TCUR][i] = null; if (x > n) { n = x; best = i; } }
+    if (best < 0) break;
+    TCAST[TCUR][best] = "BB"; cur = n;
+  }
+}
 function battleCheck(team, W, NUMS, D) {
   // the wiki's skill, else the game's own (its BC cost, hits and damage modifier from the game's tables)
   const skill = (i, kind) => (W[i]?.skills || []).find(s => s.kind === kind)
@@ -2508,10 +2523,12 @@ function battleCheck(team, W, NUMS, D) {
   const atkBuff = best("atk"), bbAtk = best("bbatk");
   const rows = team.map((id, i) => {
     if (!id || !UMAP[id]) return null;
-    const s = skill(i, "SBB") || skill(i, "BB"), u = skill(i, "UBB"), bb = skill(i, "BB"), N = NUMS[i];
+    // the skill it casts: the one you set (BB, SBB or UBB), else its SBB (else its BB)
+    const has = ["BB", "SBB", "UBB"].filter(k => skill(i, k)), set = TCAST[TCUR]?.[i], chosen = !!(set && has.includes(set));
+    const s = chosen ? skill(i, set) : skill(i, "SBB") || skill(i, "BB"), u = skill(i, "UBB"), bb = skill(i, "BB"), N = NUMS[i];
     const game = kind => (D?.[id]?.skills || []).find(x => x.label === kind);
     // Revived's own BC cost and fills (the game's skill table), else the wiki's
-    const cost = sk => sk ? +game(sk.kind)?.bc || +sk.bc || 0 : 0;
+    const cost = sk => !sk || sk.kind === "UBB" ? 0 : +game(sk.kind)?.bc || +sk.bc || 0;  // a UBB takes the OD gauge, not BC
     const fills = sk => spFills(!sk ? [0, 0, 0, 0, 0, 0, 0] : game(sk.kind) ? game(sk.kind).fill || [0, 0, 0, 0, 0, 0, 0] : wikiFills(sk), i, sk?.kind);
     const atk = N ? N.base[1] * (1 + (N.pct[1] + atkBuff) / 100) : UMAP[id].atk;
     // every attack of the skill at full HP: the game's own total, else the wiki's first and second attack
@@ -2521,7 +2538,7 @@ function battleCheck(team, W, NUMS, D) {
     const dmg = sk => sk ? Math.round(atk * (mod(sk) + spMod(sk)) / 100 * (1 + bbAtk / 100)) : 0;
     const es = SQ.es && unconditional((W[i]?.skills || []).find(x => x.kind === "Extra Skill"));
     const sbb = s?.kind === "SBB";
-    return { i, id, s, cost: cost(s), f: fills(s), bbCost: sbb ? cost(bb) : 0, bf: sbb && bb ? fills(bb) : null, sDmg: dmg(s), uDmg: dmg(u), aoe: s?.aoe === "A",
+    return { i, id, s, has, chosen, cost: cost(s), f: fills(s), bbCost: sbb ? cost(bb) : 0, bf: sbb && bb ? fills(bb) : null, sDmg: dmg(s), uDmg: s?.kind === "UBB" ? 0 : dmg(u), aoe: s?.aoe === "A",
       esSpark: Math.max(...sparkFill(es)), esSparkAll: forAll(es, SPARK_TOPIC), esTurn: turnFill(es), esTurnAll: forAll(es, TURN_TOPIC),
       esCut: costCut(es), esCutAll: forAll(es, CUT_TOPIC) };
   }).filter(Boolean);
@@ -2556,7 +2573,7 @@ function battleCheck(team, W, NUMS, D) {
   // again, if it beats everyone casting SBB (a BB that only refills its caster helps nobody else)
   let tip = null;
   for (const r of rows) {
-    if (!r.bf || !r.bbCost || !(r.bf[6] === 1 || r.bf[0] + r.bf[2] > r.f[0] + r.f[2] || r.bf[4] > r.f[4])) continue;
+    if (r.chosen || !r.bf || !r.bbCost || !(r.bf[6] === 1 || r.bf[0] + r.bf[2] > r.f[0] + r.f[2] || r.bf[4] > r.f[4])) continue;
     const F = x => x === r ? r.bf : x.f, T2 = gets(F), need = x => x === r ? Math.round(r.bbCost * (1 - r.cut / 100)) : x.need;
     const n = known.filter(x => T2.full || F(x)[6] === 2 || T2.bc(x) + T2.sparkBC(x) >= need(x)).length;
     if (n > can && (!tip || n > tip.can)) tip = { id: r.id, f: r.bf, can: n };
@@ -2567,11 +2584,12 @@ function battleCheck(team, W, NUMS, D) {
 function battleHtml(B) {
   if (!B.rows.length) return "";
   return `<div class="sec"><h3 class="purple">Battle check</h3>
-    <p class="small" style="margin:0 0 8px">When everyone casts SBB in the same turn, skills fill ${B.full ? "<b>the gauge to max</b>"
+    <p class="small" style="margin:0 0 8px">When everyone casts ${B.rows.some(r => r.chosen) ? "the skill set for it" : "SBB"} in the same turn, skills fill ${B.full ? "<b>the gauge to max</b>"
       : [B.teamFill ? `<b>${B.teamFill} BC</b> for everyone` : "", B.sparkBC ? "BC from sparks" : ""].filter(Boolean).join(", plus ") || "<b>no BC</b>"}:
-      <b class="${B.can === B.known ? "okc" : "noc"}">${B.can} of ${B.known}</b> can cast SBB again with that alone. Hits and crystals give more BC on top.</p>
+      <b class="${B.can === B.known ? "okc" : "noc"}">${B.can} of ${B.known}</b> can cast ${B.rows.some(r => r.chosen) ? "it" : "SBB"} again with that alone. Hits and crystals give more BC on top.</p>
     ${B.rows.map(r => `<div class="bcrow"><img src="${uImg(r.id)}" alt="" data-u="${r.id}"><div>
-      <div class="bcl">${r.s ? `<b>${esc(r.s.kind)}</b> ${r.cost ? r.cut ? `${r.need} BC <span class="dim">(${r.cost} −${r.cut}%)</span>` : `${r.cost} BC` : "<span class='dim'>cost not listed</span>"}` : "<span class='dim'>No BB listed</span>"}${r.f[6] === 1 ? " · fills everyone to max" : fillWords(r.f, 0) ? ` · fills ${fillWords(r.f, 0)}` : ""}${
+      <div class="bcl">${r.s ? `${r.has.length > 1 ? `<button class="bcast" data-cast="${r.i}" data-has="${r.has.join(",")}" aria-label="${esc(r.s.kind)}: choose the skill it casts">${esc(r.s.kind)}</button>`
+        : `<b>${esc(r.s.kind)}</b>`} ${r.s.kind === "UBB" ? "<span class='dim'>uses the OD gauge</span>" : r.cost ? r.cut ? `${r.need} BC <span class="dim">(${r.cost} −${r.cut}%)</span>` : `${r.cost} BC` : "<span class='dim'>cost not listed</span>"}` : "<span class='dim'>No BB listed</span>"}${r.f[6] === 1 ? " · fills everyone to max" : fillWords(r.f, 0) ? ` · fills ${fillWords(r.f, 0)}` : ""}${
           r.f[6] === 2 ? " · refills itself" : fillWords(r.f, 1) ? ` · fills itself ${fillWords(r.f, 1)}` : ""}${!B.full && r.sparkBC ? ` · +${r.sparkBC} BC from sparks` : ""}
         ${r.cost ? B.ok(r) ? `<span class="okc">✓ every turn</span>` : `<span class="noc">needs ${r.need - r.bcIn} BC more from hits</span>` : ""}</div>
       <div class="bcd">${r.sDmg ? `${esc(r.s.kind)} ≈ <b>${short(r.sDmg)}</b>${r.aoe ? " (all foes)" : ""}` : ""}${r.uDmg ? ` · UBB ≈ <b>${short(r.uDmg)}</b>` : ""}</div></div></div>`).join("")}
@@ -2661,7 +2679,7 @@ async function renderTeam() {
   jumpBar(v, [...v.querySelectorAll(":scope > .sec")]);
   v.querySelectorAll("[data-t]").forEach(b => b.onclick = () => { if (+b.dataset.t === TCUR) return teamMenu(); TCUR = +b.dataset.t; saveTeams(); renderTeam(); });
   if ($("tnew")) $("tnew").onclick = () => {
-    const n = TEAMS.length; TEAMS[n] = Array(6).fill(null); TTYPE[n] = Array(6).fill("lord"); TSPH[n] = Array.from({ length: 6 }, () => [null, null]); TELG[n] = Array(6).fill(null); TSPE[n] = Array(6).fill(null); TOMNI[n] = Array(6).fill(0); TNAMES[n] = null;
+    const n = TEAMS.length; TEAMS[n] = Array(6).fill(null); TTYPE[n] = Array(6).fill("lord"); TSPH[n] = Array.from({ length: 6 }, () => [null, null]); TELG[n] = Array(6).fill(null); TSPE[n] = Array(6).fill(null); TOMNI[n] = Array(6).fill(0); TCAST[n] = Array(6).fill(null); TNAMES[n] = null;
     TCUR = n; saveTeams(); saveSquad(); renderTeam(); toast(`${teamName(n)} added: tap its tab to name it`);
   };
   const tabs = v.querySelector(".tabs2"); tabs.scrollLeft = tabs.querySelector(".on").offsetLeft - 40;
@@ -2673,8 +2691,8 @@ async function renderTeam() {
     go(`#/pick/${s}?role=${b.dataset.find}`);
   });
   v.querySelectorAll("[data-lead]").forEach(b => b.onclick = () => {
-    const i = +b.dataset.lead, T = TTYPE[TCUR], S = TSPH[TCUR], E = TELG[TCUR], P = TSPE[TCUR], O = TOMNI[TCUR];  // the unit keeps its type, spheres, Elgif, SP and Omni+
-    [team[0], team[i]] = [team[i], team[0]]; [T[0], T[i]] = [T[i], T[0]]; [S[0], S[i]] = [S[i], S[0]]; [E[0], E[i]] = [E[i], E[0]]; [P[0], P[i]] = [P[i], P[0]]; [O[0], O[i]] = [O[i], O[0]];
+    const i = +b.dataset.lead, T = TTYPE[TCUR], S = TSPH[TCUR], E = TELG[TCUR], P = TSPE[TCUR], O = TOMNI[TCUR], C = TCAST[TCUR];  // the unit keeps its type, spheres, Elgif, SP, Omni+ and skill
+    [team[0], team[i]] = [team[i], team[0]]; [T[0], T[i]] = [T[i], T[0]]; [S[0], S[i]] = [S[i], S[0]]; [E[0], E[i]] = [E[i], E[0]]; [P[0], P[i]] = [P[i], P[0]]; [O[0], O[i]] = [O[i], O[0]]; [C[0], C[i]] = [C[i], C[0]];
     saveTeams(); saveSquad(); renderTeam(); toast(`${UMAP[team[0]]?.n} leads the team`);
   });
   v.querySelectorAll("[data-ty]").forEach(s => s.onchange = () => { TTYPE[TCUR][+s.dataset.ty] = s.value; saveSquad(); renderTeam(); });
@@ -2682,6 +2700,12 @@ async function renderTeam() {
   v.querySelectorAll("[data-elg]").forEach(b => b.onclick = () => go(`#/elgif/${b.dataset.elg}`));
   v.querySelectorAll("[data-spe]").forEach(b => b.onclick = () => go(`#/spe/${b.dataset.spe}`));
   v.querySelectorAll("[data-om]").forEach(s => s.onchange = () => { TOMNI[TCUR][+s.dataset.om] = +s.value; saveSquad(); renderTeam(); });
+  // the battle check's skill for a unit: a chooser of the ones it has
+  v.querySelectorAll("[data-cast]").forEach(b => b.onclick = () => { const i = +b.dataset.cast, cur = b.textContent;
+    modal(`<div class="about"><div class="big">${esc(UMAP[team[i]]?.n || "")} casts…</div><div class="tlist">${b.dataset.has.split(",").map(k =>
+      `<button class="tpick ${k === cur ? "on" : ""}" data-cs="${k}"><b>${k}</b><small>${k === "UBB" ? "uses the OD gauge" : k === "SBB" ? "the default" : ""}</small></button>`).join("")}</div>
+      <div class="btnrow" style="justify-content:center"><button class="gbtn dark mclose">Cancel</button></div></div>`);
+    $("mbox").querySelectorAll("[data-cs]").forEach(x => x.onclick = () => { TCAST[TCUR][i] = x.dataset.cs; saveSquad(); $("modal").hidden = true; renderTeam(); }); });
   v.querySelectorAll("[data-opt]").forEach(b => b.onclick = () => { SQ[b.dataset.opt] = !SQ[b.dataset.opt]; saveSquad(); renderTeam(); });
   $("maxcost").onchange = e => { SQ.maxcost = e.target.value.replace(/\D/g, ""); saveSquad(); renderTeam(); };
   $("tfillel").onchange = e => { fillEl = e.target.value; store.set("bf.fillel", fillEl); };
@@ -2690,6 +2714,7 @@ async function renderTeam() {
     if (SQ.mineOnly && !mine.size) return toast("Your box is empty: open a unit you have and tap ＋ My box");
     const before = [...team], { added: n, spNeed } = autoFill(team, fillEl, await load("usrc"));
     await Promise.all(team.map(async (id, i) => { if (id && !before[i] && UMAP[id]?.r === 8) TSPE[TCUR][i] = await bestSpFor(id, omniOf(i)[1], spNeed[i], i === 0 || i === 5, TOMNI[TCUR][i] || 0); }));
+    await bestCasts(team, team.map((id, i) => id && !before[i] ? i : -1).filter(i => i >= 0));
     saveTeams(); saveSquad(); renderTeam();
     toast(n ? `Added ${n} unit${n > 1 ? "s" : ""}` : `No ${fillEl ? fillEl + " " : ""}units left to add`);
   };
@@ -2708,13 +2733,13 @@ function teamMenu() {
   $("tname").onkeydown = e => { if (e.key === "Enter") $("tsave").click(); };
   $("tcopy").onclick = () => {
     const t = TCUR, n = TEAMS.length, name = `${teamName(t)} copy`.slice(0, 24);
-    TEAMS[n] = [...TEAMS[t]]; TTYPE[n] = [...TTYPE[t]]; TSPH[n] = TSPH[t].map(x => [...x]); TELG[n] = [...TELG[t]]; TSPE[n] = TSPE[t].map(x => x && { ...x, k: [...x.k] }); TOMNI[n] = [...TOMNI[t]]; TNAMES[n] = name; TCUR = n;
+    TEAMS[n] = [...TEAMS[t]]; TTYPE[n] = [...TTYPE[t]]; TSPH[n] = TSPH[t].map(x => [...x]); TELG[n] = [...TELG[t]]; TSPE[n] = TSPE[t].map(x => x && { ...x, k: [...x.k] }); TOMNI[n] = [...TOMNI[t]]; TCAST[n] = [...TCAST[t]]; TNAMES[n] = name; TCUR = n;
     done(`Copied as ${name}`);
   };
   if ($("tdel")) $("tdel").onclick = e => {
     const b = e.currentTarget; if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = "Tap again to delete"; return; }
     const name = teamName(TCUR);
-    for (const a of [TEAMS, TTYPE, TSPH, TELG, TSPE, TOMNI, TNAMES]) a.splice(TCUR, 1);
+    for (const a of [TEAMS, TTYPE, TSPH, TELG, TSPE, TOMNI, TCAST, TNAMES]) a.splice(TCUR, 1);
     TCUR = Math.min(TCUR, TEAMS.length - 1); done(`${name} deleted`);
   };
 }
