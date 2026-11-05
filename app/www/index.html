@@ -246,6 +246,7 @@ main { padding-bottom: calc(var(--navh) + 20px); }
 .spb { margin: 0 0 10px; padding: 7px 9px; border-radius: 7px; background: rgba(0,0,0,.35); border-left: 3px solid #6fd17a; } .spb details { margin-top: 4px; } .spb summary { cursor: pointer; color: var(--accent); font-size: 12px; }
 .spo { display: flex; gap: 8px; align-items: flex-start; padding: 3px 0; } .spo.pick { background: rgba(111,209,122,.09); border-radius: 6px; padding: 3px 4px; margin: 0 -4px; }
 button.spo { width: 100%; text-align: left; background: none; border: 0; color: inherit; font: inherit; cursor: pointer; } .spo.no { opacity: .55; } .spb.pick { border-left-color: var(--accent); background: rgba(111,209,122,.12); }
+.spplus { margin-top: 6px; padding-top: 4px; border-top: 1px dashed rgba(255,255,255,.14); }
 .spbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-family: Rodin, Arial, sans-serif; text-shadow: var(--ol); } .spbar > span { flex: 1; min-width: 110px; }
 .ssp { display: flex; gap: 6px; margin-top: 6px; } .ssp .sphc { flex: 1; min-width: 0; border-color: #6fd17a; } .ssp .sphc.over { border-color: #e8a33d; } .ssp .tomni { flex: none; max-width: 46%; }
 .spo .c { flex: none; min-width: 38px; text-align: center; font-family: Rodin, Arial, sans-serif; font-size: 11.5px; padding: 1px 5px; border-radius: 6px; background: linear-gradient(#ffe38a, #c98a16); text-shadow: var(--ol); }
@@ -1349,10 +1350,11 @@ const COND_PART = /\bwhen\b|\bwhile\b|\bif\b|\bin first\b|\bafter\b|probab|\bmay
 // A sphere for some elements only ("(Light, Dark)", "200% Light, Dark elemental damage") doesn't count its element
 // parts for a unit of another element (el).
 const ELEM_WORD = /\b(?:fire|water|earth|thunder|light|dark)\b/g;
-function sphereParts(s, el) {
+function sphereParts(s, el, skip) {
   const out = { dmg: 0, bc: 0, def: 0, heal: 0, cure: 0 }, t = (s.desc || "").toLowerCase(), named = t.match(ELEM_WORD) || [];
   const other = named.length && el && !named.includes(el);
   for (const p of t.split(/,\s*|\s+&\s+/)) {
+    if (skip?.some(re => re.test(p))) continue;  // what the unit already has (sphereCtx's covered)
     if (other && ELEM_WORD.test(p)) { ELEM_WORD.lastIndex = 0; continue; }
     ELEM_WORD.lastIndex = 0;
     const got = Object.keys(SPH_PART).filter(k => SPH_PART[k].test(p)), w = COND_PART.test(p) ? 0.5 : 1;
@@ -1363,15 +1365,42 @@ function sphereParts(s, el) {
 }
 // A unit's damage and support roles on its BB/SBB/UBB/extra skill, as shares (the weights a sphere's parts get)
 const OFF_ROLES = ["atk", "bbatk", "spark", "crit", "elem", "defign", "hits"], SUP_ROLES = ["mit", "emit", "heal", "bbf", "od", "snull", "ko", "barrier", "taunt"];
-function unitFocus(id) {
-  const off = OFF_ROLES.filter(c => roleOf(id, c)).length, sup = SUP_ROLES.filter(c => roleOf(id, c)).length, all = off + sup || 1;
+function unitFocus(id, extra) {  // extra: the damage and support parts of its extra skill and SP (sphereCtx), half a role each
+  const off = OFF_ROLES.filter(c => roleOf(id, c)).length + (extra?.off || 0) / 2, sup = SUP_ROLES.filter(c => roleOf(id, c)).length + (extra?.sup || 0) / 2, all = off + sup || 1;
   return { off: off / all, sup: sup / all, label: off > sup * 1.5 ? "damage" : sup > off * 1.5 ? "support" : "damage and support" };
 }
+// What a unit already has, for its sphere suggestions: its extra skill, the SP picked for it (or its suggested build)
+// and its other sphere. What they negate makes the same part of a sphere worthless (two status nulls don't add up);
+// what it focuses on (spark, critical, elemental, BB ATK: its skills' roles and these texts) makes a sphere's matching
+// parts worth more; their damage and support parts move its damage/support balance (unitFocus's extra)
+const SPH_THEME = { spark: /spark/, crit: /critical|\bcrit\b/, elem: /elemental|elements? to attack/, bbatk: /\bbb atk/ };
+const SPH_NEG = [/negates all status|status ailments? (?:null|immun)|negates [\w, ]*status ailments/, /negates critical/, /negates elemental/];
+function sphereCtx(id, texts) {
+  const t = texts.filter(Boolean).join(", ").toLowerCase(), el = (UMAP[id]?.e || "").toLowerCase(), p = sphereParts({ desc: t }, el);
+  const plain = t.replace(/negates[^,;]*|reduction[^,;]*|resist[^,;]*/g, "");
+  return { covered: SPH_NEG.filter(re => re.test(t)), themes: Object.keys(SPH_THEME).filter(k => roleOf(id, k) || SPH_THEME[k].test(plain)),
+    extra: { off: p.dmg, sup: p.def + p.heal + p.bc } };
+}
+// the parts of a sphere about those themes (not ones for other elements, a condition or a defence)
+function sphereThemed(s, el, themes) {
+  if (!themes?.length) return 0;
+  const t = (s.desc || "").toLowerCase(), named = t.match(ELEM_WORD) || [], other = named.length && el && !named.includes(el);
+  return Math.min(2, t.split(/,\s*|\s+&\s+/).filter(x => !(other && /\b(?:fire|water|earth|thunder|light|dark)\b/.test(x)) && !COND_PART.test(x)
+    && !/negates|reduction|resist/.test(x) && themes.some(k => SPH_THEME[k].test(x))).length);
+}
+// a sphere's main effect, to mix the suggestions: damage by its theme (spark, critical, …), else BC, defence, heal, cure, stats
+function sphereMain(s, el, ctx) {
+  const p = sphereParts(s, el, ctx?.covered), k = Object.keys(p).sort((a, b) => p[b] - p[a])[0];
+  if (!p[k]) return "stats";
+  if (k !== "dmg") return k;
+  const t = (s.desc || "").toLowerCase();
+  return "dmg:" + (Object.keys(SPH_THEME).find(x => SPH_THEME[x].test(t)) || "atk");
+}
 // How well a sphere suits a unit: its parts weighted by what the unit does (BC helps everyone), its stat boosts (ATK
-// for damage, HP/DEF/REC for support; a boost for another element doesn't count), rarity, and the sphere type its
-// extra skill gives a bonus with
-function sphereFit(s, id, focus, bonusTypes) {
-  const el = (UMAP[id]?.e || "").toLowerCase(), p = sphereParts(s, el);
+// for damage, HP/DEF/REC for support; a boost for another element doesn't count), rarity, the sphere type its extra
+// skill gives a bonus with, and (ctx, sphereCtx) without what it already has, with more for what it focuses on
+function sphereFit(s, id, focus, bonusTypes, ctx) {
+  const el = (UMAP[id]?.e || "").toLowerCase(), p = sphereParts(s, el, ctx?.covered);
   let atk = 0, rest = 0;
   for (const c of statBoosts(s.desc)) if (!c.els || c.els.includes(el)) {
     const w = c.cond ? 0.5 : 1;  // "… when HP is above 50%" counts half
@@ -1379,8 +1408,8 @@ function sphereFit(s, id, focus, bonusTypes) {
     rest += w * c.pct * c.stats.filter(x => x !== "atk").length / 3;
   }
   const wDmg = 0.3 + 2.4 * focus.off, wSup = 0.3 + 2.4 * focus.sup;
-  return wDmg * (p.dmg + Math.min(atk, 200) / 75) + p.bc + wSup * (p.def + p.heal + Math.min(rest, 200) / 75) + 0.3 * p.cure + 0.4 * (s.rarity || 0)
-    + (bonusTypes.includes(s.type) ? 3 : 0);
+  return wDmg * (p.dmg + Math.min(atk, 200) / 75 + 0.35 * sphereThemed(s, el, ctx?.themes)) + p.bc + wSup * (p.def + p.heal + Math.min(rest, 200) / 75) + 0.3 * p.cure
+    + 0.4 * (s.rarity || 0) + (bonusTypes.includes(s.type) ? 3 : 0);
 }
 // the sphere types a unit's extra skill gives a bonus with (none when it has no sphere-specific bonus)
 const bonusTypes = d => d?.es_generic ? [] : (d?.es_types || []).map(t => t.type);
@@ -1395,16 +1424,16 @@ function esSpheres(id, d, w, I) {
   return Object.values(byName).map(s => s.id);
 }
 // the spheres Revived gives (or, gettable false, the ones it doesn't) that suit a unit best, without the ones already
-// shown; each pick makes another sphere of the same type a little less likely, so the list mixes types (a unit carries
-// two spheres). fits: each pick's own score.
-function bestSpheres(id, I, d, n, skip = [], gettable = true) {
-  const focus = unitFocus(id), bonus = bonusTypes(d);
-  const pool = Object.values(I).filter(s => s.type && (s.ok === 1) === gettable && !skip.includes(s.id)).map(s => [s, sphereFit(s, id, focus, bonus)]), list = [], fits = [];
+// shown; each pick makes another sphere of the same type, or with the same main effect, less likely, so the list mixes
+// (a unit carries two spheres). ctx: what it already has (sphereCtx). fits: each pick's own score.
+function bestSpheres(id, I, d, n, skip = [], gettable = true, ctx = null) {
+  const focus = unitFocus(id, ctx?.extra), bonus = bonusTypes(d), el = (UMAP[id]?.e || "").toLowerCase();
+  const pool = Object.values(I).filter(s => s.type && (s.ok === 1) === gettable && !skip.includes(s.id)).map(s => [s, sphereFit(s, id, focus, bonus, ctx), sphereMain(s, el, ctx)]), list = [], fits = [], mains = [];
   while (list.length < n && pool.length) {
-    const score = ([s, f]) => f - 1.5 * list.filter(x => x.type === s.type).length;
+    const score = ([s, f, m]) => f - 2.5 * list.filter(x => x.type === s.type).length - 1.25 * mains.filter(x => x === m).length;
     let k = 0;
     pool.forEach((x, i) => { const a = score(x), b = score(pool[k]); if (a > b || a === b && x[0].name < pool[k][0].name) k = i; });
-    const [s, f] = pool.splice(k, 1)[0]; list.push(s); fits.push(f);
+    const [s, f, m] = pool.splice(k, 1)[0]; list.push(s); fits.push(f); mains.push(m);
   }
   return { list, fits, focus, bonus };
 }
@@ -1428,11 +1457,48 @@ function buildKeys(b, sp) {
   }
   return keys;
 }
-// a unit's SP options with how much each suits what it does (v) and the option it needs first (parent)
-function spOptions(id, sp) {
+// a players' build's notes, the options they add at a higher Omni+ ("At OE+3 with one Omni Emperor fused, you can take
+// the following option(s): • ... (20 SP)"): [{lv: OMNI_PLUS index (OE+1 1, +2 2, +3 3, +3 with 1 or 2 Omni Emperors 4,
+// 5), n: how many of them ("one of" 1, "two of" 2, else all), keys, alt: an alternative ("Alternatively", "instead")}]
+const BP_HEAD = /\b(?:at|if|upon|with|for)\b[^.\n]*?\boe\s*\+\s*([123])(?:[^.\n]*?\bwith (one|two|[12])\b(?: or \w+)? (?:omni )?emperors?)?/i;
+function buildPlus(b, sp) {
+  const out = [], lines = String(b.notes || "").split(/\r?\n/);
+  for (let i = 0; i < lines.length; i++) {
+    const m = lines[i].match(BP_HEAD);
+    if (!m) continue;
+    const bullets = [];
+    for (let j = i + 1; j < lines.length && /^\s*[•\-*]/.test(lines[j]); j++) bullets.push(lines[j].replace(/^\s*[•\-*]\s*/, "").replace(/\s*\((?:\d+\s*SP|SP\s*\d+)\)\s*$/i, ""));
+    const keys = bullets.map(x => [...buildKeys({ picks: [[0, x]] }, sp)][0]).filter(Boolean);
+    if (!keys.length) continue;
+    const head = lines[i].toLowerCase(), base = +m[1];
+    out.push({ lv: base + (base === 3 && m[2] ? ({ one: 1, two: 2, 1: 1, 2: 2 })[m[2].toLowerCase()] : 0), keys,
+      n: /\b(?:either )?one of\b/.test(head) ? 1 : /\btwo of\b/.test(head) ? 2 : keys.length, alt: /alternativ|instead/.test(head) });
+  }
+  return out;
+}
+// a build at Omni+ level lv within cap SP: its own picks, then what its notes add up to that level, in order, each with
+// the option it needs first, while they fit (by: key -> spOptions' option)
+function buildAt(b, sp, base, lv, cap, by) {
+  const out = new Set(base), added = [], cost = () => [...out].reduce((a, k) => a + (by[k]?.cost || 0), 0);
+  for (const x of buildPlus(b, sp).filter(y => !y.alt && y.lv <= lv).sort((a, c) => a.lv - c.lv)) {
+    let took = 0;
+    for (const k of x.keys) {
+      if (took >= x.n) break;
+      if (out.has(k)) { took++; continue; }
+      const need = []; for (let o = by[k]; o && !out.has(o.key); o = o.parent) need.push(o.key);
+      if (cost() + need.reduce((a, y) => a + (by[y]?.cost || 0), 0) <= cap) { need.forEach(y => { out.add(y); added.push(y); }); took++; }
+    }
+  }
+  return { keys: out, added };
+}
+// an SP option for the leader skill: it only works when the unit is the Leader or the Friend
+const LS_OPT = /\bto ls\b|\bls's\b|^add to ls\b|\(ls\)|leader skill/i;
+// a unit's SP options with how much each suits what it does (v; nothing for a leader skill one unless leaderToo) and
+// the option it needs first (parent)
+function spOptions(id, sp, leaderToo = false) {
   const focus = unitFocus(id), norm = t => (t || "").toLowerCase().replace(/[^a-z0-9%]+/g, " ").trim();
-  const opts = sp.flatMap((c, ci) => c.opts.map((o, oi) => ({ key: `${ci}:${oi}`, cost: o.sp || 0, o, cat: c.cat,
-    v: Math.max(0, sphereFit({ desc: `${o.desc}, ${o.note || ""}`, rarity: 0, type: "" }, id, focus, [])) })));
+  const opts = sp.flatMap((c, ci) => c.opts.map((o, oi) => ({ key: `${ci}:${oi}`, cost: o.sp || 0, o, cat: c.cat, ls: LS_OPT.test(o.desc || ""),
+    v: LS_OPT.test(o.desc || "") && !leaderToo ? 0 : Math.max(0, sphereFit({ desc: `${o.desc}, ${o.note || ""}`, rarity: 0, type: "" }, id, focus, [])) })));
   for (const x of opts) {
     const m = (x.o.note || "").match(/prerequisites?:\s*unlock\s*"([^"]+)"/i), want = m && norm(m[1]);
     x.parent = want ? opts.find(y => y !== x && (norm(y.o.desc) === want || norm(y.o.desc).startsWith(want) || want.startsWith(norm(y.o.desc)))) || null : null;
@@ -1440,8 +1506,8 @@ function spOptions(id, sp) {
   for (const x of opts) { let p = x.parent; for (let i = 0; p && i < 30; i++, p = p.parent) if (p === x) { x.parent = null; break; } }  // no loops
   return { opts, focus };
 }
-function spPicks(id, sp, budget = SP_BUDGET, force = new Set()) {
-  const { opts, focus } = spOptions(id, sp), val = x => x.v + (force.has(x.key) ? 1000 : 0);  // an option Fill needs comes first
+function spPicks(id, sp, budget = SP_BUDGET, force = new Set(), leaderToo = false) {
+  const { opts, focus } = spOptions(id, sp, leaderToo), val = x => x.v + (force.has(x.key) ? 1000 : 0);  // an option Fill needs comes first
   // best value per SP spent: picks merged so that a sum of costs stays within the budget
   const merge = (A, B) => { const out = new Map(A);
     for (const [c1, a] of A) for (const [c2, b] of B) { const c = c1 + c2; if (c <= budget && (!out.has(c) || out.get(c).v < a.v + b.v)) out.set(c, { v: a.v + b.v, keys: [...a.keys, ...b.keys] }); }
@@ -1561,12 +1627,16 @@ async function showUnit(id) {
   let spheres = "";
   if (TAGS.units[id]) {
     const own = esSpheres(id, d, w, I).map(i => I[i]);
+    // what it already has: its extra skill and its suggested SP build (the players' first, else the app's pick)
+    const spK = !w.sp?.length ? [] : [...((w.builds || []).length ? buildKeys(w.builds[0], w.sp) : spPicks(id, w.sp).keys)];
+    const ctx = sphereCtx(id, [d.extra || (w.skills || []).find(s => s.kind === "Extra Skill")?.desc,
+      ...spK.map(k => { const [c, o] = k.split(":").map(Number), x = w.sp[c]?.opts?.[o]; return x && `${x.desc}, ${x.note || ""}`; })]);
     if (own.length) spheres += `<p class="dim small" style="margin:0 0 8px">These switch on the unit's extra skill:</p>` + own.map(sphereCard).join("");
-    const B = bestSpheres(id, I, d, 5, own.map(s => s.id));
-    if (B.list.length) spheres += `<p class="dim small" style="margin:${own.length ? 8 : 0}px 0 8px">${own.length ? "Also suggested" : "Suggested"} for what it does (${B.focus.label}), from the spheres Revived gives${
+    const B = bestSpheres(id, I, d, 8, own.map(s => s.id), true, ctx);
+    if (B.list.length) spheres += `<p class="dim small" style="margin:${own.length ? 8 : 0}px 0 8px">${own.length ? "Also suggested" : "Suggested"} for what it does (${B.focus.label}), from the spheres Revived gives, with its extra skill${spK.length ? " and SP build" : ""} in mind${
       B.bonus.length ? `, counting its extra skill's bonus with <b>${B.bonus.map(esc).join(", ")}</b> spheres` : ""}:</p>` + B.list.map(sphereCard).join("");
     // spheres Revived doesn't give now that would suit it better than any it does: worth knowing if they come back
-    const top = B.fits.length ? Math.max(...B.fits) : 0, N = bestSpheres(id, I, d, 3, own.map(s => s.id), false);
+    const top = B.fits.length ? Math.max(...B.fits) : 0, N = bestSpheres(id, I, d, 3, own.map(s => s.id), false, ctx);
     const missing = N.list.filter((s, k) => N.fits[k] > top);
     if (missing.length) spheres += `<p class="dim small" style="margin:8px 0">Not in Revived right now, but even better for it:</p>` + missing.map(sphereCard).join("");
     if (d.es_partners?.length) spheres = `<p class="dim small" style="margin:0 0 8px">Extra skill bonus with <b>${d.es_partners.map(esc).join(", ")}</b> in the squad.</p>` + spheres;
@@ -1580,8 +1650,10 @@ async function showUnit(id) {
         k === 0 && spPick.keys.size ? ` <span class="dim">(ticked below)</span>` : ""}</div>
       <div class="dim small" style="margin:1px 0 4px">${b.by ? `by ${esc(b.by)}` : "From players"}${b.date ? `, ${esc(b.date)}` : ""}, on the Brave Frontier Wiki</div>
       ${b.picks.map(([c, t]) => `<div class="spo"><span class="c">${c} SP</span><div>${esc(t)}</div></div>`).join("")}
+      ${buildPlus(b, w.sp).filter(y => !y.alt).map(y => `<div class="spplus"><div class="dim small">At ${esc(OMNI_PLUS[y.lv][0])}${y.n < y.keys.length ? ` (${y.n === 1 ? "one" : "two"} of these)` : ""}, from its notes:</div>${y.keys.map(kk => {
+        const [ci, oi] = kk.split(":").map(Number), o = w.sp[ci]?.opts?.[oi]; return o ? `<div class="spo"><span class="c">${o.sp} SP</span><div>${esc(o.desc)}</div></div>` : ""; }).join("")}</div>`).join("")}
       ${b.notes ? `<details><summary>Notes</summary><div class="lore small">${esc(b.notes)}</div></details>` : ""}</div>`).join("")
-      : spPick?.keys.size ? `<p class="small" style="margin:0 0 8px">Suggested for what it does (${spPick.focus.label}): the <b class="okc">✓</b> ones, <b>${spPick.spent}</b> of its ${SP_BUDGET} SP, prerequisites included. The wiki has no build for it; picked from its SP options, an estimate.</p>` : "")
+      : spPick?.keys.size ? `<p class="small" style="margin:0 0 8px">Suggested for what it does (${spPick.focus.label}): the <b class="okc">✓</b> ones, <b>${spPick.spent}</b> of its ${SP_BUDGET} SP, prerequisites included. The wiki has no build for it; picked from its SP options, an estimate${w.sp.some(c => c.opts.some(o => LS_OPT.test(o.desc || ""))) ? ". Leader skill options left out: they only work when it leads" : ""}.</p>` : "")
     + w.sp.map((c, ci) => `<div class="sp"><div class="cat">${esc(c.cat)}</div>${c.opts.map((o, oi) => { const on = spPick?.keys.has(`${ci}:${oi}`);
       return `<div class="spo${on ? " pick" : ""}"><span class="c">${o.sp} SP</span><div>${on ? `<b class="okc">✓</b> ` : ""}${esc(o.desc)}${o.note ? `<div class="dim small">${esc(o.note)}</div>` : ""}</div></div>`; }).join("")}</div>`).join("") : "";
   const quotes = [["Summon", w.summon], ["Fusion", w.fusion], ["Evolution", w.evolution]].filter(q => q[1]);
@@ -2617,7 +2689,7 @@ async function renderTeam() {
     if (!team.includes(null)) return toast("No empty slots");
     if (SQ.mineOnly && !mine.size) return toast("Your box is empty: open a unit you have and tap ＋ My box");
     const before = [...team], { added: n, spNeed } = autoFill(team, fillEl, await load("usrc"));
-    await Promise.all(team.map(async (id, i) => { if (id && !before[i] && UMAP[id]?.r === 8) TSPE[TCUR][i] = await bestSpFor(id, omniOf(i)[1], spNeed[i], i === 0 || i === 5); }));
+    await Promise.all(team.map(async (id, i) => { if (id && !before[i] && UMAP[id]?.r === 8) TSPE[TCUR][i] = await bestSpFor(id, omniOf(i)[1], spNeed[i], i === 0 || i === 5, TOMNI[TCUR][i] || 0); }));
     saveTeams(); saveSquad(); renderTeam();
     toast(n ? `Added ${n} unit${n > 1 ? "s" : ""}` : `No ${fillEl ? fillEl + " " : ""}units left to add`);
   };
@@ -2719,11 +2791,15 @@ async function showSpherePick(slot, n) {
   if (!u) return go("#/team");
   setTitle(`Sphere ${n + 1} · ${u.n}`, true); $("share").hidden = true;
   // how well each sphere suits this unit (as on its page: what it does, its stat boosts, its extra skill's sphere type)
-  const focus = unitFocus(id), bonus = bonusTypes(D[id]), fit = new Map();
-  const gain = s => { if (!fit.has(s.id)) fit.set(s.id, sphereFit(s, id, focus, bonus)); return fit.get(s.id); };
-  const best = esSpheres(id, D[id], w, I);
   // a unit can't hold two spheres of one Sphere Type (GitHub issue 3): the other slot's type is greyed out here
   const other = I[TSPH[TCUR][slot][1 - n]], clash = s => !!(other?.type && s.type === other.type);
+  // with what it already has: its extra skill, the SP picked for it, its other sphere (sphereCtx)
+  const ctx = sphereCtx(id, [D[id]?.extra || (w?.skills || []).find(s => s.kind === "Extra Skill")?.desc, other?.desc,
+    ...(TSPE[TCUR][slot]?.k || []).map(k => { const [c, o] = k.split(":").map(Number), x = w?.sp?.[c]?.opts?.[o]; return x && `${x.desc}, ${x.note || ""}`; })]);
+  const focus = unitFocus(id, ctx.extra), bonus = bonusTypes(D[id]), fit = new Map();
+  const gain = s => { if (!fit.has(s.id)) fit.set(s.id, sphereFit(s, id, focus, bonus, ctx)); return fit.get(s.id); };
+  const best = esSpheres(id, D[id], w, I);
+
   // its extra skill: already switched on by the other sphere (one it names, or one of the type it names)? Else the
   // ones that switch it on and can go with the other sphere
   const esOn = !!other && (best.includes(other.id) || bonusTypes(D[id]).includes(other.type)), bestOk = best.filter(x => !clash(I[x]));
@@ -2745,7 +2821,7 @@ async function showSpherePick(slot, n) {
     const q = sphQ.trim().toLowerCase();
     const list = Object.values(I).filter(s => s.type && s.name && (!q || s.name.toLowerCase().includes(q) || s.desc.toLowerCase().includes(q)))
       .map(s => [s, gain(s)]).sort((a, b) => clash(a[0]) - clash(b[0]) || b[1] - a[1] || (b[0].rarity || 0) - (a[0].rarity || 0) || a[0].name.localeCompare(b[0].name)).map(x => x[0]);
-    $("spcount").textContent = `${list.length} spheres, the best for what it does (${focus.label}) first${
+    $("spcount").textContent = `${list.length} spheres, the best for what it does (${focus.label}) first, with its extra skill, SP and other sphere in mind${
       other?.type ? `. ${other.type} spheres are greyed out at the end: it already holds ${other.name}` : ""}`;
     paged($("splist"), list, s => { const d = document.createElement("div"); d.innerHTML = row(s); return d.firstElementChild; }, "");
   };
@@ -2795,8 +2871,10 @@ async function showSpPick(slot) {
   if (nav !== NAV) return;  // left the page while it loaded
   if (!u || !w?.sp?.length) return go("#/team");
   setTitle(`SP · ${u.n}`, true); $("share").hidden = true;
-  const { opts, focus } = spOptions(id, w.sp), byKey = Object.fromEntries(opts.map(o => [o.key, o]));
+  const lead = slot === 0 || slot === 5;  // the Leader or the Friend: its leader skill counts
+  const { opts, focus } = spOptions(id, w.sp, lead), byKey = Object.fromEntries(opts.map(o => [o.key, o]));
   const builds = (w.builds || []).map((b, n) => ({ b, name: b.name || `Build ${n + 1}`, k: buildKeys(b, w.sp) })).filter(x => x.k.size);
+  const lv = () => TOMNI[TCUR][slot] || 0, at = x => buildAt(x.b, w.sp, x.k, lv(), cap(), byKey);  // with what its notes add at this Omni+
   let cur = new Set((TSPE[TCUR][slot]?.k || []).filter(k => byKey[k])), from = TSPE[TCUR][slot]?.b ?? null;
   const cap = () => omniOf(slot)[1], cost = keys => [...keys].reduce((a, k) => a + (byKey[k]?.cost || 0), 0);
   const save = () => { TSPE[TCUR][slot] = cur.size ? { k: [...cur], b: from } : null; saveSquad(); };
@@ -2818,21 +2896,26 @@ async function showSpPick(slot) {
     $("page").innerHTML = `<div id="sppage"><div class="bar2"><div class="spbar"><span><b>${used}</b> of <b>${cap()}</b> SP${left < 0 ? ` <span class="noc">${-left} too many</span>` : ""}</span>
         <select class="gsel" id="spomni" aria-label="Omni+ level">${OMNI_PLUS.map(([n, c], k) => `<option value="${k}" ${k === (TOMNI[TCUR][slot] || 0) ? "selected" : ""}>${n} (${c} SP)</option>`).join("")}</select>
         <button class="gbtn small dark" id="spclear" ${cur.size ? "" : "disabled"}>Clear</button></div></div>
-      ${builds.length ? `<div class="sec"><h3 class="blue">Suggested builds</h3>${builds.map(({ b, name, k }, n) => { const c = cost(k), on = from === name && same(k);
-        return `<div class="spb${on ? " pick" : ""}"><div class="bcl"><b>${esc(name)}</b> · ${c} SP${b.by ? ` <span class="dim small">by ${esc(b.by)}</span>` : ""}</div>
+      ${builds.length ? `<div class="sec"><h3 class="blue">Suggested builds</h3>${builds.map((x, n) => { const { b, name, k } = x, A = at(x), c = cost(k), ca = cost(A.keys), on = from === name && same(A.keys);
+        const plus = buildPlus(b, w.sp).filter(y => !y.alt);
+        return `<div class="spb${on ? " pick" : ""}"><div class="bcl"><b>${esc(name)}</b> · ${c} SP${A.added.length ? ` <span class="okc">+${ca - c} at ${esc(OMNI_PLUS[lv()][0])}</span>` : ""}${b.by ? ` <span class="dim small">by ${esc(b.by)}</span>` : ""}</div>
           ${b.picks.map(([sp, txt]) => `<div class="spo"><span class="c">${sp} SP</span><div>${esc(txt)}</div></div>`).join("")}
-          <div class="btnrow" style="margin-top:6px"><button class="gbtn small ${on ? "dark" : "green"}" data-build="${n}" ${on || c > cap() ? "disabled" : ""}>${on ? "✓ In use" : c > cap() ? `Needs ${c} SP: raise its Omni+` : "Use this build"}</button></div></div>`; }).join("")}
-        <p class="dim small" style="margin:0">From players, on the Brave Frontier Wiki.</p></div>` : ""}
-      <div class="sec"><h3 class="green">The app's pick</h3><p class="small" style="margin:0 0 6px">The options that suit what it does (${esc(focus.label)}) best, within ${cap()} SP.</p>
+          ${plus.map(y => `<div class="spplus"><div class="dim small">At ${esc(OMNI_PLUS[y.lv][0])}${y.n < y.keys.length ? ` (${y.n === 1 ? "one" : "two"} of these)` : ""}, from its notes:</div>${y.keys.map(kk => { const o = byKey[kk], inn = A.keys.has(kk) && !k.has(kk);
+            return o ? `<div class="spo"><span class="c">${o.cost} SP</span><div>${inn ? `<b class="okc">✓</b> ` : ""}${esc(o.o.desc)}</div></div>` : ""; }).join("")}</div>`).join("")}
+          ${!lead && [...k].some(kk => byKey[kk]?.ls) ? `<div class="dim small" style="margin-top:4px">Takes leader skill options: they only work as the Leader or the Friend</div>` : ""}
+          ${b.notes ? `<details><summary>Notes</summary><div class="lore small">${esc(b.notes)}</div></details>` : ""}
+          <div class="btnrow" style="margin-top:6px"><button class="gbtn small ${on ? "dark" : "green"}" data-build="${n}" ${on || c > cap() ? "disabled" : ""}>${on ? "✓ In use" : c > cap() ? `Needs ${c} SP: raise its Omni+` : `Use this build${A.added.length ? ` (with ${A.added.length} from its notes)` : ""}`}</button></div></div>`; }).join("")}
+        <p class="dim small" style="margin:0">From players, on the Brave Frontier Wiki. At a higher Omni+, the options a build's notes suggest for it come along when they fit.</p></div>` : ""}
+      <div class="sec"><h3 class="green">The app's pick</h3><p class="small" style="margin:0 0 6px">The options that suit what it does (${esc(focus.label)}) best, within ${cap()} SP${!lead && opts.some(o => o.ls) ? ". Leader skill ones left out: it isn't the Leader or the Friend" : ""}.</p>
         <button class="gbtn small ${from === "app" ? "dark" : "green"}" id="spapp" ${from === "app" ? "disabled" : ""}>${from === "app" ? "✓ In use" : "Use the app's pick"}</button></div>
       <div class="sec"><h3>Or choose them yourself</h3>${w.sp.map((c, ci) => `<div class="sp"><div class="cat">${esc(c.cat)}</div>${c.opts.map((o, oi) => {
         const k = `${ci}:${oi}`, x = byKey[k], on = cur.has(k), need = chain(x).filter(y => !cur.has(y.key)).reduce((a, y) => a + y.cost, 0), no = !on && need > left;
         return `<button class="spo spt${on ? " pick" : ""}${no ? " no" : ""}" data-k="${k}"><span class="c">${o.sp} SP</span><div>${on ? `<b class="okc">✓</b> ` : ""}${esc(o.desc)}${
-          o.note ? `<div class="dim small">${esc(o.note)}</div>` : ""}${!on && x.parent && !cur.has(x.parent.key) ? `<div class="dim small">Takes “${esc(x.parent.o.desc)}” along</div>` : ""}${
+          o.note ? `<div class="dim small">${esc(o.note)}</div>` : ""}${x.ls && !lead ? `<div class="dim small">For the leader skill: only works as the Leader or the Friend</div>` : ""}${!on && x.parent && !cur.has(x.parent.key) ? `<div class="dim small">Takes “${esc(x.parent.o.desc)}” along</div>` : ""}${
           no ? `<div class="noc small">Needs ${need} SP, ${Math.max(0, left)} left</div>` : ""}</div></button>`; }).join("")}</div>`).join("")}</div></div>`;
     $("sppage").querySelectorAll("[data-k]").forEach(b => b.onclick = () => toggle(b.dataset.k));
-    $("sppage").querySelectorAll("[data-build]").forEach(b => b.onclick = () => { const x = builds[+b.dataset.build]; use(x.k, x.name); });
-    $("spapp").onclick = () => use(spPicks(id, w.sp, cap()).keys, "app");
+    $("sppage").querySelectorAll("[data-build]").forEach(b => b.onclick = () => { const x = builds[+b.dataset.build]; use(at(x).keys, x.name); });
+    $("spapp").onclick = () => use(spPicks(id, w.sp, cap(), new Set(), lead).keys, "app");
     $("spclear").onclick = () => { cur.clear(); from = null; save(); draw(); };
     $("spomni").onchange = e => { TOMNI[TCUR][slot] = +e.target.value; saveSquad(); draw(); };
   };
@@ -2840,17 +2923,19 @@ async function showSpPick(slot) {
   draw();
 }
 // Fill's SP for a unit it adds: the players' build that suits what it does best (its options' worth, as the app's pick
-// weighs them) within its SP, with the roles Fill picked it for (need); without one, the app's pick with them
-async function bestSpFor(id, budget, need = [], leaderToo = false) {
+// weighs them; a leader skill option counts only for the Leader and the Friend) within its SP, with what its notes add
+// at its Omni+ (lv) and the roles Fill picked it for (need); without one, the app's pick with them
+async function bestSpFor(id, budget, need = [], leaderToo = false, lv = 0) {
   const w = await wiki(id);
   if (!w?.sp?.length) return null;
-  const { opts } = spOptions(id, w.sp), by = Object.fromEntries(opts.map(o => [o.key, o]));
+  const { opts } = spOptions(id, w.sp, leaderToo), by = Object.fromEntries(opts.map(o => [o.key, o]));
   const sum = (keys, f) => [...keys].reduce((a, k) => a + (by[k]?.[f] || 0), 0);
   const has = keys => { const r = spRolesOf(id, [...keys], leaderToo); return need.every(c => r.has(c)); };
-  const fits = (w.builds || []).map((b, n) => ({ name: b.name || `Build ${n + 1}`, k: buildKeys(b, w.sp) })).filter(x => x.k.size && sum(x.k, "cost") <= budget && has(x.k));
+  const fits = (w.builds || []).map((b, n) => ({ name: b.name || `Build ${n + 1}`, k: buildKeys(b, w.sp), b })).filter(x => x.k.size && sum(x.k, "cost") <= budget)
+    .map(x => ({ ...x, k: buildAt(x.b, w.sp, x.k, lv, budget, by).keys })).filter(x => has(x.k));
   if (fits.length) { const best = fits.reduce((a, x) => sum(x.k, "v") > sum(a.k, "v") + 1e-9 ? x : a); return { k: [...best.k], b: best.name }; }
   const cheapest = c => Object.entries(spRoleOpts(id)).filter(([k, x]) => by[k] && spFor(x, leaderToo) && x[2].split(" ").includes(c)).sort((a, b) => a[1][0] - b[1][0])[0]?.[0];
-  const p = spPicks(id, w.sp, budget, new Set(need.map(cheapest).filter(Boolean)));
+  const p = spPicks(id, w.sp, budget, new Set(need.map(cheapest).filter(Boolean)), leaderToo);
   return p.keys.size ? { k: [...p.keys], b: "app" } : null;
 }
 
