@@ -194,7 +194,7 @@ main { padding-bottom: calc(var(--navh) + 20px); }
 .sca { display: flex; justify-content: flex-end; gap: 6px; margin-top: 6px; }
 .bcrow { display: flex; gap: 8px; align-items: center; padding: 6px 0; border-top: 1px solid rgba(255,255,255,.07); } .bcrow img { width: 40px; height: 40px; flex: none; cursor: pointer; }
 .bcl { font-size: 12.5px; } .bcast { font: inherit; font-family: Rodin, Arial, sans-serif; font-size: 12px; padding: 1px 6px; border-radius: 6px; background: #1d2440; color: var(--accent); border: 1px solid rgba(255,255,255,.25); text-shadow: var(--ol); cursor: pointer; } .bcast::after { content: " ▾"; color: var(--dim); } .bcl b { font-family: Rodin, Arial, sans-serif; text-shadow: var(--ol); } .bcd { font-size: 12px; color: var(--dim); } .bcd b { color: var(--accent); font-weight: normal; font-family: Rodin, Arial, sans-serif; }
-.okc { color: #7ad67a; } .noc { color: #ff8a7a; } .bcl .okc, .bcl .noc { margin-left: 4px; font-size: 11px; }
+.okc { color: #7ad67a; } .noc { color: #ff8a7a; } .bcl .okc, .bcl .noc { margin-left: 4px; font-size: 11px; white-space: nowrap; }
 .spark { margin-top: 8px; padding: 7px 9px; border-radius: 7px; background: rgba(0,0,0,.35); border-left: 3px solid #f2c94c; }
 .spark .bcl b { color: var(--accent); }
 .bctip { margin-top: 8px; padding: 7px 9px; border-radius: 7px; background: rgba(0,0,0,.35); border-left: 3px solid #6fd17a; } .sorder { margin: 5px 0 0; padding-left: 22px; font-size: 12.5px; } .sorder li { margin: 2px 0; }
@@ -384,7 +384,7 @@ select.gsel { height: 38px; font-size: 12.5px; padding: 0 10px; }
 /* ＋ Team: which team */
 .tlist { display: grid; gap: 8px; margin: 10px 0; text-align: left; }
 .tpick { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 10px; border-radius: 10px; border: 2px solid var(--gold2); background: linear-gradient(#1c2340, #0b1024); }
-.tpick.on { border-color: var(--accent); } .tpick:disabled { opacity: .45; }
+.tpick.on { border-color: var(--accent); } .tpick.cpick { text-align: left; } .tpick.cpick b { flex: none; width: 46px; font-size: 15px; } .tpick.cpick span { flex: 1; min-width: 0; font-size: 12px; color: #ece6d6; } .tpick.cpick em { display: block; font-style: normal; font-size: 11px; color: var(--dim); } .tpick.cpick i { flex: none; font-style: normal; font-size: 16px; } .tpick:disabled { opacity: .45; }
 .tpick b { flex: 1; min-width: 0; font-family: Rodin, Arial, sans-serif; font-weight: normal; font-size: 13.5px; text-shadow: var(--ol); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tpick small { flex: none; font-size: 11px; color: var(--dim); } .tpick .ti { display: flex; flex: none; } .tpick .ti img, .tpick .ti i { width: 24px; height: 24px; margin-left: -4px; border-radius: 50%; }
 .tpick .ti i { display: inline-block; border: 1px dashed rgba(255,255,255,.35); }
@@ -2538,7 +2538,9 @@ function battleCheck(team, W, NUMS, D) {
     const dmg = sk => sk ? Math.round(atk * (mod(sk) + spMod(sk)) / 100 * (1 + bbAtk / 100)) : 0;
     const es = SQ.es && unconditional((W[i]?.skills || []).find(x => x.kind === "Extra Skill"));
     const sbb = s?.kind === "SBB";
-    return { i, id, s, has, chosen, cost: cost(s), f: fills(s), bbCost: sbb ? cost(bb) : 0, bf: sbb && bb ? fills(bb) : null, sDmg: dmg(s), uDmg: s?.kind === "UBB" ? 0 : dmg(u), aoe: s?.aoe === "A",
+    const info = has.map(k => { const sk = skill(i, k), f = fills(sk), w = f[6] === 1 ? "fills everyone to max" : fillWords(f, 0) ? `fills ${fillWords(f, 0)}` : f[6] === 2 ? "refills itself" : "";
+      return [k, k === "UBB" ? "uses the OD gauge" : cost(sk) ? `${cost(sk)} BC` : "BC cost not listed", w]; });
+    return { i, id, s, has, info, chosen, cost: cost(s), f: fills(s), bbCost: sbb ? cost(bb) : 0, bf: sbb && bb ? fills(bb) : null, sDmg: dmg(s), uDmg: s?.kind === "UBB" ? 0 : dmg(u), aoe: s?.aoe === "A",
       esSpark: Math.max(...sparkFill(es)), esSparkAll: forAll(es, SPARK_TOPIC), esTurn: turnFill(es), esTurnAll: forAll(es, TURN_TOPIC),
       esCut: costCut(es), esCutAll: forAll(es, CUT_TOPIC) };
   }).filter(Boolean);
@@ -2588,7 +2590,7 @@ function battleHtml(B) {
       : [B.teamFill ? `<b>${B.teamFill} BC</b> for everyone` : "", B.sparkBC ? "BC from sparks" : ""].filter(Boolean).join(", plus ") || "<b>no BC</b>"}:
       <b class="${B.can === B.known ? "okc" : "noc"}">${B.can} of ${B.known}</b> can cast ${B.rows.some(r => r.chosen) ? "it" : "SBB"} again with that alone. Hits and crystals give more BC on top.</p>
     ${B.rows.map(r => `<div class="bcrow"><img src="${uImg(r.id)}" alt="" data-u="${r.id}"><div>
-      <div class="bcl">${r.s ? `${r.has.length > 1 ? `<button class="bcast" data-cast="${r.i}" data-has="${r.has.join(",")}" aria-label="${esc(r.s.kind)}: choose the skill it casts">${esc(r.s.kind)}</button>`
+      <div class="bcl">${r.s ? `${r.has.length > 1 ? `<button class="bcast" data-cast="${r.i}" data-info="${esc(JSON.stringify(r.info))}" aria-label="${esc(r.s.kind)}: choose the skill it casts">${esc(r.s.kind)}</button>`
         : `<b>${esc(r.s.kind)}</b>`} ${r.s.kind === "UBB" ? "<span class='dim'>uses the OD gauge</span>" : r.cost ? r.cut ? `${r.need} BC <span class="dim">(${r.cost} −${r.cut}%)</span>` : `${r.cost} BC` : "<span class='dim'>cost not listed</span>"}` : "<span class='dim'>No BB listed</span>"}${r.f[6] === 1 ? " · fills everyone to max" : fillWords(r.f, 0) ? ` · fills ${fillWords(r.f, 0)}` : ""}${
           r.f[6] === 2 ? " · refills itself" : fillWords(r.f, 1) ? ` · fills itself ${fillWords(r.f, 1)}` : ""}${!B.full && r.sparkBC ? ` · +${r.sparkBC} BC from sparks` : ""}
         ${r.cost ? B.ok(r) ? `<span class="okc">✓ every turn</span>` : `<span class="noc">needs ${r.need - r.bcIn} BC more from hits</span>` : ""}</div>
@@ -2702,8 +2704,8 @@ async function renderTeam() {
   v.querySelectorAll("[data-om]").forEach(s => s.onchange = () => { TOMNI[TCUR][+s.dataset.om] = +s.value; saveSquad(); renderTeam(); });
   // the battle check's skill for a unit: a chooser of the ones it has
   v.querySelectorAll("[data-cast]").forEach(b => b.onclick = () => { const i = +b.dataset.cast, cur = b.textContent;
-    modal(`<div class="about"><div class="big">${esc(UMAP[team[i]]?.n || "")} casts…</div><div class="tlist">${b.dataset.has.split(",").map(k =>
-      `<button class="tpick ${k === cur ? "on" : ""}" data-cs="${k}"><b>${k}</b><small>${k === "UBB" ? "uses the OD gauge" : k === "SBB" ? "the default" : ""}</small></button>`).join("")}</div>
+    modal(`<div class="about"><div class="big">${esc(UMAP[team[i]]?.n || "")} casts…</div><div class="tlist">${JSON.parse(b.dataset.info).map(([k, c, f]) =>
+      `<button class="tpick cpick ${k === cur ? "on" : ""}" data-cs="${k}"><b>${k}</b><span>${esc(c)}${f ? ` · ${esc(f)}` : ""}${k === "SBB" ? `<em>the default</em>` : ""}</span>${k === cur ? `<i class="okc">✓</i>` : ""}</button>`).join("")}</div>
       <div class="btnrow" style="justify-content:center"><button class="gbtn dark mclose">Cancel</button></div></div>`);
     $("mbox").querySelectorAll("[data-cs]").forEach(x => x.onclick = () => { TCAST[TCUR][i] = x.dataset.cs; saveSquad(); $("modal").hidden = true; renderTeam(); }); });
   v.querySelectorAll("[data-opt]").forEach(b => b.onclick = () => { SQ[b.dataset.opt] = !SQ[b.dataset.opt]; saveSquad(); renderTeam(); });
