@@ -684,7 +684,7 @@ const spRolesOf = (id, keys, leaderToo) => new Set((keys || []).flatMap(k => { c
 const spPowerOf = (id, keys, c) => (keys || []).reduce((b, k) => { const x = spRoleOpts(id)[k], v = spFor(x, true) && x[3]?.[c]; return v && (!b || v > b[0]) ? [v, "SP"] : b; }, null);
 // the roles a unit's SP options can add that its skills don't give: {code: the least SP for it}
 function spAdds(id, leaderToo, now) {
-  const out = {}, has = c => now ? [...(TAGS.units[id]?.[c] || "")].some(l => now.includes(l)) : roleOf(id, c, leaderToo);
+  const out = {}, has = c => now ? teamLetters(id, c).some(l => now.includes(l)) : roleOf(id, c, leaderToo);
   for (const x of Object.values(spRoleOpts(id))) if (spFor(x, leaderToo) && (!now || onSkill(x, now))) for (const c of x[2].split(" ").filter(Boolean))
     if (!has(c) && !(out[c] <= x[0])) out[c] = x[0];
   return out;
@@ -2238,11 +2238,15 @@ function castNow(i, id, fresh) {  // fresh: a unit not in the slot yet casts its
 }
 const onSkill = (x, now) => [...x[1]].some(l => now.includes(l));  // an SP option for a skill it uses
 // where a squad unit gets a role: on = from what it uses (skill letters, P: the SP picked for it), off = only from the rest
+// a role a skill gives only the unit itself (tags.json "self": the wiki's "To self", or "boosts own …")
+const selfOf = (id, code) => TAGS.self?.[id]?.[code] || "";
+const teamLetters = (id, code) => [...(TAGS.units[id]?.[code] || "")].filter(l => !selfOf(id, code).includes(l));
 function roleSrc(team, i, code) {
   const id = team[i], lead = i === 0 || i === 5, now = castNow(i, id), own = [...(TAGS.units[id]?.[code] || "")].filter(l => l !== "L" || lead).sort((x, y) => "LEBSU".indexOf(x) - "LEBSU".indexOf(y));
   const sp = (TSPE[TCUR]?.[i]?.k || []).map(k => spRoleOpts(id)[k]).filter(x => spFor(x, lead) && x[2].split(" ").includes(code)), spOn = sp.some(x => onSkill(x, now));
-  const dbb = dbbWith(team, id)?.r.split(" ").includes(code);
-  return { now, on: [...own.filter(l => now.includes(l)), ...(spOn ? ["P"] : [])], off: [...own.filter(l => !now.includes(l)), ...(sp.length && !spOn ? ["P"] : []), ...(dbb ? ["D"] : [])] };
+  const dbb = dbbWith(team, id)?.r.split(" ").includes(code), me = selfOf(id, code), team_ = own.filter(l => !me.includes(l));
+  return { now, on: [...team_.filter(l => now.includes(l)), ...(spOn ? ["P"] : [])], off: [...team_.filter(l => !now.includes(l)), ...(sp.length && !spOn ? ["P"] : []), ...(dbb ? ["D"] : [])],
+    self: own.filter(l => me.includes(l)) };
 }
 const viaSp = (team, i, code) => roleSrc(team, i, code).on.join("") === "P";
 const providers = (team, code) => team.filter((id, i) => id && roleSrc(team, i, code).on.length);
@@ -2273,33 +2277,112 @@ function spFill(id, roles, leaderToo, cap, now) {
   for (const c of roles.filter(c => adds[c] != null).sort((a, b) => adds[a] - adds[b])) if (used + adds[c] <= cap) { used += adds[c]; out.push(c); }
   return out;
 }
-function autoFill(team, el, S) {
+// what a unit in a slot gives the team for a role, as a number: the game's team number for the skill it would cast, else
+// the skill text's (its ES and LS too), not a heal per spark, not what's only for itself
+function teamVal(id, s, c, fresh) {
+  const now = castNow(s, id, fresh); let v = 0;
+  for (const l of teamLetters(id, c)) if (now.includes(l) && !TAGS.powerAll?.[id]?.[c]?.["~" + l]) {
+    const g = (TEAM_D?.[id]?.skills || []).find(x => CAST_L[x.label] === l);
+    v = Math.max(v, g?.buffs?.[c] || TAGS.powerAll?.[id]?.[c]?.[l] || 0);
+  }
+  return Math.min(v, c === "heal" ? 10000 : v);
+}
+const NUM_ROLES = ["mit", "heal", "bbf", "atk", "bbatk", "spark", "crit", "critrate", "elem"];
+// a team's damage per turn, roughly as the game works it out: each unit's skill (the game's total modifier for the
+// skill it casts) times its ATK, times the team's best ATK buff, BB ATK, critical (rate × damage), elemental and spark
+// boosts; buffs of one kind don't stack (the biggest counts), a unit's own boost counts for itself; "5% damage of foes'
+// max HP" (the newest units) ignores DEF and is big against a boss: about half again its damage
+const DMG_ROLES = ["atk", "bbatk", "critrate", "crit", "elem", "spark"];
+function dmgInfo(id, i, fresh) {
+  const now = castNow(i, id, fresh), L = now.includes("U") ? "UBB" : now.includes("S") ? "SBB" : "BB", sk = (TEAM_D?.[id]?.skills || []).find(x => x.label === L);
+  const hp = +((sk?.desc || "").match(/(\d+(?:\.\d+)?)% damage of foes' max hp/i)?.[1] || 0);  // ignores DEF: about half again per 5%
+  return { atk: UMAP[id]?.atk || 0, m: (sk?.dmg || sk?.mod || 0) / 100, own: sk?.own || {}, hp };
+}
+const teamTops = t => Object.fromEntries(DMG_ROLES.map(c => [c, Math.max(0, ...t.map((id, i) => id ? teamVal(id, i, c) : 0))]));
+function dmgOfTeam(infos, T) {
+  return infos.reduce((a, x) => {
+    if (!x?.m) return a;
+    const g = c => Math.max(T[c] || 0, x.own[c] || 0);
+    return a + (x.half ? .5 : 1) * (1 + (x.hp || 0) / 10) * x.atk * x.m * (1 + g("atk") / 100) * (1 + g("bbatk") / 100) * (1 + Math.min(1, g("critrate") / 100) * (.5 + g("crit") / 100))
+      * (1 + .5 * (.5 + g("elem") / 100)) * (1 + .5 * (.5 + g("spark") / 100));
+  }, 0);
+}
+// half: the slots whose unit can't cast every turn (it hits half as often)
+const teamDamage = (t, half) => dmgOfTeam(t.map((id, i) => id && { ...dmgInfo(id, i), half: !!half?.has(i) }), teamTops(t));
+// how much a newer unit counts (0 to 1 by release, times this): new units are usually stronger (power creep), not always
+const FILL_W = { newness: 8, old: 15 };  // old: what a unit from before release number 8000 counts less
+// keep: how many teams to give back (the best first, the team itself not changed); 1 fills the team with the best
+function autoFill(team, el, S, keep = 1) {
   const can = new Set(S?.o || []);
   // units without skills (the custom ones, Summoner, Rainbow Crystal…) don't help a team
   const pool = UNITS.filter(u => (SQ.mineOnly ? mine.has(u.id) : u.r >= 7 && !u.f && (!can.size || can.has(u.id))) && (!el || u.e === el) && TAGS.units[u.id] && !/\(custom\)/i.test(u.n));
-  // newer units outdo older ones with the same roles (power creep): 0 for the oldest to 1 for the newest, by release
-  // order, worth about one and a half roles covered
+  // newer units count (they're usually stronger, not always): 0 for the oldest to 1 for the newest, times FILL_W.newness
   const order = [...pool].sort((a, b) => a.no - b.no), newness = new Map(order.map((u, i) => [u.id, u.no ? i / Math.max(1, order.length - 1) : 0]));
-  let added = 0; const spNeed = {};  // slot -> the roles Fill counts on its SP for
-  for (let s = 0; s < 6; s++) {
-    if (team[s]) continue;
-    const lead = s === 0 || s === 5, missing = COVER.filter(c => !providers(team, c).length && !Object.values(spNeed).some(r => r.includes(c))), cap = omniOf(s)[1];
-    let best = null, bestScore = -1, bestSp = [];
-    for (const u of pool) {
-      if (team.includes(u.id)) continue;
-      const now = castNow(s, u.id, true), got = missing.filter(c => [...(TAGS.units[u.id]?.[c] || "")].some(l => now.includes(l)));
-      // each missing role it brings counts, more when it's strong at it (compared with the strongest unit for that role)
-      const covers = got.length + got.reduce((a, c) => a + (powerOf(u.id, c)?.[0] || 0) / (POWER_MAX[c] || 1) * .6, 0);
-      // an Omni unit's SP options that add a missing role to its skills, the cheapest first, within the SP its Omni+
-      // allows: each counts like a role its skills give, a little less (it takes SP)
-      const sp = u.r === 8 ? spFill(u.id, missing.filter(c => !got.includes(c)), lead, cap, now) : [];
-      const ls = lead ? ["atk", "mit", "bbf", "crit", "critrate", "elem", "spark", "heal"].filter(c => (TAGS.units[u.id]?.[c] || "").includes("L")).length : 0;
-      const score = (covers + sp.length * .8) * 10 + ls * 3 + newness.get(u.id) * 15 + u.r + u.atk / 1e5;
-      if (score > bestScore) { bestScore = score; best = u; bestSp = sp; }
+  // how much each candidate for slot s raises the team's damage (teamDamage), 0 to 1 against the one raising it most
+  function addDamage(rs, s, t) {
+    const infos = t.map((id, i) => id && dmgInfo(id, i)), T0 = teamTops(t), base = dmgOfTeam(infos, T0);
+    for (const x of rs) {
+      const T = { ...T0 }; for (const c of DMG_ROLES) T[c] = Math.max(T[c], teamVal(x.u.id, s, c, true));
+      const inf = infos.slice(); inf[s] = dmgInfo(x.u.id, s, true); x.dd = Math.max(0, dmgOfTeam(inf, T) - base);
     }
-    if (best) { if (team === TEAMS[TCUR]) resetSlot(s); team[s] = best.id; added++; if (bestSp.length) spNeed[s] = bestSp; }
+    const mx = Math.max(1e-9, ...rs.map(x => x.dd));
+    for (const x of rs) x.total = x.r.score + x.dd / mx * 12;
+    return rs.sort((a, b) => b.total - a.total);
   }
-  return { added, spNeed };
+  if (team === TEAMS[TCUR]) for (let s = 0; s < 6; s++) if (!team[s]) resetSlot(s);  // an empty slot keeps nothing of the unit before
+  const empty = [0, 1, 2, 3, 4, 5].filter(s => !team[s]);
+  const top = (t, c) => Math.max(0, ...t.map((id, i) => id ? teamVal(id, i, c) : 0));
+  // one unit for slot s of team t: each missing role it brings (more when it's strong at it), SP that adds one, its
+  // leader skill as the leader, how much it raises the team's top numbers (its damage: addDamage), newness
+  function rate(u, s, t, missing, tops = Object.fromEntries(NUM_ROLES.map(c => [c, top(t, c)])), live) {
+    const lead = s === 0 || s === 5, now = castNow(s, u.id, true), got = missing.filter(c => teamLetters(u.id, c).some(l => now.includes(l)));
+    const covers = got.length + got.reduce((a, c) => a + (powerOf(u.id, c)?.[0] || 0) / (POWER_MAX[c] || 1) * .6, 0);
+    const sp = u.r === 8 ? spFill(u.id, missing.filter(c => !got.includes(c)), lead, omniOf(s)[1], now) : [];
+    const ls = lead ? ["atk", "mit", "bbf", "crit", "critrate", "elem", "spark", "heal"].filter(c => teamLetters(u.id, c).includes("L")).length : 0;
+    if (live) return { score: (covers + sp.length * .8) * 10 + ls * 3 + newness.get(u.id) * 15 + u.r + u.atk / 1e5, sp };  // the 5.6.30 Fill
+    const raise = NUM_ROLES.reduce((a, c) => a + Math.min(1, Math.max(0, teamVal(u.id, s, c, true) - tops[c]) / (POWER_MAX[c] || 1)), 0);
+    return { score: (covers + sp.length * .8) * 10 + ls * 3 + raise * 6 + newness.get(u.id) * FILL_W.newness - ((u.no || 0) < 8000 ? FILL_W.old : 0) + u.r / 10, sp };
+  }
+  const missingIn = (t, spNeed) => COVER.filter(c => !providers(t, c).length && !Object.values(spNeed).some(r => r.includes(c)));
+  // the rest of the empty slots, one at a time, the best unit for each
+  function finish(t, spNeed, from) {
+    for (const s of empty.slice(from)) {
+      const missing = missingIn(t, spNeed), tops = Object.fromEntries(NUM_ROLES.map(c => [c, top(t, c)]));
+      const best = addDamage(pool.filter(u => !t.includes(u.id)).map(u => ({ u, r: rate(u, s, t, missing, tops) })), s, t)[0];
+      if (best) { t[s] = best.u.id; if (best.r.sp.length) spNeed[s] = best.r.sp; }
+    }
+  }
+  // a whole team: the roles it covers, its top numbers, its units' newness (its damage: teamDamage, below)
+  const worth = (t, spNeed) => (COVER.length - missingIn(t, spNeed).length) * 10 + NUM_ROLES.reduce((a, c) => a + Math.min(1, top(t, c) / (POWER_MAX[c] || 1)), 0) * 6
+    + empty.reduce((a, s) => a + (t[s] ? (newness.get(t[s]) || 0) * FILL_W.newness - ((UMAP[t[s]]?.no || 0) < 8000 ? FILL_W.old : 0) : 0), 0);
+  // several first picks (the best few for the first empty slot), each team filled the same way, the best one kept
+  const cands = [];
+  if (empty.length) {
+    const s0 = empty[0], miss0 = missingIn(team, {}), tops0 = Object.fromEntries(NUM_ROLES.map(c => [c, top(team, c)]));
+    const firsts = addDamage(pool.filter(u => !team.includes(u.id)).map(u => ({ u, r: rate(u, s0, team, miss0, tops0) })), s0, team).slice(0, 5);
+    for (const { u, r } of firsts) {
+      const t = [...team], spNeed = {}; t[s0] = u.id; if (r.sp.length) spNeed[s0] = r.sp;
+      finish(t, spNeed, 1);
+      if (!cands.some(c => c.t.join() === t.join())) cands.push({ t, spNeed, w: worth(t, spNeed) });
+    }
+  }
+  // the team the 5.6.30 Fill makes (roles, then newer units), so the battle check can compare it too
+  if (empty.length) {
+    const t = [...team], spNeed = {};
+    for (const s of empty) {
+      const missing = missingIn(t, spNeed); let best = null, bs = -Infinity, bsp = [];
+      for (const u of pool) { if (t.includes(u.id)) continue; const r = rate(u, s, t, missing, undefined, true); if (r.score > bs) { bs = r.score; best = u; bsp = r.sp; } }
+      if (best) { t[s] = best.id; if (bsp.length) spNeed[s] = bsp; }
+    }
+    if (!cands.some(c => c.t.join() === t.join())) cands.push({ t, spNeed, w: worth(t, spNeed), live: true });
+  }
+  const dm = cands.map(c => teamDamage(c.t)), dmx = Math.max(1e-9, ...dm);
+  cands.forEach((c, k) => { c.w += dm[k] / dmx * 12; });
+  cands.sort((a, b) => b.w - a.w);
+  if (keep > 1) return [...cands.filter(c => !c.live).slice(0, keep), ...cands.filter(c => c.live)];
+  const pick = cands[0]; let added = 0;
+  if (pick) for (const s of empty) if (pick.t[s]) { team[s] = pick.t[s]; added++; }
+  return { added, spNeed: pick?.spNeed || {} };
 }
 // ---------------- squad numbers, like the game's Manage Squad screen ----------------
 const STATK = ["hp", "atk", "def", "rec"], TYPES = ["lord", "anima", "breaker", "guardian", "oracle", "rex"];
@@ -2697,7 +2780,7 @@ async function renderTeam() {
         <select id="tfillel" class="gsel" aria-label="Element for Fill"><option value="">Any element</option>${ELS.map(e => `<option ${e === fillEl ? "selected" : ""}>${e}</option>`).join("")}</select>
         <button class="gbtn blue" id="tshare" ${team.some(Boolean) ? "" : "disabled"}>Share picture</button><button class="gbtn dark" id="tclear">Clear team</button></div>
       <div class="chipwrap" style="margin:-2px 0 8px"><button class="chip ${SQ.mineOnly ? "on" : ""}" data-opt="mineOnly">✓ Fill from my box only</button></div>
-      <p class="small dim" style="margin:0">Tap a spot to choose a unit. <b>Fill</b> picks ${SQ.mineOnly ? `from the ${mine.size} units in your box` : "7★ and Omni units you can get in Revived"} that cover what the team still misses, newer units first.</p></div>
+      <p class="small dim" style="margin:0">Tap a spot to choose a unit. <b>Fill</b> picks ${SQ.mineOnly ? `from the ${mine.size} units in your box` : "7★ and Omni units you can get in Revived"} that cover what the team still misses, then the strongest: bigger buffs and damage. It tries a few teams (the way it picked before too) and keeps the one that, in the battle check, sparks most, lets the most cast every turn and hits hardest.</p></div>
     <div class="sec"><h3>Squad</h3>
       <div class="sqbar"><span class="costplate ${SQ.maxcost && cost > +SQ.maxcost ? "over" : ""}">COST <b>${cost}</b>/<input id="maxcost" inputmode="numeric" value="${esc(SQ.maxcost)}" placeholder="max" aria-label="Your max cost"></span>
         <button class="chip ${SQ.imps ? "on" : ""}" data-opt="imps">Imps max</button><button class="chip ${SQ.lead ? "on" : ""}" data-opt="lead">Leader skill</button><button class="chip ${SQ.friend ? "on" : ""}" data-opt="friend">Friend skill</button><button class="chip ${SQ.es ? "on" : ""}" data-opt="es">Extra skills</button></div>
@@ -2709,11 +2792,11 @@ async function renderTeam() {
     ${battleHtml(battleCheck(team, W, NUMS, D))}
     ${team[0] || team[5] ? `<div class="sec"><h3 class="blue">Leader skills</h3>${[0, 5].filter(i => team[i]).map(i => { const [n, d] = ls(team[i], W[i]); const b = boostText(statBoosts(lsText(team[i], W[i], D)));
         return `<div class="sk"><div class="kn"><span class="tag ls">${i ? "Friend" : "Leader"}</span><span class="nm">${esc(n || UMAP[team[i]]?.n)}</span></div><p>${d ? hl(d) : `<span class="dim">No leader skill</span>`}</p>${b ? `<div class="pills"><span class="pill">Counted: ${esc(b)}</span></div>` : ""}</div>`; }).join("")}</div>` : ""}
-    <div class="sec"><h3 class="green">What the team covers</h3><p class="covkey">Under each unit: where it gets it (LS, ES, BB, SBB, UBB, SP) and how much (self: only for itself); next to the role: the highest number in the team. <b>Dimmed</b>: it has it only on a skill it doesn't cast, so it doesn't count; change its skill on its battle check row.</p>${(() => {
+    <div class="sec"><h3 class="green">What the team covers</h3><p class="covkey">Under each unit: where it gets it (LS, ES, BB, SBB, UBB, SP) and how much; next to the role: the highest number in the team. <b>Dimmed</b>: it doesn't count for the team: it has it only on a skill it doesn't cast (change its skill on its battle check row), or only for itself (<b>self</b>).</p>${(() => {
       const seen = new Set(), pairs = team.flatMap(id => { const d = id && dbbWith(team, id), p = d && d.p.find(x => team.includes(x)), k = p && [id, p].sort().join();
         if (!k || seen.has(k)) return []; seen.add(k); return [`<b class="dbbok">${esc(UMAP[id]?.n || "")}</b> + <b class="dbbok">${esc(UMAP[p]?.n || "")}</b>${d.n ? ` (${esc(d.n)})` : ""}`]; });
       return pairs.length ? `<p class="covkey dbbkey">Dual BB ready: ${pairs.join(", ")}. Its buffs show as <b>DBB</b>: the battle check has each unit cast its own skill, so they don't count.</p>` : ""; })()}<div class="cov"><div class="covh"><span></span>${team.map((id, i) => `<span>${id ? (i === 0 ? "Leader" : i === 5 ? "Friend" : `Unit ${i + 1}`) : ""}</span>`).join("")}</div>${COVER.map(c => {
-        const src = team.map((id, i) => id ? { i, id, ...roleSrc(team, i, c) } : null).filter(r => r && (r.on.length || r.off.length)), on = src.filter(r => r.on.length), off = src.filter(r => !r.on.length);
+        const src = team.map((id, i) => id ? { i, id, ...roleSrc(team, i, c) } : null).filter(r => r && (r.on.length || r.off.length || r.self.length)), on = src.filter(r => r.on.length), off = src.filter(r => !r.on.length);
         // each unit's number from what it uses (a BB/SBB value only from the skill it casts, SP only for those skills);
         // for each skill it uses: the game's number for the team, else the skill text's (ES and LS too), else the game's
         // number for the unit itself ("self"); and the SP picked for those skills
@@ -2724,7 +2807,9 @@ async function renderTeam() {
           return [...vals, ...sp.map(x => [x[3][c], "SP"])].filter(Boolean).sort((a, b) => b[0] - a[0] || (a[2] || 0) - (b[2] || 0))[0] || null; };
         on.forEach(r => r.v = valOf(r));
         const nums = on.filter(r => r.v && !(r.v[3] && on.some(x => x.v && !x.v[3]))), best = nums.map(r => r.v).sort((a, b) => b[0] - a[0])[0];
-        const pic = (r, dim) => `<span class="src${dim ? " off" : ""}" title="${esc(UMAP[r.id]?.n || "")}: ${dim ? `only on its ${(dim ? r.off : r.on).map(l => SRC_NAME[l]).join(", ")}, not the skill it casts` : `from its ${r.on.map(l => SRC_NAME[l]).join(", ")}${r.v ? `: ${fmtPower(c, r.v)}${r.v[3] ? " per spark" : ""}${r.v[2] ? " for itself" : ""}` : ""}`}"><img src="${uImg(r.id)}" alt="" data-u="${r.id}"${!dim && r.on.join("") === "P" ? ` class="viasp"` : ""}><small>${(dim ? r.off : r.on).map(l => SRC_NAME[l]).join(" ")}</small>${!dim && r.v ? `<em>${fmtShort(c, r.v)}${r.v[3] ? " per spark" : ""}${r.v[2] ? " self" : ""}</em>` : ""}</span>`;
+        const dimCap = r => [r.off.map(l => SRC_NAME[l]).join(" "), r.self.length ? `${r.self.map(l => SRC_NAME[l]).join(" ")} self` : ""].filter(Boolean).join(" · ");
+        const dimWhy = r => [r.off.length ? `only on its ${r.off.map(l => SRC_NAME[l]).join(", ")}, not the skill it casts` : "", r.self.length ? `its ${r.self.map(l => SRC_NAME[l]).join(", ")} only for itself` : ""].filter(Boolean).join("; ");
+        const pic = (r, dim) => `<span class="src${dim ? " off" : ""}" title="${esc(UMAP[r.id]?.n || "")}: ${dim ? dimWhy(r) : `from its ${r.on.map(l => SRC_NAME[l]).join(", ")}${r.v ? `: ${fmtPower(c, r.v)}${r.v[3] ? " per spark" : ""}${r.v[2] ? " for itself" : ""}` : ""}`}"><img src="${uImg(r.id)}" alt="" data-u="${r.id}"${!dim && r.on.join("") === "P" ? ` class="viasp"` : ""}><small>${dim ? dimCap(r) : r.on.map(l => SRC_NAME[l]).join(" ")}</small>${!dim && r.v ? `<em>${fmtShort(c, r.v)}${r.v[3] ? " per spark" : ""}${r.v[2] ? " self" : ""}</em>` : ""}</span>`;
         return `<div><span class="cl ${on.length ? "ok" : off.length ? "part" : "no"}">${on.length ? "✓" : "✗"} ${esc(TAGS.labels[c] || c)}${best ? `<small> ${fmtPower(c, best)}${best[3] ? " per spark" : ""}${best[2] ? " self" : ""}</small>` : ""}${off.length && !on.length ? `<button class="gbtn small blue cfind" data-find="${c}">Find</button>` : ""}</span>${src.length ? team.map((id, i) => { const r = src.find(x => x.i === i); return r ? pic(r, !r.on.length) : `<span class="nos"></span>`; }).join("") : `<span class="cfrow"><button class="gbtn small blue" data-find="${c}">Find</button></span>`}</div>`; }).join("")}</div>
       <p class="small dim" style="margin:8px 0 0">It counts the units' extra skills, the skill each one casts in the battle check (its SBB unless you change it there) and the SP picked for them; leader skills for the leader and the friend. A BB's buff while the unit casts its SBB, or a UBB's, doesn't count. Green ring: only from its SP.</p></div>
     ${matchupHtml(team)}`;
@@ -2766,9 +2851,30 @@ async function renderTeam() {
   $("tfill").onclick = async () => {
     if (!team.includes(null)) return toast("No empty slots");
     if (SQ.mineOnly && !mine.size) return toast("Your box is empty: hold a unit you have in a list, or open it and tap ＋ My box", 3000);
-    const snap = teamSnap(), at = TCUR, before = [...team], { added: n, spNeed } = autoFill(team, fillEl, await load("usrc"));
-    await Promise.all(team.map(async (id, i) => { if (id && !before[i] && UMAP[id]?.r === 8) TSPE[TCUR][i] = await bestSpFor(id, omniOf(i)[1], spNeed[i], i === 0 || i === 5, TOMNI[TCUR][i] || 0, castNow(i, id)); }));
-    await bestCasts(team, team.map((id, i) => id && !before[i] ? i : -1).filter(i => i >= 0));
+    toast("Working out the team…", 20000);  // until Fill is done (the next toast replaces it)
+    const snap = teamSnap(), at = TCUR, before = [...team], S = await load("usrc"), D = await load("details");
+    // the best few teams by roles and buffs, each through the battle check (with BB where that helps): the one where
+    // the most units can cast every turn and that hits hardest is kept
+    const I = await load("items"), cands = autoFill(team, fillEl, S, 5), news = [0, 1, 2, 3, 4, 5].filter(i => !before[i]);
+    const cast0 = [...TCAST[TCUR]], spe0 = JSON.stringify(TSPE[TCUR]);
+    for (const c of cands) {  // each team with its SP and skills set the way Fill sets them, then the battle check you see
+      TCAST[TCUR] = [...cast0]; TSPE[TCUR] = JSON.parse(spe0);
+      for (const i of news) if (c.t[i] && UMAP[c.t[i]]?.r === 8) TSPE[TCUR][i] = await bestSpFor(c.t[i], omniOf(i)[1], c.spNeed[i], i === 0 || i === 5, TOMNI[TCUR][i] || 0, castNow(i, c.t[i]));
+      await bestCasts(c.t, news.filter(i => c.t[i]));
+      const W = await Promise.all(c.t.map(id => id ? wiki(id) : {})), Nm = c.t.map((id, i) => id && UMAP[id] ? unitNumbers(i, c.t, W, D, I) : null), B = battleCheck(c.t, W, Nm, D);
+      // damage per turn: each SBB (half if it can't cast every turn, more with foes' max HP damage), with the hits that
+      // spark (spark buff), crit and elemental boosts
+      const T = teamTops(c.t), rate = B.spark?.best?.rate || 0;
+      const mult = (1 + rate * (.5 + T.spark / 100)) * (1 + Math.min(1, T.critrate / 100) * (.5 + T.crit / 100)) * (1 + .5 * (.5 + T.elem / 100));
+      c.can = B.can; c.rate = rate; c.roles = COVER.filter(x => providers(c.t, x).length).length;
+      c.dmg = B.rows.reduce((a, r) => a + (r.sDmg || 0) * (B.ok(r) ? 1 : .5) * (1 + (dmgInfo(r.id, r.i).hp || 0) / 10), 0) * mult;
+      c.casts = [...TCAST[TCUR]]; c.spe = JSON.stringify(TSPE[TCUR]);
+    }
+    const mxd = Math.max(1, ...cands.map(c => c.dmg));
+    const pick = cands.map(c => ({ ...c, score: c.roles * 10 + c.can * 8 + c.rate * 8 + c.dmg / mxd * 15 })).sort((a, b) => b.score - a.score)[0];
+    TCAST[TCUR] = pick ? pick.casts : cast0; TSPE[TCUR] = JSON.parse(pick ? pick.spe : spe0);
+    let n = 0; const spNeed = pick?.spNeed || {};
+    if (pick) for (const s of news) if (pick.t[s]) { team[s] = pick.t[s]; n++; }
     saveTeams(); saveSquad(); renderTeam();
     n ? undoToast(`Added ${n} unit${n > 1 ? "s" : ""}`, () => teamRestore(at, snap)) : toast(`No ${fillEl ? fillEl + " " : ""}units left to add`);
   };
