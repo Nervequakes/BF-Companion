@@ -778,10 +778,27 @@ function tierNums(DET, P, u) {
   const twice = Math.max(0, ...sk.map(s => s.twice || 0)), mx = k => Math.max(0, ...sk.map(s => s.own?.[k] || 0));
   const own = [mx("atk") + Math.max(0, ...sk.map(s => convPct(u, s.own?.conv))), mx("spark"), mx("critrate")];
   const mod = sbb?.dmg || 0, n = {}, base = {}, moves = [];
-  n.dmg = [mod * (1 + twice / 100) * (u.atk || 0) * ownF(...own) * bcF(sbb),
-    `SBB ${mod.toLocaleString("en")}%${twice ? `, ${twice}% twice` : ""}${own.some(x => x > 0) ? ", own buffs" : ""}`];
   // its SP options for its BB/SBB (within 100 SP each) and how often that skill fires
   const S = Object.values(TAGS.sp?.[u.id] || {}).filter(x => x[0] > 0 && x[0] <= SP_BUDGET && /[BS]/.test(x[1]));
+  // SBB damage, with the SP that raises it: attacks SP adds to the SBB (their modifier at full HP) and buffs on itself
+  // (own ATK, spark, critical rate: the bigger of its skills' and its SP's); the options that add most per SP, in 100 SP
+  const OWN_SP = ["own_atk", "own_spark", "own_critrate"];
+  const dmgOpts = S.filter(x => x[1].includes("S") && (x[3].dmg || OWN_SP.some(r => x[3][r]))).map(x => ({ cost: x[0], n: x[3] }));
+  const dmgWith = picks => {
+    const md = mod + picks.reduce((a, p) => a + (p.n.dmg || 0), 0), o = own.map((v, k) => Math.max(v, ...picks.map(p => p.n[OWN_SP[k]] || 0)));
+    return [md * (1 + twice / 100) * (u.atk || 0) * ownF(...o) * bcF(sbb),
+      `SBB ${md.toLocaleString("en")}%${twice ? `, ${twice}% twice` : ""}${o.some(x => x > 0) ? ", own buffs" : ""}${picks.length ? " (SP)" : ""}`];
+  };
+  base.dmg = dmgWith([]);
+  { const got = []; let left = SP_BUDGET, cur = base.dmg[0];
+    for (;;) {
+      let pick = null, g = 0;
+      for (const x of dmgOpts) if (!got.includes(x) && x.cost <= left) { const y = (dmgWith([...got, x])[0] - cur) / x.cost; if (y > g) { g = y; pick = x; } }
+      if (!pick) break;
+      got.push(pick); left -= pick.cost; cur = dmgWith(got)[0];
+    }
+    n.dmg = dmgWith(got); }
+  n.dmgOpts = dmgOpts; n.dmgWith = dmgWith;
   const spF = L => Math.max(/B/.test(L) && skillOf("B") ? bcF(skillOf("B")) : 0, /S/.test(L) && skillOf("S") ? bcF(skillOf("S")) : 0);
   const lab = (r, v, raw, sp) => r === "heal" ? [Math.min(v, 10000), (raw >= 10000 && !sp ? "Full heal" : `Heal ${raw.toLocaleString("en")} HP`) + sp] : [v, `${TIER_SHORT[r]} ${TAGS.powerUnit[r] ? fmtPower(r, [raw]) : `${raw}%`}${sp}`];
   for (const r of Object.keys(TIER_SHORT)) {
@@ -818,9 +835,11 @@ const numsLab = (ns, l) => { const top = [...ns].sort((a, b) => b[1] - a[1])[0];
 const TIER_ALL = {};
 function tierAll(n, best, id) {
   if (TIER_ALL[id]) return TIER_ALL[id];
-  const m = { ...n, ...n.base, sp: [0, ""] }, tools = new Set(n.tools0), pas = [];
-  const cand = [...n.moves.map(x => ({ ...x, k: "r" })), ...n.tmoves.map(x => ({ ...x, k: "t" })), ...n.pas.map(x => ({ cost: x.sp, ns: x.ns, v: x.v, k: "p" }))];
+  const m = { ...n, ...n.base, sp: [0, ""] }, tools = new Set(n.tools0), pas = [], dp = [];
+  const cand = [...n.moves.map(x => ({ ...x, k: "r" })), ...n.tmoves.map(x => ({ ...x, k: "t" })), ...n.pas.map(x => ({ cost: x.sp, ns: x.ns, v: x.v, k: "p" })),
+    ...n.dmgOpts.map(x => ({ cost: x.cost, x, k: "d" }))];
   const gain = x => x.k === "r" ? Math.max(0, x.lab[0] - m[x.r][0]) / best[x.r]
+    : x.k === "d" ? Math.max(0, n.dmgWith([...dp, x.x])[0] - m.dmg[0]) / best.dmg
     : x.k === "t" ? x.tools.filter(y => !tools.has(y)).reduce((a, y) => a + 1 / (DEFENSE.includes(y) ? DEFENSE.length : DEBUFFS.length), 0)
     : x.v / best.sp;
   let left = SP_BUDGET;
@@ -829,7 +848,8 @@ function tierAll(n, best, id) {
     for (const x of cand) if (!x.used && x.cost > 0 && x.cost <= left) { const y = gain(x) / x.cost; if (y > g) { g = y; pick = x; } }
     if (!pick) break;
     pick.used = true; left -= pick.cost;
-    if (pick.k === "r") m[pick.r] = pick.lab; else if (pick.k === "t") pick.tools.forEach(y => tools.add(y)); else pas.push(...pick.ns);
+    if (pick.k === "r") m[pick.r] = pick.lab; else if (pick.k === "t") pick.tools.forEach(y => tools.add(y));
+    else if (pick.k === "d") { dp.push(pick.x); m.dmg = n.dmgWith(dp); } else pas.push(...pick.ns);
   }
   Object.assign(m, toolNums(tools));
   m.sp = numsLab(pas, "SP"); m.spent = SP_BUDGET - left;
@@ -880,7 +900,7 @@ async function showTiers() {
   $("page").innerHTML = `<div class="bar2"><div class="scroller" id="tel"></div><div class="scroller" id="trole"></div><div class="scroller" id="tget"></div></div>
     <details class="why"><summary>How is this made?</summary>
       <p class="small" style="margin:6px 0 0">No votes and no opinions: every Omni unit is measured with the same rule, from the game's own numbers.</p>
-      <ul><li><b>Damage:</b> its SBB's attacks (at full HP), more if it can cast twice, with its ATK and the buffs it gives itself (ATK, spark, critical rate, HP or DEF turned into ATK).</li>
+      <ul><li><b>Damage:</b> its SBB's attacks (at full HP), more if it can cast twice, with its ATK and the buffs it gives itself (ATK, spark, critical rate, HP or DEF turned into ATK), and the SP options that add an attack to its SBB or buff itself.</li>
       <li><b>Buffs for the team:</b> ATK, BB ATK, critical damage and rate, spark, elemental damage, mitigation, BB fill, heal, OD fill and stat conversion, read from the skills themselves, so also where the skill's text gives no number, and from the SP options that add one to its BB or SBB or raise it.</li>
       <li><b>Spark timing:</b> how many of its hits land together with another unit's, on average with every other unit of its element (the same hit frames as the Team tab's spark check).</li>
       <li><b>Defense tools</b> (cures, ailment negation, barrier, KO resistance, revive, taunt) and <b>debuffs</b> on foes (DEF ignore, ATK/DEF down, spark, critical and elemental weakness), its skills' and the ones SP options add to them.</li>
@@ -2395,7 +2415,24 @@ function battleCheck(team, W, NUMS, D) {
   const skill = (i, kind) => (W[i]?.skills || []).find(s => s.kind === kind)
     || (s => s && { ...s, kind })((D?.[team[i]]?.skills || []).find(s => s.label === kind && s.name));
   // buffs of one kind don't stack in the game: the biggest one on the team's BB/SBB counts
-  const best = c => Math.max(0, ...team.filter(Boolean).map(id => { const p = powerOf(id, c); return p && "BS".includes(p[1]) ? p[0] : 0; }));
+  // the SP picked for a unit (tags.json "sp"): the options for its skills, [skill letters, {role: value}, its text]
+  const spOpts = i => (TSPE[TCUR]?.[i]?.k || []).map(k => { const x = spRoleOpts(team[i])[k], [c, o] = k.split(":").map(Number);
+    return x && /[BSU]/.test(x[1]) && { L: x[1], n: x[3] || {}, d: String(W[i]?.sp?.[c]?.opts?.[o]?.desc || "").toLowerCase() }; }).filter(Boolean);
+  // the BC that SP adds to a skill: "Add to BB/SBB (fills BB gauge) 12 BC" at once, "... for 3 turns" each turn, "fills own
+  // BB gauge to max" a refill; an "Enhances BB's BB gauge boost ... 15 BC total" raises the skill's own fill to that
+  const spFills = (f, i, kind) => {
+    const L = { BB: "B", SBB: "S", UBB: "U" }[kind], out = [...f];
+    if (L) for (const x of spOpts(i)) if (x.L.includes(L)) {
+      if (/bb gauge to max/.test(x.d)) { out[6] = /\bown\b|self/.test(x.d) ? out[6] || 2 : 1; continue; }
+      const v = x.n.bbf; if (!v) continue;
+      const turn = /for \d+ turns|each turn/.test(x.d), k = (turn ? 2 : 0) + (/\bown\b|to self/.test(x.d) ? 1 : 0);
+      out[k] = turn || /enhances/.test(x.d) ? Math.max(out[k], v) : out[k] + v;
+    }
+    return out;
+  };
+  // buffs of one kind don't stack in the game: the biggest one on the team's BB/SBB counts, the SP picked for them too
+  const best = c => Math.max(0, ...team.map((id, i) => { if (!id) return 0; const p = powerOf(id, c);
+    return Math.max(p && "BS".includes(p[1]) ? p[0] : 0, ...spOpts(i).filter(x => /[BS]/.test(x.L)).map(x => x.n[c] || 0)); }));
   const atkBuff = best("atk"), bbAtk = best("bbatk");
   const rows = team.map((id, i) => {
     if (!id || !UMAP[id]) return null;
@@ -2403,11 +2440,13 @@ function battleCheck(team, W, NUMS, D) {
     const game = kind => (D?.[id]?.skills || []).find(x => x.label === kind);
     // Revived's own BC cost and fills (the game's skill table), else the wiki's
     const cost = sk => sk ? +game(sk.kind)?.bc || +sk.bc || 0 : 0;
-    const fills = sk => !sk ? [0, 0, 0, 0, 0, 0, 0] : game(sk.kind) ? game(sk.kind).fill || [0, 0, 0, 0, 0, 0, 0] : wikiFills(sk);
+    const fills = sk => spFills(!sk ? [0, 0, 0, 0, 0, 0, 0] : game(sk.kind) ? game(sk.kind).fill || [0, 0, 0, 0, 0, 0, 0] : wikiFills(sk), i, sk?.kind);
     const atk = N ? N.base[1] * (1 + (N.pct[1] + atkBuff) / 100) : UMAP[id].atk;
     // every attack of the skill at full HP: the game's own total, else the wiki's first and second attack
     const mod = sk => game(sk.kind)?.dmg || fullMod(sk) + (sk.mod2 || 0);
-    const dmg = sk => sk ? Math.round(atk * mod(sk) / 100 * (1 + bbAtk / 100)) : 0;
+    // and the attacks the SP picked for it adds to its SBB ("Add to SBB (22 combo Fire attack)": their modifier at full HP)
+    const spMod = sk => sk?.kind === "SBB" ? spOpts(i).filter(x => x.L.includes("S")).reduce((a, x) => a + (x.n.dmg || 0), 0) : 0;
+    const dmg = sk => sk ? Math.round(atk * (mod(sk) + spMod(sk)) / 100 * (1 + bbAtk / 100)) : 0;
     const es = SQ.es && unconditional((W[i]?.skills || []).find(x => x.kind === "Extra Skill"));
     const sbb = s?.kind === "SBB";
     return { i, id, s, cost: cost(s), f: fills(s), bbCost: sbb ? cost(bb) : 0, bf: sbb && bb ? fills(bb) : null, sDmg: dmg(s), uDmg: dmg(u), aoe: s?.aoe === "A",
@@ -2467,7 +2506,7 @@ function battleHtml(B) {
     ${B.tip ? `<div class="bctip small"><b>Tip:</b> with ${esc(UMAP[B.tip.id].n)} casting <b>BB</b> instead of SBB (it ${B.tip.f[6] === 1 ? "fills everyone's gauge to max"
       : fillWords(B.tip.f, 0, true) ? `gives everyone ${fillWords(B.tip.f, 0, true)}` : "refills its own gauge"}), <b class="okc">${B.tip.can} of ${B.known}</b> can cast again right away.</div>` : ""}
     ${B.spark ? sparkHtml(B.spark) : ""}
-    <p class="small dim" style="margin:8px 0 0">Rough: counts the skills' BC fills (BB/SBB as the game's own data has them; leader and extra skills as the wiki words them; each turn and per spark, sparks as in the best order above) and BC cost cuts, not BC from hits, crystals, guarding or damage taken. Damage = ATK${B.atkBuff ? ` with the team's +${B.atkBuff}% ATK buff` : ""}${B.bbAtk ? ` and +${B.bbAtk}% BB ATK` : ""} × all the skill's attacks (the game's modifiers, at full HP), before enemy DEF, critical hits, sparks and elements.</p></div>`;
+    <p class="small dim" style="margin:8px 0 0">Rough: counts the skills' BC fills (BB/SBB as the game's own data has them, with the SP you picked for them; leader and extra skills as the wiki words them; each turn and per spark, sparks as in the best order above) and BC cost cuts, not BC from hits, crystals, guarding or damage taken. Damage = ATK${B.atkBuff ? ` with the team's +${B.atkBuff}% ATK buff` : ""}${B.bbAtk ? ` and +${B.bbAtk}% BB ATK` : ""} (the biggest on the BB/SBBs and the SP picked for them) × all the skill's attacks (the game's modifiers, at full HP), before enemy DEF, critical hits, sparks and elements.</p></div>`;
 }
 
 // the game's element wheel: an element deals 50% more damage to the one it beats and 50% less to the one that beats
@@ -2507,7 +2546,7 @@ async function renderTeam() {
     const s = TSPE[TCUR][i], used = spUsed(w.sp, s?.k), [, cap] = omniOf(i), on = s?.k?.length > 0;
     const name = s?.b === "app" ? "App's pick" : s?.b || "My own";
     return `<div class="ssp"><button class="sphc spc ${on ? "" : "none"}${used > cap ? " over" : ""}" data-spe="${i}">${on ? `<span class="er">SP</span><span>${esc(name)} · ${used}/${cap}</span>` : `＋ SP enhancements (${cap} SP)`}</button>
-      <select class="gsel tomni" data-om="${i}" aria-label="Omni+ level">${OMNI_PLUS.map(([n], k) => `<option value="${k}" ${k === (TOMNI[TCUR][i] || 0) ? "selected" : ""}>${n}</option>`).join("")}</select></div>${
+      <select class="gsel tomni" data-om="${i}" aria-label="Omni+ level">${OMNI_PLUS.map(([n, c], k) => `<option value="${k}" ${k === (TOMNI[TCUR][i] || 0) ? "selected" : ""}>${n} · ${c} SP</option>`).join("")}</select></div>${
       used > cap ? `<div class="sphwarn">Its SP uses ${used}, more than ${omniOf(i)[0]}'s ${cap}: raise its Omni+ or change its SP.</div>` : ""}`; };
   const NUMS = team.map((id, i) => id && UMAP[id] ? unitNumbers(i, team, W, D, I) : null);
   const card = (id, i) => { const u = UMAP[id], N = NUMS[i];
