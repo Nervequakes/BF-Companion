@@ -1133,7 +1133,8 @@ function paged(container, items, make, cls) {
   let n = 0; const per = cls === "grid" ? 96 : 40;
   const step = () => { const next = items.slice(n, n + per); n += next.length; box.append(...next.map(make)); if (n < items.length) container.append(more); else more.remove(); };
   step();
-  new IntersectionObserver((es, ob) => { if (es[0].isIntersecting) { more.remove(); step(); if (n >= items.length) ob.disconnect(); } }, { rootMargin: "1200px" }).observe(more);
+  // after each batch it looks again: on a wide screen a batch is short and the "…" can stay in range (no new event)
+  new IntersectionObserver((es, ob) => { if (es.some(e => e.isIntersecting)) { more.remove(); step(); if (n >= items.length) ob.disconnect(); else { ob.unobserve(more); ob.observe(more); } } }, { rootMargin: "1200px" }).observe(more);
 }
 const elOrder = u => (ELS.indexOf(u.e) + 1) || 9;  // Fire, Water, Earth, Thunder, Light, Dark, then units without one
 const SORTS = { rarity: (a, b) => b.r - a.r || b.no - a.no, element: (a, b) => elOrder(a) - elOrder(b) || b.r - a.r || b.no - a.no, new: (a, b) => b.no - a.no || b.r - a.r, name: (a, b) => a.n.localeCompare(b.n),
