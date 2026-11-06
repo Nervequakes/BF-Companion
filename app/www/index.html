@@ -45,6 +45,11 @@ body::before { content: ""; position: fixed; inset: 0; z-index: -1; transform: t
 button, select, input { font: inherit; color: var(--text); }
 input, select { background: linear-gradient(#0a1020, #121a36); border: 2px solid var(--gold2); border-radius: 10px; padding: 8px 12px; box-shadow: inset 0 0 0 1px #000, inset 0 2px 10px rgba(0,0,0,.7); }
 input:focus, select:focus { outline: none; border-color: var(--accent); }
+/* a search box's × (the same on iPhone and Android; the browser's own is hidden): shows once something is typed */
+input[type=search]::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; display: none; }
+.qwrap { position: relative; display: flex; flex: 1; min-width: 0; } .qwrap > input { flex: 1; min-width: 0; padding-right: 38px; }
+.qx { position: absolute; right: 5px; top: 50%; transform: translateY(-50%); width: 30px; height: 30px; padding: 0; border: 0; border-radius: 50%; background: rgba(255,255,255,.14); color: var(--text); font-size: 15px; line-height: 30px; text-align: center; display: none; cursor: pointer; }
+.qwrap.has .qx { display: block; } .qx:active { background: rgba(255,255,255,.3); }
 select { text-shadow: var(--ol); font-size: 13px; }
 
 /* top bar */
@@ -212,7 +217,9 @@ main { padding-bottom: calc(var(--navh) + 20px); }
 .item .craft { margin-left: 6px; font-size: 9.5px; padding: 0 6px; border-radius: 999px; background: linear-gradient(#5aa8ff, #1e5fe0); text-shadow: var(--ol); vertical-align: 2px; }
 .recent { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 4px; clear: both; } .recent::-webkit-scrollbar { display: none; }
 .recent .eu { flex: none; width: 64px; text-align: center; cursor: pointer; } .recent .eu img { width: 56px; height: 56px; object-fit: contain; }
-.recent .eu .gname { font-size: 9.5px; line-height: 1.15; text-shadow: var(--ol); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.fitems { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; clear: both; } .fitems .eu { width: 64px; text-align: center; cursor: pointer; } .fitems .eu img { width: 56px; height: 56px; object-fit: contain; }
+.recent .eu .gname, .fitems .eu .gname { font-size: 9.5px; line-height: 1.15; text-shadow: var(--ol); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.favbtn.inl { position: static; margin-left: auto; flex: none; }
 .favbtn img { width: 30px; height: 30px; filter: grayscale(1) brightness(.6); transition: .15s; } .favbtn.on { border-color: var(--accent); } .favbtn.on img { filter: drop-shadow(0 0 5px #ffd76a); transform: scale(1.1); }
 .sec { margin: 12px 10px; padding: 12px; border-radius: 12px; border: 2px solid var(--gold2); background: linear-gradient(rgba(12,16,32,.92), rgba(8,10,20,.92)); box-shadow: inset 0 0 0 1px #000, 0 3px 6px #000; }
 .sec > h3 { display: inline-block; margin: 0 0 10px; padding: 3px 18px 3px 12px; font-size: 13px; text-shadow: var(--ol); background: linear-gradient(#ff9a3c, #e8531a 55%, #c73a0e);
@@ -249,6 +256,7 @@ button.spo { width: 100%; text-align: left; background: none; border: 0; color: 
 .spplus { margin-top: 6px; padding-top: 4px; border-top: 1px dashed rgba(255,255,255,.14); }
 .spbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-family: Rodin, Arial, sans-serif; text-shadow: var(--ol); } .spbar > span { flex: 1; min-width: 110px; }
 .ssp { display: flex; gap: 6px; margin-top: 6px; } .ssp .sphc { flex: 1; min-width: 0; border-color: #6fd17a; } .ssp .sphc.over { border-color: #e8a33d; } .ssp .tomni { flex: none; max-width: 46%; }
+@media (max-width: 359px) { .ssp { flex-wrap: wrap; } .ssp .sphc, .ssp .tomni { flex: 1 1 100%; max-width: none; } }  /* narrow phones: one above the other, both in full */
 .spo .c { flex: none; min-width: 38px; text-align: center; font-family: Rodin, Arial, sans-serif; font-size: 11.5px; padding: 1px 5px; border-radius: 6px; background: linear-gradient(#ffe38a, #c98a16); text-shadow: var(--ol); }
 .evo { display: flex; align-items: center; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
 .evo .eu { flex: none; width: 72px; text-align: center; cursor: pointer; } .evo .eu img { width: 64px; height: 64px; } .evo .eu.cur img { filter: drop-shadow(0 0 6px var(--accent)); }
@@ -347,8 +355,16 @@ select.gsel { height: 38px; font-size: 12.5px; padding: 0 10px; }
 .ctree, .ctree ul { list-style: none; margin: 4px 0 0; padding: 0; } .ctree ul { padding-left: 14px; border-left: 1px dashed var(--gold3); margin-left: 10px; }
 .ctree li { padding: 3px 0; } .ci { cursor: pointer; font-size: 12.5px; } .ci img { width: 22px; height: 22px; vertical-align: -6px; margin-right: 4px; object-fit: contain; }
 .ci b { color: var(--accent); } .ci small { color: var(--dim); font-size: 10px; }
-.jump { position: sticky; top: var(--toph); z-index: 9; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin-top: 10px; padding: 7px 10px;
-  background: linear-gradient(rgba(11,10,20,.97), rgba(11,10,20,.9)); border-bottom: 1px solid var(--gold3); }
+/* the sticky bar (.jumpw) holds the row that scrolls sideways (.jump) and the fades at its ends */
+.jumpw { position: sticky; top: var(--toph); z-index: 9; margin-top: 10px; background: linear-gradient(rgba(11,10,20,.97), rgba(11,10,20,.9)); border-bottom: 1px solid var(--gold3); }
+.jump { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 7px 10px; }
+.jumpw::before, .jumpw::after { content: ""; position: absolute; top: 0; bottom: 0; width: 34px; z-index: 1; pointer-events: none; opacity: 0; transition: opacity .15s; }
+.jumpw::before { left: 0; background: linear-gradient(90deg, rgb(11,10,20), rgba(11,10,20,0)); } .jumpw::after { right: 0; background: linear-gradient(270deg, rgb(11,10,20), rgba(11,10,20,0)); }
+.jumpw.fl::before, .jumpw.fr::after { opacity: 1; }
+/* other rows that scroll sideways fade out at an end with more to see, as .scroller does (its .less / .more) */
+.recent.fr, .evo.fr, .tabs2.teams.fr { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 34px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 34px), transparent); }
+.recent.fl, .evo.fl, .tabs2.teams.fl { -webkit-mask-image: linear-gradient(90deg, transparent, #000 34px); mask-image: linear-gradient(90deg, transparent, #000 34px); }
+.recent.fl.fr, .evo.fl.fr, .tabs2.teams.fl.fr { -webkit-mask-image: linear-gradient(90deg, transparent, #000 34px, #000 calc(100% - 34px), transparent); mask-image: linear-gradient(90deg, transparent, #000 34px, #000 calc(100% - 34px), transparent); }
 .jump::-webkit-scrollbar { display: none; }
 .jump button { flex: none; height: 28px; padding: 0 11px; border-radius: 999px; border: 2px solid var(--gold2); background: linear-gradient(#1c2340, #0b1024);
   font-family: Rodin, Arial, sans-serif; font-size: 11.5px; text-shadow: var(--ol); }
@@ -999,6 +1015,9 @@ let uState = { els: new Set(ELS), rar: new Set(["omni", "7", "6"]), q: "", sort:
 uState.els = new Set(uState.els); uState.rar = new Set(uState.rar); uState.roles = new Set(uState.roles); uState.get = new Set(uState.get);
 delete uState.mine; if (uState.sort === "lv") uState.sort = "rarity";  // box filter and sort from 4.0–4.3
 let viewMode = store.get("bf.view", "grid"), favs = new Set(store.get("bf.favs", []));
+// favorite spheres and items (their ★ on the item page): on the Favorites tab, a ★ filter on the Items tab and in the sphere picker
+let ifavs = new Set(store.get("bf.ifavs", []));
+const ifavToggle = id => { ifavs.has(id) ? ifavs.delete(id) : ifavs.add(id); store.set("bf.ifavs", [...ifavs]); return ifavs.has(id); };
 // "My box": the units you have, marked by hand on their page (kept only on this phone)
 let mine = new Set(store.get("bf.mine", []));
 const saveMine = () => store.set("bf.mine", [...mine]);
@@ -1232,12 +1251,13 @@ $("ufbtn").onclick = $("usum").onclick = () => { uState.showFilters = !uState.sh
 function jumpBar(container, secs) {
   if (secs.length < 3) return;
   const bar = document.createElement("div"); bar.className = "jump";
+  const wrap = document.createElement("div"); wrap.className = "jumpw"; wrap.append(bar);
   const btns = secs.map(s => {
     const b = document.createElement("button"); b.textContent = s.querySelector(":scope > h3")?.textContent || s.dataset.jump || "";
     b.onclick = () => s.scrollIntoView({ behavior: "smooth", block: "start" });
     bar.append(b); return b;
   });
-  container.prepend(bar);
+  container.prepend(wrap);
   // the section you're reading lights up, and the bar scrolls along to keep it in sight
   let raf = 0, cur = -1;
   const spy = () => {
@@ -1253,6 +1273,31 @@ function jumpBar(container, secs) {
   const onScroll = () => { raf ||= requestAnimationFrame(spy); };
   addEventListener("scroll", onScroll, { passive: true }); requestAnimationFrame(spy);
 }
+// a row that scrolls sideways fades at the end that has more (fl / fr; a jump bar's on its sticky holder): it is redrawn
+// when it scrolls, and once a frame after the page changes (new rows, a tab shown, a turned phone)
+const FADE_SEL = ".recent, .evo, .jump, .tabs2.teams";  // .scroller has its own (scrollHint)
+// every search box gets its × (wrapped once, as it's drawn); the × follows what's typed, or set by the page
+function searchX() {
+  for (const q of document.querySelectorAll("input[type=search]")) {
+    if (!q.parentElement.classList.contains("qwrap")) {
+      const w = document.createElement("span"); w.className = "qwrap"; q.before(w); w.append(q);
+      const x = document.createElement("button"); x.type = "button"; x.className = "qx"; x.textContent = "✕"; x.setAttribute("aria-label", "Clear the search");
+      x.onclick = () => { q.value = ""; q.dispatchEvent(new Event("input", { bubbles: true })); q.dispatchEvent(new Event("change", { bubbles: true })); w.classList.remove("has"); q.focus(); };
+      w.append(x);
+    }
+    q.parentElement.classList.toggle("has", !!q.value);
+  }
+}
+document.addEventListener("input", e => { if (e.target.matches?.("input[type=search]") && e.target.parentElement.classList.contains("qwrap")) e.target.parentElement.classList.toggle("has", !!e.target.value); });
+function edgeFade(el) {
+  const box = el.classList.contains("jump") ? el.parentElement : el, w = el.clientWidth;
+  box.classList.toggle("fl", !!w && el.scrollLeft > 2); box.classList.toggle("fr", !!w && el.scrollLeft + w < el.scrollWidth - 2);
+}
+let fadeRaf = 0;
+const fadeSoon = () => { fadeRaf ||= requestAnimationFrame(() => { fadeRaf = 0; document.querySelectorAll(FADE_SEL).forEach(edgeFade); searchX(); }); };
+document.addEventListener("scroll", e => { if (e.target.nodeType === 1 && e.target.matches(FADE_SEL)) edgeFade(e.target); }, { capture: true, passive: true });
+new MutationObserver(fadeSoon).observe(document.body, { childList: true, subtree: true });
+addEventListener("resize", fadeSoon);
 function setupUnitFilters() {
   const els = $("uel"), rar = $("urar"), roles = $("urole");
   for (const e of ELS) {
@@ -1834,6 +1879,14 @@ async function showUnit(id) {
 let sType = store.get("bf.stype", "All"), sRev = store.get("bf.srev", false);
 if (sType === "Materials") sType = "Items";  // the chip's old name
 let sEl = store.get("bf.sel", "");  // only spheres whose effect names this element ("boost to Atk of Fire types"), "" any
+let sFav = false;  // only your favorite spheres and items (not remembered: the list never looks empty by surprise next time)
+const IFSTAR = `<img class="sti ifav" src="/static/star_fav.png" alt="★"> `;
+// back on the Items tab after a ★ was tapped on an item page: the stars in the list follow (the ★ filter redraws it)
+function refreshItemMarks() {
+  if (sFav) return renderSpheres();
+  for (const el of $("slist").querySelectorAll(".item[data-i]")) { const t = el.querySelector(".t"), has = !!t.querySelector(".ifav");
+    if (has !== ifavs.has(el.dataset.i)) has ? t.querySelector(".ifav").remove() : t.insertAdjacentHTML("afterbegin", IFSTAR); }
+}
 async function renderSpheres() {
   const [I, R] = await Promise.all([load("items"), load("recipes")]), q = $("sq").value.trim().toLowerCase();
   const all = Object.values(I).filter(s => s.name);
@@ -1845,7 +1898,11 @@ async function renderSpheres() {
       const b = document.createElement("button"); b.className = "chip" + (t === sType ? " on" : ""); b.textContent = t;
       b.onclick = () => { sType = t; store.set("bf.stype", t); $("stype").querySelectorAll(".chip:not(.rev)").forEach(c => c.classList.toggle("on", c === b)); renderSpheres(); };
       $("stype").append(b);
-      if (t === "All") $("stype").append(r);  // right after All, as on the Elgif tab
+      if (t === "All") {  // right after All, as on the Elgif tab
+        const f = chip(`${FAVSTAR} Favorites`, sFav); f.id = "sfav";
+        f.onclick = () => { sFav = !sFav; f.classList.toggle("on", sFav); renderSpheres(); };
+        $("stype").append(f, r);
+      }
     }
     for (const e of ELS) {  // one element at a time; tap it again for all
       const b = chip(`${orb(e)}${e}`, e === sEl); b.dataset.el = e;
@@ -1857,22 +1914,23 @@ async function renderSpheres() {
   const pick = { All: () => true, Spheres: s => s.type, Items: s => !s.type, Craftable: craftable }[sType] || (s => s.type === sType);
   const label = { All: "spheres and items", Spheres: "spheres", Items: "items", Craftable: "craftable items" }[sType] || `${sType} spheres`;
   const elRe = sEl && new RegExp(`\\b${sEl}\\b`, "i");
-  const match = s => (!q || s.name.toLowerCase().includes(q)) && (!sRev || s.ok === 1) && (!elRe || elRe.test(s.desc || ""));
+  const match = s => (!q || s.name.toLowerCase().includes(q)) && (!sRev || s.ok === 1) && (!elRe || elRe.test(s.desc || "")) && (!sFav || ifavs.has(s.id));
   // a search looks through the chip's own list; when that has none, through everything (said so)
   let list = all.filter(s => match(s) && pick(s)), wider = false;
   if (q && !list.length && sType !== "All") { list = all.filter(match); wider = list.length > 0; }
   list.sort((a, b) => (b.rarity || 0) - (a.rarity || 0) || a.name.localeCompare(b.name) || (b.ok || 0) - (a.ok || 0));  // two of a name: Revived's first
   const guess = !!q && !list.length;  // nothing anywhere: the closest names
-  if (guess) list.push(...closeNames(q, sRev ? all.filter(s => s.ok === 1) : all, s => s.name, s => s.rarity || 0).slice(0, 12));
+  if (guess) list.push(...closeNames(q, all.filter(s => (!sRev || s.ok === 1) && (!sFav || ifavs.has(s.id))), s => s.name, s => s.rarity || 0).slice(0, 12));
   const n = list.length, res = `${n} result${n === 1 ? "" : "s"}`, typed = $("sq").value.trim();
-  const only = `${sRev && sType !== "Craftable" ? " you can get in Revived" : ""}${sEl ? ` that name ${sEl}` : ""}`;
+  const only = `${sFav ? " in your favorites" : ""}${sRev && sType !== "Craftable" ? " you can get in Revived" : ""}${sEl ? ` that name ${sEl}` : ""}`;
   $("scount").textContent = guess && n ? `No exact match for “${typed}”${only}. Did you mean:`
     : wider ? `No ${label} with “${typed}”${only}: ${res} in all spheres and items`
     : q ? `${res}${sType === "All" ? "" : ` in ${label}`}${only}`
     : `${n} ${sType === "Craftable" ? "you can make in town (items at Synthesis, spheres at Sphere)" : label}${only}`;
-  paged($("slist"), list, s => { const d = document.createElement("div"); d.className = "item"; d.onclick = () => go(`#/item/${s.id}`);
-    d.innerHTML = `<img loading="lazy" decoding="async" src="${iImg(s.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1"><div class="t">${esc(s.name)} <span class="dim small">${s.rarity ? `${s.rarity}${STAR}` : ""}</span>${craftable(s) ? `<span class="craft">craftable</span>` : nogTag(s)}</div><div class="s">${esc(s.type ? s.type + " · " : "Item · ")}${esc(s.desc)}</div></div>`;
+  paged($("slist"), list, s => { const d = document.createElement("div"); d.className = "item"; d.dataset.i = s.id; d.onclick = () => go(`#/item/${s.id}`);
+    d.innerHTML = `<img loading="lazy" decoding="async" src="${iImg(s.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1"><div class="t">${ifavs.has(s.id) ? IFSTAR : ""}${esc(s.name)} <span class="dim small">${s.rarity ? `${s.rarity}${STAR}` : ""}</span>${craftable(s) ? `<span class="craft">craftable</span>` : nogTag(s)}</div><div class="s">${esc(s.type ? s.type + " · " : "Item · ")}${esc(s.desc)}</div></div>`;
     return d; }, "");
+  if (sFav && !n && !q) $("slist").innerHTML = `<div class="empty"><b>No favorite ${label} yet</b>Open a sphere or item and tap the ${FAVSTAR} at the top to keep it here and on the ${FAVSTAR} tab.</div>`;
 }
 // Elgifs: extra skills a unit learns when an Imbued Tablet Elgif carrying one is fused into it (the game's own list)
 const ELGIF = "50792", EMGIF = "60812";
@@ -1979,7 +2037,8 @@ async function showItem(id) {
   if (nav !== NAV) return;  // left the page while it loaded
   const users = Object.entries(D).filter(([, d]) => (d.es_spheres || []).includes(id)).map(([u]) => u).filter(u => UMAP[u]);
   $("page").innerHTML = `<div class="sec" style="display:flex;gap:12px;align-items:center"><img src="${iImg(id)}" alt="" style="width:72px;height:72px;object-fit:contain" onerror="this.style.visibility='hidden'">
-      <div><h2 style="margin:0;font-size:20px;text-shadow:var(--ol)">${esc(s.name)}</h2><div class="badges">${s.type ? `<span class="badge">${esc(s.type)} sphere</span>` : `<span class="badge">Item</span>`}${s.rarity ? `<span class="badge star">${s.rarity}${STAR}</span>` : ""}${nogTag(s)}</div></div></div>
+      <div style="min-width:0"><h2 style="margin:0;font-size:20px;text-shadow:var(--ol)">${esc(s.name)}</h2><div class="badges">${s.type ? `<span class="badge">${esc(s.type)} sphere</span>` : `<span class="badge">Item</span>`}${s.rarity ? `<span class="badge star">${s.rarity}${STAR}</span>` : ""}${nogTag(s)}</div></div>
+      <button class="favbtn inl ${ifavs.has(id) ? "on" : ""}" id="ifavbtn" aria-label="Favorite"><img src="/static/star_fav.png" alt=""></button></div>
     ${s.desc ? `<div class="sec"><h3 class="blue">Effect</h3><div class="lore">${hl(s.desc)}</div></div>` : ""}
     <div class="sec"><h3 class="green">Where to get it</h3>${getHtml(s)}</div>
     ${R[id] ? `<div class="sec"><h3>Crafting plan</h3><div class="qty"><button class="gbtn small dark" id="cminus" aria-label="Fewer">−</button><b id="cq">1</b><button class="gbtn small dark" id="cplus" aria-label="More">+</button><span class="small dim">to craft</span></div>${
@@ -1987,6 +2046,7 @@ async function showItem(id) {
     ${usedIn.length ? `<div class="sec"><h3 class="blue">Used to craft</h3><div class="need">${usedIn.map(r => `<div class="ni" data-i="${r}"><img src="${iImg(r)}" alt="" onerror="this.style.visibility='hidden'"><span>${esc(I[r].name)}</span><small>needs ${R[r][1].find(([m]) => m === id)[1]}</small></div>`).join("")}</div></div>` : ""}
     ${users.length ? `<div class="sec"><h3 class="purple">Best on</h3><div class="mats">${users.map(u => unitMini(u)).join("")}</div></div>` : ""}`;
   $("page").querySelectorAll(".sec > .need [data-i]").forEach(el => el.onclick = () => go(`#/item/${el.dataset.i}`));
+  $("ifavbtn").onclick = () => { const on = ifavToggle(id); $("ifavbtn").classList.toggle("on", on); toast(on ? "Added to favorites: find it on the ★ tab" : "Removed from favorites"); };
   if (R[id]) {
     let qty = 1;
     const set = n => { qty = Math.max(1, Math.min(99, n)); $("cq").textContent = qty; drawPlan(id, qty, I, R); };
@@ -2046,10 +2106,14 @@ async function renderFavs() {
   const list = UNITS.filter(u => favs.has(u.id)).sort((a, b) => b.r - a.r || a.n.localeCompare(b.n));
   NAV_LIST = list.map(u => u.id);
   // the units and items opened last
-  const I = RECENT.some(([t]) => t === "i") ? await load("items") : {};
-  const recent = RECENT.filter(([t, id]) => t === "u" ? UMAP[id] : I[id]).map(([t, id]) => t === "u" ? unitMini(id)
-    : `<div class="eu" onclick="go('#/item/${id}')"><img src="${iImg(id)}" alt="" onerror="this.style.visibility='hidden'"><div class="gname">${esc(I[id].name)}</div></div>`).join("");
-  $("frecent").innerHTML = recent ? `<div class="sec" style="padding:10px 10px 6px"><h3 class="blue">Recently viewed</h3><button class="gbtn small dark" id="rclear" style="float:right">Clear</button><div class="recent">${recent}</div></div>` : "";
+  const I = RECENT.some(([t]) => t === "i") || ifavs.size ? await load("items") : {};
+  const itemMini = id => `<div class="eu" onclick="go('#/item/${id}')"><img src="${iImg(id)}" alt="" onerror="this.style.visibility='hidden'"><div class="gname">${esc(I[id].name)}</div></div>`;
+  const recent = RECENT.filter(([t, id]) => t === "u" ? UMAP[id] : I[id]).map(([t, id]) => t === "u" ? unitMini(id) : itemMini(id)).join("");
+  // favorite spheres and items: spheres first, then by rarity and name
+  const fi = [...ifavs].filter(id => I[id]).sort((a, b) => !!I[b].type - !!I[a].type || (I[b].rarity || 0) - (I[a].rarity || 0) || I[a].name.localeCompare(I[b].name));
+  $("frecent").innerHTML = (fi.length ? `<div class="sec" style="padding:10px 10px 6px"><h3 class="purple">Favorite spheres and items</h3><button class="gbtn small dark" id="fiall" style="float:right">List</button><div class="fitems">${fi.map(itemMini).join("")}</div></div>` : "")
+    + (recent ? `<div class="sec" style="padding:10px 10px 6px"><h3 class="blue">Recently viewed</h3><button class="gbtn small dark" id="rclear" style="float:right">Clear</button><div class="recent">${recent}</div></div>` : "");
+  if ($("fiall")) $("fiall").onclick = () => { sFav = true; sType = "All"; $("sq").value = ""; $("stype").innerHTML = ""; $("sel").innerHTML = ""; go("#/spheres"); renderSpheres(); };
   if ($("rclear")) $("rclear").onclick = () => { RECENT = []; store.set("bf.recent", RECENT); renderFavs(); };
   // your box at a glance, and the way to mark many units at once
   const box = UNITS.filter(u => mine.has(u.id)), count = (f, keys) => keys.map(([k, l]) => [l, box.filter(u => f(u, k)).length]).filter(x => x[1]);
@@ -2058,8 +2122,8 @@ async function renderFavs() {
   $("fbox").innerHTML = `<div class="sec"><h3 class="green">My box</h3>${box.length
     ? `<p class="small" style="margin:0 0 6px"><b>${box.length}</b> unit${box.length > 1 ? "s" : ""} marked as yours</p><div class="badges">${rar.map(([l, n]) => `<span class="badge star">${l} ×${n}</span>`).join("")}</div>
       <div class="badges" style="margin-top:5px">${els.map(([l, n]) => `<span class="badge">${l}×${n}</span>`).join("")}</div>`
-    : `<p class="small" style="margin:0">Your box is empty.</p>`}
-    <details class="why" ${box.length ? "" : "open"}><summary>What is My box for?</summary><ul>
+    : `<p class="small" style="margin:0">Your box is empty. Mark the units you own to filter lists and build teams from them.</p>`}
+    <details class="why"><summary>What is My box for?</summary><ul>
       <li>Your box is the units you own in Brave Frontier. You mark them yourself: the app can't see your game account.</li>
       <li>Your units get a <b>✓</b> in every list, and the <b>✓ My box</b> filter shows only them.</li>
       <li>Team builder: <b>✓ Fill from my box only</b> builds a team from units you really have, and the unit picker has a My box filter too.</li>
@@ -2070,7 +2134,7 @@ async function renderFavs() {
   if ($("fshow")) $("fshow").onclick = () => { uState.mine = true; uState.q = ""; $("uq").value = ""; $("umine").classList.add("on"); tabsDrawn.add("units"); go("#/units"); renderUnits(); };
   $("fedit").onclick = () => { go("#/units"); setBoxEdit(true); };
   $("fcount").textContent = list.length ? `${list.length} favorite units` : "";
-  if (!list.length) return $("flist").innerHTML = `<div class="empty"><b>No favorites yet</b>Open a unit and tap the ${FAVSTAR} to keep it here.</div>`;
+  if (!list.length) return $("flist").innerHTML = `<div class="empty"><b>No favorite units yet</b>Open a unit, sphere or item and tap the ${FAVSTAR} to keep it here.</div>`;
   paged($("flist"), list, viewMode === "grid" ? u => gridCell(u) : u => listRow(u), viewMode === "grid" ? "grid" : "list");
 }
 
@@ -3418,7 +3482,7 @@ async function shareTeam(team, W) {
 }
 
 // choosing a sphere for a squad unit: the ones its extra skill wants first, then the biggest stat boosts for it
-let sphQ = "";
+let sphQ = "", sphFav = false;  // sphFav: only your favorite spheres
 async function showSpherePick(slot, n) {
   const nav = NAV, id = TEAMS[TCUR][slot], u = UMAP[id], [I, D, w] = await Promise.all([load("items"), load("details"), u ? wiki(id) : {}]);
   if (nav !== NAV) return;  // left the page while it loaded
@@ -3439,10 +3503,10 @@ async function showSpherePick(slot, n) {
   const esOn = !!other && (best.includes(other.id) || bonusTypes(D[id]).includes(other.type)), bestOk = best.filter(x => !clash(I[x]));
   const row = s => { const b = boostText(statBoosts(s.desc)), no = clash(s);
     return `<div class="item${no ? " clash" : ""}" ${no ? "" : `data-pick="${s.id}"`}><img loading="lazy" src="${iImg(s.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1">
-      <div class="t">${esc(s.name)} <span class="dim small">${s.rarity ? `${s.rarity}${STAR}` : ""} ${esc(s.type || "")}</span></div>${
+      <div class="t">${ifavs.has(s.id) ? IFSTAR : ""}${esc(s.name)} <span class="dim small">${s.rarity ? `${s.rarity}${STAR}` : ""} ${esc(s.type || "")}</span></div>${
       no ? `<div class="clashw">Can't go with ${esc(other.name)}: a unit can't hold two ${esc(s.type)} spheres</div>` : ""}${b ? `<div class="sb">${esc(b)}</div>` : ""}<div class="s">${esc(s.desc)}</div></div></div>`; };
   $("page").innerHTML = `<div id="sphpage"><div class="bar2"><div class="searchrow"><input id="spq" type="search" placeholder="Search spheres…" value="${esc(sphQ)}" autocomplete="off"></div>
-      <div class="scroller"><button class="chip on" id="spnone">No sphere</button></div></div>
+      <div class="scroller"><button class="chip on" id="spnone">No sphere</button>${[...ifavs].some(x => I[x]?.type) ? `<button class="chip${sphFav ? " on" : ""}" id="spfav">${FAVSTAR} Favorites</button>` : ""}</div></div>
     ${!best.length ? "" : esOn ? `<div class="count">${esc(other.name)} (sphere ${2 - n}) already switches on ${esc(u.n)}'s extra skill</div>`
       : bestOk.length ? `<div class="count">These switch on ${esc(u.n)}'s extra skill</div><div style="padding-top:8px">${bestOk.map(x => row(I[x])).join("")}</div>`
       : `<div class="count">${esc(u.n)}'s extra skill needs ${best.map(x => esc(I[x].name)).join(" or ")}, which can't go with ${esc(other.name)} (both ${esc(other.type)}): put it in sphere ${2 - n} instead to switch it on</div>`}
@@ -3451,11 +3515,13 @@ async function showSpherePick(slot, n) {
   const pick = sid => { if (picked) return; picked = true; TSPH[TCUR][slot][n] = sid; saveSquad(); history.back(); };
   $("sphpage").onclick = e => { const r = e.target.closest("[data-pick]"); if (r) pick(r.dataset.pick); };
   $("spnone").onclick = () => pick(null);
+  if (sphFav && ![...ifavs].some(x => I[x]?.type)) sphFav = false;
+  if ($("spfav")) $("spfav").onclick = () => { sphFav = !sphFav; $("spfav").classList.toggle("on", sphFav); draw(); };
   const draw = () => {
     const q = sphQ.trim().toLowerCase();
-    const list = Object.values(I).filter(s => s.type && s.name && (!q || s.name.toLowerCase().includes(q) || s.desc.toLowerCase().includes(q)))
+    const list = Object.values(I).filter(s => s.type && s.name && (!sphFav || ifavs.has(s.id)) && (!q || s.name.toLowerCase().includes(q) || s.desc.toLowerCase().includes(q)))
       .map(s => [s, gain(s)]).sort((a, b) => clash(a[0]) - clash(b[0]) || b[1] - a[1] || (b[0].rarity || 0) - (a[0].rarity || 0) || a[0].name.localeCompare(b[0].name)).map(x => x[0]);
-    $("spcount").textContent = `${list.length} spheres, the best for what it does (${focus.label}) first, with its extra skill, SP and other sphere in mind${
+    $("spcount").textContent = `${list.length} ${sphFav ? "of your favorite " : ""}spheres, the best for what it does (${focus.label}) first, with its extra skill, SP and other sphere in mind${
       other?.type ? `. ${other.type} spheres are greyed out at the end: it already holds ${other.name}` : ""}`;
     paged($("splist"), list, s => { const d = document.createElement("div"); d.innerHTML = row(s); return d.firstElementChild; }, "");
   };
@@ -3683,11 +3749,13 @@ async function route() {
   tab = TABS[t] ? t : "units";
   document.querySelectorAll(".view").forEach(v => v.classList.toggle("on", v.id === "v-" + tab));
   refreshMarks($("v-" + tab));  // ★ and ✓ changed on a unit page
+  fadeSoon();  // its rows of chips, shown again
   document.querySelectorAll(".nav button").forEach(b => b.classList.toggle("on", b.dataset.tab === tab));
   $("favtab").classList.toggle("on", tab === "favs");
   setTitle(TABS[tab], false);
   if (tab === "favs") renderFavs();
   else if (tab === "team") renderTeam();
+  else if (tab === "spheres" && tabsDrawn.has(tab)) refreshItemMarks();
   else if (!tabsDrawn.has(tab)) { tabsDrawn.add(tab); if (tab === "units") renderUnits(); if (tab === "spheres") renderSpheres(); if (tab === "drops") renderDrops(); if (tab === "elgifs") renderElgifs(); }
   requestAnimationFrame(() => window.scrollTo(0, scrollPos[tab] || 0));
 }
@@ -3755,7 +3823,7 @@ const scrollHint = el => { const max = el.scrollWidth - el.clientWidth;
 const scrollHints = () => document.querySelectorAll(".scroller:not(.wrap)").forEach(scrollHint);
 document.addEventListener("scroll", e => e.target.classList?.contains("scroller") && scrollHint(e.target), true);  // scroll doesn't bubble
 document.addEventListener("wheel", e => {
-  const el = e.target.closest?.(".scroller:not(.wrap)"), x = el?.scrollLeft;
+  const el = e.target.closest?.(".scroller:not(.wrap), .jump, .recent, .tabs2.teams"), x = el?.scrollLeft;
   if (el && Math.abs(e.deltaY) > Math.abs(e.deltaX)) { el.scrollLeft += e.deltaY; if (el.scrollLeft !== x) e.preventDefault(); }  // at its ends the page scrolls
 }, { passive: false });
 let hintRaf = 0;
@@ -3796,7 +3864,7 @@ window.BFBack = () => {
   setupUnitFilters();
   try { await route(); } finally { hideSplash(); }
   load("version").then(V => {
-    const seen = store.get("bf.seenv", null), used = ["bf.recent", "bf.favs", "bf.teams"].some(k => store.get(k, null) !== null);
+    const seen = store.get("bf.seenv", null), used = ["bf.recent", "bf.favs", "bf.ifavs", "bf.teams"].some(k => store.get(k, null) !== null);
     if (!V.version || seen === V.version) return;
     store.set("bf.seenv", V.version);
     if (seen || used) setTimeout(showAbout, 600);
