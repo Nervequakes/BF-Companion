@@ -47,9 +47,13 @@ input, select { background: linear-gradient(#0a1020, #121a36); border: 2px solid
 input:focus, select:focus { outline: none; border-color: var(--accent); }
 /* a search box's × (the same on iPhone and Android; the browser's own is hidden): shows once something is typed */
 input[type=search]::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; display: none; }
-.qwrap { position: relative; display: flex; flex: 1; min-width: 0; } .qwrap > input { flex: 1; min-width: 0; padding-right: 38px; }
+.qwrap { position: relative; display: flex; flex: 1; min-width: 0; } .qwrap > input { flex: 1; min-width: 0; } .qwrap.has > input { padding-right: 38px; }  /* room for the × only once it shows: the hint keeps its room */
 .qx { position: absolute; right: 5px; top: 50%; transform: translateY(-50%); width: 30px; height: 30px; padding: 0; border: 0; border-radius: 50%; background: rgba(255,255,255,.14); color: var(--text); font-size: 15px; line-height: 30px; text-align: center; display: none; cursor: pointer; }
 .qwrap.has .qx { display: block; } .qx:active { background: rgba(255,255,255,.3); }
+/* a long note (over 5 lines) shows its first 3 and a button that opens or closes the rest */
+p.fold { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; -webkit-mask-image: linear-gradient(#000 55%, transparent); mask-image: linear-gradient(#000 55%, transparent); }
+.foldbtn { display: inline-flex; align-items: center; gap: 4px; margin: 2px 0 0; padding: 6px 2px; background: none; border: 0; color: var(--accent); font: bold 12.5px Arial, sans-serif; text-shadow: var(--ol); cursor: pointer; }
+.foldbtn:active { opacity: .7; }
 select { text-shadow: var(--ol); font-size: 13px; }
 
 /* top bar */
@@ -177,7 +181,11 @@ main { padding-bottom: calc(var(--navh) + 20px); }
   font-family: Rodin, Arial, sans-serif; color: var(--orange); text-shadow: var(--ol); font-size: 14px; }
 .costplate b { color: #fff; font-weight: normal; font-size: 17px; } .costplate.over b { color: #ff7a6b; }
 .costplate input { width: 52px; padding: 2px 6px; font-size: 15px; font-family: Rodin, Arial, sans-serif; border-radius: 6px; }
-.scards { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; } @media (min-width: 560px) { .scards { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.scards { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+/* the Team tab's sections are sized by their own width (a pane on a PC, the screen on a phone): two squad cards a row from 600 px (each 296+) */
+#v-team .sec { container-type: inline-size; }
+@container (min-width: 600px) { .scards { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+@supports not (container-type: inline-size) { @media (min-width: 560px) { .scards { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } } }
 .scard { position: relative; min-width: 0; padding: 8px; border-radius: 10px; border: 2px solid var(--gold2); background: linear-gradient(90deg, color-mix(in srgb, var(--el) 22%, transparent), rgba(0,0,0,.45) 60%), linear-gradient(#141a2e, #0a0d18); box-shadow: inset 0 0 0 1px #000; }
 .sch { display: flex; align-items: center; gap: 8px; } .sch .ic { width: 46px; height: 46px; flex: none; cursor: pointer; }
 .scn { flex: 1; min-width: 0; font-family: Rodin, Arial, sans-serif; font-size: 13px; text-shadow: var(--ol); line-height: 1.2; cursor: pointer; }
@@ -368,7 +376,7 @@ select.gsel { height: 38px; font-size: 12.5px; padding: 0 10px; }
 .jump::-webkit-scrollbar { display: none; }
 .jump button { flex: none; height: 28px; padding: 0 11px; border-radius: 999px; border: 2px solid var(--gold2); background: linear-gradient(#1c2340, #0b1024);
   font-family: Rodin, Arial, sans-serif; font-size: 11.5px; text-shadow: var(--ol); }
-#ubody > .sec, #v-team > .sec { scroll-margin-top: calc(var(--toph) + 55px); }
+#ubody > .sec, .tpane > .sec { scroll-margin-top: calc(var(--toph) + 55px); }
 
 /* battle sprite stage and the team formation */
 .stage { position: relative; min-height: 170px; margin: -2px -2px 0; border-radius: 9px; overflow: hidden; background: #2b3a1c url(/static/battle_bg.jpg) center 62% / cover; display: grid; place-items: end center; padding: 10px 0 18px; }
@@ -399,16 +407,24 @@ select.gsel { height: 38px; font-size: 12.5px; padding: 0 10px; }
 .cov .cl { align-self: center; font-family: Rodin, Arial, sans-serif; font-size: 12px; line-height: 1.2; text-shadow: var(--ol); overflow-wrap: anywhere; }
 /* the role's best number on its own line, under the name, on every row */
 .cov .cl > small { display: block; margin-top: 2px; padding-left: .95em; } .cov .cl .cfind { display: block; margin-top: 4px; } .cov .cfrow { grid-column: 2 / -1; }
-.cov .ok { color: #7ad67a; } .cov .no { color: #ff8a7a; } .cov .part { color: #ff8a7a; } .cov .cl small { color: var(--accent); font-size: 10.5px; }
+.cov .ok { color: #7ad67a; } .cov .no { color: #ff8a7a; } .cov .part { color: #ff8a7a; } .cov .selfc { color: #8fd0ff; } .cov .cl small { color: var(--accent); font-size: 10.5px; }
 /* the unit's portrait as big as its column allows (36px, less on a narrow phone), every one at the top of its row; its
    spheres in a row on the portrait's bottom edge (not over its face, and not pushing the caption down: every caption
    starts at the same height); a caption of several parts, one part a line */
 .cov .src { display: flex; flex-direction: column; align-items: center; min-width: 0; } .cov .src .pw { position: relative; display: block; line-height: 0; }
 .cov .src .sphi { display: flex; justify-content: center; gap: 1px; height: 14px; position: absolute; left: 50%; bottom: -7px; transform: translateX(-50%); z-index: 1; }
 .cov .src small > span { display: block; } .cov .src .sphi img { width: 14px; height: 14px; border-radius: 3px; box-shadow: 0 0 0 1px #000; background: #0a0d18; } .cov .src .sphi img.own { opacity: .55; } .cov .src img { width: 36px; max-width: 100%; height: auto; aspect-ratio: 1; cursor: pointer; } .cov .src img.viasp { outline: 2px solid #6fd17a; outline-offset: -2px; border-radius: 4px; }
-.cov .src small { margin-top: 8px; font-size: 9px; line-height: 1.1; color: var(--dim); text-align: center; text-shadow: var(--ol); } .cov .src.off img { opacity: .4; filter: grayscale(.7); } .cov .src em { font-style: normal; font-size: 9px; line-height: 1.1; color: var(--accent); text-shadow: var(--ol); text-align: center; } .cov .src { position: relative; }
+.cov .src small { margin-top: 8px; font-size: 9px; line-height: 1.1; color: var(--dim); text-align: center; text-shadow: var(--ol); } .cov .src.off img { opacity: .4; filter: grayscale(.7); }
+/* on a skill it doesn't cast (counts if it casts that one): faded less, a dashed outline, its caption in gold */
+.cov .src.off.alt img { opacity: .6; filter: grayscale(.3); outline: 2px dashed #d8b25a; outline-offset: 1px; border-radius: 6px; } .cov .src.off.alt small { color: #e6c877; }
+/* a buff for itself: it's active (that unit hits harder), just not for the others: full colour, a blue outline */
+/* the note by a faded unit you tapped: small and dark, by the icon */
+.covtip { position: absolute; z-index: 35; width: max-content; max-width: min(260px, calc(100vw - 16px)); padding: 8px 10px; border-radius: 10px; background: linear-gradient(#161d33, #0a0d18);
+  border: 1px solid var(--gold3); box-shadow: 0 6px 18px rgba(0,0,0,.7); font-size: 12px; line-height: 1.35; text-shadow: var(--ol); animation: fadein .12s ease-out; }
+.covtip b { font-family: Rodin, Arial, sans-serif; font-weight: normal; color: var(--accent); } .covtip .ctb { display: flex; justify-content: flex-end; gap: 6px; margin-top: 7px; }
+.cov .src.off.self img { opacity: 1; filter: none; outline: 2px solid #6fc3ff; outline-offset: 1px; border-radius: 6px; } .cov .src.off.self small { color: #a9dcff; } .cov .src em { font-style: normal; font-size: 9px; line-height: 1.1; color: var(--accent); text-shadow: var(--ol); text-align: center; } .cov .src { position: relative; }
 .covkey { margin: 0 0 6px; font-size: 12px; color: var(--dim); text-shadow: var(--ol); } .covkey b { color: #fff; font-weight: normal; } .covkey b.dbbok { color: #9ff09f; } .covkey b.gold { color: #ffd76a; }
-@media (min-width: 700px) { .cov > div { grid-template-columns: 170px repeat(6, minmax(0, 76px)); column-gap: 6px; } .cov > .covh { font-size: 12px; } .cov .cl { font-size: 14px; } .cov .cl small { font-size: 12px; }
+@container (min-width: 650px) { .cov > div { grid-template-columns: 170px repeat(6, minmax(0, 76px)); column-gap: 6px; } .cov > .covh { font-size: 12px; } .cov .cl { font-size: 14px; } .cov .cl small { font-size: 12px; }
   .cov .src img { width: 40px; height: 40px; } .cov .src small, .cov .src em { font-size: 11.5px; } .covkey { font-size: 13px; } }
 .mu { display: grid; grid-template-columns: 96px repeat(6, 1fr); align-items: center; text-align: center; font-family: Rodin, Arial, sans-serif; font-size: 14px; text-shadow: var(--ol); }
 .mu > div { padding: 5px 0; border-top: 1px solid rgba(255,255,255,.06); } .mu > div:nth-child(-n+7) { border-top: 0; }
@@ -472,16 +488,40 @@ body.boxedit .totop { bottom: calc(var(--navh) + 78px); } body.boxedit .toast { 
   .lu:hover, .item:hover { border-color: var(--gold); } .gate:hover { background: rgba(255,255,255,.05); }
   .gbtn:hover:not(:disabled), .chip:hover, .jump button:hover { filter: brightness(1.15); }
 }
-/* on a PC screen: one centered column, like a big phone */
-@media (min-width: 1000px) { main { max-width: 920px; margin: 0 auto; } .top { padding-left: calc(50vw - 460px); padding-right: calc(50vw - 460px); } }
-/* ...with the game's tab buttons up in the header (placeNav), so nothing sits fixed over the bottom of the page */
+/* on a PC screen (1000 px and wider) the app is laid out like a web app: the header runs across the top, the game's
+   tab buttons stand in a bar down the left side, and the pages use the whole width */
 @media (min-width: 1000px) {
-  :root { --navh: 0px; --toph: 73px; }
-  .top .nav { position: static; padding: 0; gap: 4px; background: none; border: 0; box-shadow: none; }
-  .top .nav button { width: 62px; } .top .nav button img { max-height: 58px; }
-  .top .nav button.on img { transform: scale(1.06); }
-  .top .iconbtn[hidden] { display: grid !important; visibility: hidden; }  /* keeps its room: the tabs don't move from page to page */
+  :root { --navh: 0px; --railw: 96px; --jumph: 43px; }
+  body { padding-left: var(--railw); }
+  .top { margin-left: calc(-1 * var(--railw)); padding-left: 18px; padding-right: 18px; }
+  .nav { top: var(--toph); right: auto; bottom: 0; width: var(--railw); flex-direction: column; justify-content: flex-start; align-items: center; gap: 4px;
+    padding: 14px 0; border-top: 0; border-right: 3px solid var(--gold); box-shadow: 3px 0 0 var(--gold3), 8px 0 18px rgba(0,0,0,.6); overflow-y: auto; scrollbar-width: none; }
+  .nav button { flex: none; width: 76px; } .nav button img { max-height: 72px; }
+  .nav button.on img { transform: scale(1.08); }
+  main { max-width: 1760px; margin: 0 auto; padding-left: 10px; padding-right: 10px; }
+  .editbar { left: calc(var(--railw) + 12px); }
 }
+/* ...and the long pages put their sections side by side (3 columns from 1700 px), their bars across the top */
+@media (min-width: 1000px) {
+  #ubody, #dres, #page > .cols { columns: 2; column-gap: 0; }
+  :is(#ubody, #dres, #page > .cols) > * { break-inside: avoid; }
+  :is(#ubody, #dres, #page > .cols) > .sec { margin-top: 0; margin-bottom: 12px; }
+  :is(#ubody, #dres, #page > .cols) > :not(.sec) { column-span: all; }
+  #ubody > .jumpw { margin-bottom: 12px; } #dres, #page > .cols { padding-top: 12px; }
+  /* the Team tab: what you edit on the left (Field, Squad), what it does on the right, in view while you scroll the squad */
+  .tpanes { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+  .tpane.tr { position: sticky; top: calc(var(--toph) + var(--jumph)); max-height: calc(100vh - var(--toph) - var(--jumph)); overflow-y: auto; overscroll-behavior: contain;
+    display: flex; flex-direction: column; padding-top: 12px; scrollbar-width: thin; scrollbar-color: var(--gold3) transparent; }
+  .tpane.tr > .sec { margin: 0 10px 12px; scroll-margin-top: 12px; }  /* a jump scrolls the pane itself */
+  .tpane.tr > .tcov { order: 1; } .tpane.tr > .tmu { order: 2; } .tpane.tr > .tbc { order: 3; } .tpane.tr > .tls { order: 4; }
+  /* lists of cards (spheres and items, Elgifs, the pickers): as many side by side as fit */
+  :is(#slist, #elist, #splist, #ellist) > div:not(.more) { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 8px; padding: 0 10px; }
+  :is(#slist, #elist, #splist, #ellist) .item { margin: 0; }
+  /* the ★ tab: favorite spheres and items, recently viewed and My box in a row, the favorite units under them */
+  #v-favs.on { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; }
+  #frecent { display: contents; } #fcount, #flist { grid-column: 1 / -1; }
+}
+@media (min-width: 1700px) { #ubody, #dres { columns: 3; } }
 @media (min-width: 700px) { .grid { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); } .hero { min-height: 300px; } .list { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); } }
 /* a wide header: the picture under the glow (70% across), whole, instead of against the right edge and cut off */
 @media (min-width: 700px) { .hero .art { right: auto; left: 70%; transform: translateX(-50%); max-width: 56%; object-position: center bottom; } .hero .art.icon { transform: translate(-50%, 50%); } }
@@ -577,9 +617,9 @@ const applyZoom = () => { document.querySelector("meta[name=viewport]").content 
 addEventListener("orientationchange", () => setTimeout(applyZoom, 300));
 function toast(m, ms = 1800) { if (ms <= 1800) $("toast").classList.remove("long"); $("toast").textContent = m; $("toast").classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => $("toast").classList.remove("show"), ms); }
 // a toast with an Undo button, after a change that's easy to make by mistake (clearing a team, taking units out of the box)
-function undoToast(m, undo, ms = 6000) {
+function undoToast(m, undo, ms = 6000, label = "Undo") {  // a message with a button (Undo, or label)
   const el = $("toast"), b = document.createElement("button"); toast(m, ms); el.classList.add("long"); el.append(" ", b);
-  b.className = "tundo"; b.textContent = "Undo"; b.onclick = () => { clearTimeout(toast.t); el.classList.remove("show"); undo(); };
+  b.className = "tundo"; b.textContent = label; b.onclick = () => { clearTimeout(toast.t); el.classList.remove("show"); undo(); };
 }
 $("toast").onclick = () => { clearTimeout(toast.t); $("toast").classList.remove("show"); };  // a tap closes it sooner
 // numbers and dates look the same on every phone, whatever its language: "25,330", "31 October 2026"
@@ -1248,13 +1288,15 @@ function updateFilterUI() {
 }
 $("ufbtn").onclick = $("usum").onclick = () => { uState.showFilters = !uState.showFilters; saveU(); updateFilterUI(); };
 // a sticky row of a page's sections to jump to
+// a section in the Team tab's right pane on a PC: it scrolls in the pane, not with the page
+const PANES = matchMedia("(min-width: 1000px)"), inPane = s => PANES.matches && !!s.parentElement?.classList.contains("tr");
 function jumpBar(container, secs) {
   if (secs.length < 3) return;
   const bar = document.createElement("div"); bar.className = "jump";
   const wrap = document.createElement("div"); wrap.className = "jumpw"; wrap.append(bar);
   const btns = secs.map(s => {
     const b = document.createElement("button"); b.textContent = s.querySelector(":scope > h3")?.textContent || s.dataset.jump || "";
-    b.onclick = () => s.scrollIntoView({ behavior: "smooth", block: "start" });
+    b.onclick = () => { s.scrollIntoView({ behavior: "smooth", block: "start" }); if (inPane(s)) btns.forEach(x => x.classList.toggle("on", x === b)); };
     bar.append(b); return b;
   });
   container.prepend(wrap);
@@ -1264,7 +1306,9 @@ function jumpBar(container, secs) {
     raf = 0;
     if (!bar.isConnected) return removeEventListener("scroll", onScroll);
     if (!bar.offsetParent) return;  // its tab is hidden
-    let i = 0; secs.forEach((s, k) => { if (s.getBoundingClientRect().top < 150) i = k; });
+    // the section that last passed under the bar (in any column, on a PC; not the Team tab's right pane, which stays put)
+    let i = -1, at = -Infinity; secs.forEach((s, k) => { const y = s.getBoundingClientRect().top; if (y < 150 && y > at && !inPane(s)) { at = y; i = k; } });
+    if (i < 0) i = 0;
     if (i === cur) return; cur = i;
     btns.forEach((b, k) => b.classList.toggle("on", k === i));
     const b = btns[i];
@@ -1288,13 +1332,30 @@ function searchX() {
     q.parentElement.classList.toggle("has", !!q.value);
   }
 }
+// long notes (the small print under a section, like how the battle check works things out): over 5 lines they fold
+// to 3 with a ▾ Show all button; one you opened stays open when its page is drawn again (till the app is closed)
+const FOLD_OPEN = new Set();
+function foldNotes() {
+  for (const p of document.querySelectorAll("p.small:not([data-fold]), p.dim:not([data-fold])")) {
+    if (!p.offsetParent || p.closest("details, #mbox, .toast")) continue;  // hidden for now (measured once shown), or already folds
+    p.dataset.fold = "";
+    const lh = parseFloat(getComputedStyle(p).lineHeight) || 18;
+    if (p.scrollHeight < lh * 5.5) continue;
+    const key = p.textContent.slice(0, 80), b = document.createElement("button");
+    b.type = "button"; b.className = "foldbtn";
+    const set = open => { p.classList.toggle("fold", !open); b.textContent = open ? "▴ Show less" : "▾ Show all"; b.setAttribute("aria-expanded", open); };
+    b.onclick = e => { e.stopPropagation(); const open = p.classList.contains("fold"); open ? FOLD_OPEN.add(key) : FOLD_OPEN.delete(key); set(open);
+      if (!open && p.getBoundingClientRect().top < 0) p.scrollIntoView({ block: "center" }); };  // closed from far below: back to it
+    set(FOLD_OPEN.has(key)); p.after(b);
+  }
+}
 document.addEventListener("input", e => { if (e.target.matches?.("input[type=search]") && e.target.parentElement.classList.contains("qwrap")) e.target.parentElement.classList.toggle("has", !!e.target.value); });
 function edgeFade(el) {
   const box = el.classList.contains("jump") ? el.parentElement : el, w = el.clientWidth;
   box.classList.toggle("fl", !!w && el.scrollLeft > 2); box.classList.toggle("fr", !!w && el.scrollLeft + w < el.scrollWidth - 2);
 }
 let fadeRaf = 0;
-const fadeSoon = () => { fadeRaf ||= requestAnimationFrame(() => { fadeRaf = 0; document.querySelectorAll(FADE_SEL).forEach(edgeFade); searchX(); }); };
+const fadeSoon = () => { fadeRaf ||= requestAnimationFrame(() => { fadeRaf = 0; document.querySelectorAll(FADE_SEL).forEach(edgeFade); searchX(); foldNotes(); }); };
 document.addEventListener("scroll", e => { if (e.target.nodeType === 1 && e.target.matches(FADE_SEL)) edgeFade(e.target); }, { capture: true, passive: true });
 new MutationObserver(fadeSoon).observe(document.body, { childList: true, subtree: true });
 addEventListener("resize", fadeSoon);
@@ -2036,7 +2097,7 @@ async function showItem(id) {
   const D = await load("details");
   if (nav !== NAV) return;  // left the page while it loaded
   const users = Object.entries(D).filter(([, d]) => (d.es_spheres || []).includes(id)).map(([u]) => u).filter(u => UMAP[u]);
-  $("page").innerHTML = `<div class="sec" style="display:flex;gap:12px;align-items:center"><img src="${iImg(id)}" alt="" style="width:72px;height:72px;object-fit:contain" onerror="this.style.visibility='hidden'">
+  $("page").innerHTML = `<div class="cols"><div class="sec" style="display:flex;gap:12px;align-items:center"><img src="${iImg(id)}" alt="" style="width:72px;height:72px;object-fit:contain" onerror="this.style.visibility='hidden'">
       <div style="min-width:0"><h2 style="margin:0;font-size:20px;text-shadow:var(--ol)">${esc(s.name)}</h2><div class="badges">${s.type ? `<span class="badge">${esc(s.type)} sphere</span>` : `<span class="badge">Item</span>`}${s.rarity ? `<span class="badge star">${s.rarity}${STAR}</span>` : ""}${nogTag(s)}</div></div>
       <button class="favbtn inl ${ifavs.has(id) ? "on" : ""}" id="ifavbtn" aria-label="Favorite"><img src="/static/star_fav.png" alt=""></button></div>
     ${s.desc ? `<div class="sec"><h3 class="blue">Effect</h3><div class="lore">${hl(s.desc)}</div></div>` : ""}
@@ -2044,7 +2105,7 @@ async function showItem(id) {
     ${R[id] ? `<div class="sec"><h3>Crafting plan</h3><div class="qty"><button class="gbtn small dark" id="cminus" aria-label="Fewer">−</button><b id="cq">1</b><button class="gbtn small dark" id="cplus" aria-label="More">+</button><span class="small dim">to craft</span></div>${
       s.cr === 0 ? `<p class="small" style="margin:0 0 8px;color:var(--warn)">${s.type ? "Forge Sphere" : "Synthesis"} can't make it right now: some materials have no way to get in Revived (below).</p>` : ""}<div id="cplan"></div></div>` : ""}
     ${usedIn.length ? `<div class="sec"><h3 class="blue">Used to craft</h3><div class="need">${usedIn.map(r => `<div class="ni" data-i="${r}"><img src="${iImg(r)}" alt="" onerror="this.style.visibility='hidden'"><span>${esc(I[r].name)}</span><small>needs ${R[r][1].find(([m]) => m === id)[1]}</small></div>`).join("")}</div></div>` : ""}
-    ${users.length ? `<div class="sec"><h3 class="purple">Best on</h3><div class="mats">${users.map(u => unitMini(u)).join("")}</div></div>` : ""}`;
+    ${users.length ? `<div class="sec"><h3 class="purple">Best on</h3><div class="mats">${users.map(u => unitMini(u)).join("")}</div></div>` : ""}</div>`;
   $("page").querySelectorAll(".sec > .need [data-i]").forEach(el => el.onclick = () => go(`#/item/${el.dataset.i}`));
   $("ifavbtn").onclick = () => { const on = ifavToggle(id); $("ifavbtn").classList.toggle("on", on); toast(on ? "Added to favorites: find it on the ★ tab" : "Removed from favorites"); };
   if (R[id]) {
@@ -2440,7 +2501,8 @@ function roleSrc(team, i, code) {
   // its spheres: a part for all allies counts ("H"), one only for the holder is its own
   const sphIds = (TSPH[TCUR]?.[i] || []).filter(sid => { const x = sphTag(sid, code, id); return x && (x[0] !== 2 || lead || x[2]); }), sph = sphIds.map(sid => sphTag(sid, code, id)), sphTeam = sph.some(x => sphTeamOf(x, i));
   return { now, on: [...team_.filter(l => now.includes(l)), ...(spOn(sp) ? ["P"] : []), ...(sphTeam ? ["H"] : [])], off: [...team_.filter(l => !now.includes(l)), ...(sp.length && !spOn(sp) ? ["P"] : []), ...(dbb ? ["D"] : [])],
-    self: [...own.filter(l => me.includes(l)), ...(spMine.length && !spOn(sp) ? ["P"] : [])], sph, sphIds };  // a sphere only for its holder: just its icon on a unit shown anyway
+    self: [...own.filter(l => me.includes(l)), ...(spMine.length && !spOn(sp) ? ["P"] : [])], sph, sphIds,
+    spSk: [...new Set(sp.flatMap(x => [...x[1]]))].filter(l => "LBSU".includes(l)).sort((x, y) => "LBSU".indexOf(x) - "LBSU".indexOf(y)) };  // the skills the SP picked adds it to  // a sphere only for its holder: just its icon on a unit shown anyway
 }
 const viaSp = (team, i, code) => roleSrc(team, i, code).on.join("") === "P";
 const providers = (team, code) => team.filter((id, i) => id && roleSrc(team, i, code).on.length);
@@ -2696,7 +2758,9 @@ function teamDamage(t, half, fresh) {
   }, 0);
 }
 // how much a newer unit counts (0 to 1 by release, times this): new units are usually stronger (power creep), not always
-const FILL_W = { newness: 8, old: 15 };  // old: what a unit from before release number 8000 counts less
+const FILL_W = { newness: 8, old: 15 };
+// the swap check after Fill picks a team: how many rounds, and how many swaps (the best by the quick damage estimate) a round judges
+const FILL_SWAP = { rounds: 2, keep: 8, screen: 300 };  // screen: a pool bigger than this is screened first  // old: what a unit from before release number 8000 counts less
 // keep: how many teams to give back (the best first, the team itself not changed); 1 fills the team with the best
 // All at once (autoFill), or in short turns so the page keeps drawing while it works (autoFillAsync, the Fill button):
 // the work is the same steps either way (autoFillSteps stops after each slot it fills and each first pick it tries)
@@ -2706,10 +2770,14 @@ async function autoFillAsync(team, el, S, keep = 1) {
   for (;;) { const s = it.next(); if (s.done) return s.value;
     if (performance.now() - t > 40) { await new Promise(r => setTimeout(r, 0)); t = performance.now(); } }
 }
-function* autoFillSteps(team, el, S, keep = 1) {
+// the units Fill can use: the ones in your box (✓ Fill from my box only), else 7★ and Omni units you can get in Revived;
+// of the element asked for; units without skills (the custom ones, Summoner, Rainbow Crystal…) don't help a team
+function fillPool(el, S) {
   const can = new Set(S?.o || []);
-  // units without skills (the custom ones, Summoner, Rainbow Crystal…) don't help a team
-  const pool = UNITS.filter(u => (SQ.mineOnly ? mine.has(u.id) : u.r >= 7 && !u.f && (!can.size || can.has(u.id))) && (!el || u.e === el) && TAGS.units[u.id] && !/\(custom\)/i.test(u.n));
+  return UNITS.filter(u => (SQ.mineOnly ? mine.has(u.id) : u.r >= 7 && !u.f && (!can.size || can.has(u.id))) && (!el || u.e === el) && TAGS.units[u.id] && !/\(custom\)/i.test(u.n));
+}
+function* autoFillSteps(team, el, S, keep = 1) {
+  const pool = fillPool(el, S);
   // newer units count (they're usually stronger, not always): 0 for the oldest to 1 for the newest, times FILL_W.newness
   const order = [...pool].sort((a, b) => a.no - b.no), newness = new Map(order.map((u, i) => [u.id, u.no ? i / Math.max(1, order.length - 1) : 0]));
   // how much each candidate for slot s raises the team's damage (teamDamage), 0 to 1 against the one raising it most
@@ -3208,7 +3276,7 @@ function battleCheck(team, W, NUMS, D) {
 }
 function battleHtml(B) {
   if (!B.rows.length) return "";
-  return `<div class="sec"><h3 class="purple">Battle check</h3>
+  return `<div class="sec tbc"><h3 class="purple">Battle check</h3>
     <p class="small" style="margin:0 0 8px">When everyone casts ${B.rows.some(r => r.chosen) ? "the skill set for it" : "SBB"} in the same turn, skills fill ${B.full ? "<b>the gauge to max</b>"
       : [B.teamFill ? `<b>${B.teamFill} BC</b> for everyone` : "", B.sparkBC ? "BC from sparks" : ""].filter(Boolean).join(", plus ") || "<b>no BC</b>"}:
       <b class="${B.can === B.known ? "okc" : "noc"}">${B.can} of ${B.known}</b> can cast ${B.rows.some(r => r.chosen) ? "it" : "SBB"} again with that alone. Hits and crystals give more BC on top.</p>
@@ -3237,7 +3305,7 @@ function matchupHtml(team) {
   const top = Math.max(...cols.map(c => c.score)), low = Math.min(...cols.map(c => c.score));
   const pick = v => cols.filter(c => c.score === v).map(c => `${orb(c.E)}${c.E}`).join(", ");
   const row = (label, k, cls) => `<div class="k">${label}</div>${cols.map(c => `<div class="${c[k] ? cls : "dim"}">${c[k] || "–"}</div>`).join("")}`;
-  return `<div class="sec"><h3 class="purple">Against each element</h3>
+  return `<div class="sec tmu"><h3 class="purple">Against each element</h3>
     <div class="mu"><div></div>${cols.map(c => `<div class="${c.score === top && top > low ? "best" : c.score === low && top > low ? "worst" : ""}">${orb(c.E)}</div>`).join("")}
       ${row("You hit hard", "hard", "okc")}${row("You hit weakly", "weak", "noc")}${row("Hits you hard", "hurt", "noc")}</div>
     ${top > low ? `<p class="small mut" style="margin:8px 0 0">Best against <b>${pick(top)}</b> · hardest against <b>${pick(low)}</b>.</p>` : ""}
@@ -3276,7 +3344,8 @@ async function renderTeam() {
       <div class="ssph">${sphereChip(i, 0)}${sphereChip(i, 1)}${elgifChip(i)}</div>${spChip(i, id)}${sameType(i) ? `<div class="sphwarn">Two ${esc(sameType(i))} spheres: the game doesn't let a unit hold two of one type. Change one.</div>` : ""}
       <div class="sca">${i > 0 && i < 5 ? `<button class="gbtn small" data-lead="${i}">Lead</button>` : ""}<button class="gbtn small dark" data-s="${i}">Change</button><button class="gbtn small red" data-x="${i}" aria-label="Remove">✕</button></div>
     </div>`; };
-  v.innerHTML = `<div class="sec" style="padding:8px" data-jump="Field">
+  // two panes (side by side on a PC): what you edit, then what it does (on a PC the cover table first)
+  v.innerHTML = `<div class="tpanes"><div class="tpane tl"><div class="sec" style="padding:8px" data-jump="Field">
       <div class="tabs2 teams">${TEAMS.map((t, i) => `<button class="${i === TCUR ? "on" : ""}" data-t="${i}">${esc(teamName(i))}${i === TCUR ? " ✎" : ""}</button>`).join("")}${
         TEAMS.length < MAXT ? `<button class="add" id="tnew" aria-label="New team">＋</button>` : ""}</div>
       <div class="formation">${team.map((id, i) => `<button class="slot" data-s="${i}" style="left:${SPOS[i][0]}%;top:${SPOS[i][1]}%;z-index:${SPOS[i][1]}" aria-label="${SLOTS[i]}">${id && UMAP[id]
@@ -3293,11 +3362,11 @@ async function renderTeam() {
         : `<p class="dim">No units yet: tap the + spots above or <b>Fill empty slots</b>.</p>`}
       ${(par => par ? `<div class="note para"><b>Elemental Paradigm ${par.lv}</b> (${par.el} Omni+ squad): +${PARADIGM[par.lv][0]}% parameters, +${PARADIGM[par.lv][1]}% spark, +${PARADIGM[par.lv][2]}% critical and +${PARADIGM[par.lv][3]}% elemental damage for the squad${par.lv === 3 ? "; its boost, mitigation, critical and spark buffs last a turn longer" : ""}. Counted in the stats above; not in Summoner's Arc or Strategy Zone.</div>` : "")(paradigm(team))}
       <p class="small dim" style="margin:8px 0 0">Max level stats of the chosen type${SQ.imps ? ", max imps" : ""}${SQ.lead ? ", the leader's skill" : ""}${SQ.friend ? ", the friend's skill" : ""}${SQ.es ? ", each unit's extra skill and Elgif" : ""} and the spheres you pick (the app can't see yours). Like the game's squad screen, the friend is off by default.
-        Tap a sphere or Elgif to choose it (a unit holds one Elgif). ✱ = a boost with a condition (counted). Cost: friend not counted. ${elems.map(([e, n]) => `<span class="badge">${orb(e)}×${n}</span>`).join(" ")}</p></div>
-    ${battleHtml(battleCheck(team, W, NUMS, D))}
-    ${team[0] || team[5] ? `<div class="sec"><h3 class="blue">Leader skills</h3>${[0, 5].filter(i => team[i]).map(i => { const [n, d] = ls(team[i], W[i]); const b = boostText(statBoosts(lsText(team[i], W[i], D)));
+        Tap a sphere or Elgif to choose it (a unit holds one Elgif). ✱ = a boost with a condition (counted). Cost: friend not counted. ${elems.map(([e, n]) => `<span class="badge">${orb(e)}×${n}</span>`).join(" ")}</p></div></div>
+    <div class="tpane tr">${battleHtml(battleCheck(team, W, NUMS, D))}
+    ${team[0] || team[5] ? `<div class="sec tls"><h3 class="blue">Leader skills</h3>${[0, 5].filter(i => team[i]).map(i => { const [n, d] = ls(team[i], W[i]); const b = boostText(statBoosts(lsText(team[i], W[i], D)));
         return `<div class="sk"><div class="kn"><span class="tag ls">${i ? "Friend" : "Leader"}</span><span class="nm">${esc(n || UMAP[team[i]]?.n)}</span></div><p>${d ? hl(d) : `<span class="dim">No leader skill</span>`}</p>${b ? `<div class="pills"><span class="pill">Counted: ${esc(b)}</span></div>` : ""}</div>`; }).join("")}</div>` : ""}
-    <div class="sec"><h3 class="green">What the team covers</h3><p class="covkey">Under each unit: where it gets it (LS, ES, BB, SBB, UBB, SP; a small sphere icon: its sphere, faded if only for that unit) and how much; next to the role: the highest number in the team. <b>Dimmed</b>: it doesn't count for the team: it has it only on a skill it doesn't cast (change its skill on its battle check row), or only for itself (<b>self</b>).</p>${(() => {
+    <div class="sec tcov"><h3 class="green">What the team covers</h3><p class="covkey">Under each unit: where it gets it (LS, ES, BB, SBB, UBB, SP, or a small sphere icon, faded if only for that unit) and how much. Next to the role: the highest number in the team. <b style="color:#8fd0ff">Blue, self only</b>: it buffs only that unit. <b style="color:#e6c877">Dashed, if BB / SBB / UBB</b>: it's on that skill, and the unit casts another one in the battle check; tap it to cast that one. ◐: only self buffs. <b>Grey</b>: not active.</p>${(() => {
       const seen = new Set(), pairs = team.flatMap(id => { const d = id && dbbWith(team, id), p = d && d.p.find(x => team.includes(x)), k = p && [id, p].sort().join();
         if (!k || seen.has(k)) return []; seen.add(k); return [`<b class="dbbok">${esc(UMAP[id]?.n || "")}</b> + <b class="dbbok">${esc(UMAP[p]?.n || "")}</b>${d.n ? ` (${esc(d.n)})` : ""}`]; });
       return pairs.length ? `<p class="covkey dbbkey">Dual BB ready: ${pairs.join(", ")}. Its buffs show as <b>DBB</b>: the battle check has each unit cast its own skill, so they don't count.</p>` : ""; })()}<div class="cov"><div class="covh"><span></span>${team.map((id, i) => `<span>${id ? (i === 0 ? "Leader" : i === 5 ? "Friend" : `Unit ${i + 1}`) : ""}</span>`).join("")}</div>${COVER.map(c => {
@@ -3313,15 +3382,31 @@ async function renderTeam() {
         on.forEach(r => r.v = valOf(r));
         const nums = on.filter(r => r.v && !(r.v[3] && on.some(x => x.v && !x.v[3]))), best = nums.map(r => r.v).sort((a, b) => b[0] - a[0])[0];
         // a dimmed unit's caption: what it has only on skills it doesn't cast, and what's only for itself, a line each
-        const dimCap = r => { const p = [r.off.map(l => SRC_NAME[l]).join(" "), r.self.length ? `${r.self.map(l => SRC_NAME[l]).join(" ")} self` : ""].filter(Boolean);
+        // a grey unit's caption: "if BB" (on a skill it doesn't cast), "SP if BB" (SP picked for one), "ES self only"
+        const dimCap = r => { const sk = r.off.filter(l => "LEBSU".includes(l)), p = [sk.length ? `if ${sk.map(l => SRC_NAME[l]).join("/")}` : "",
+            r.off.includes("P") ? `SP if ${(r.spSk || []).map(l => SRC_NAME[l]).join("/") || "other skill"}` : "", r.off.includes("D") ? "DBB only" : "",
+            r.self.length ? `${r.self.map(l => SRC_NAME[l]).join(" ")} self only` : ""].filter(Boolean);
           return p.length > 1 ? p.map(x => `<span>${x}</span>`).join("") : p.join(""); };
-        const dimWhy = r => [r.off.length ? `only on its ${r.off.map(l => SRC_NAME[l]).join(", ")}, not the skill it casts` : "", r.self.length ? `its ${r.self.map(l => SRC_NAME[l]).join(", ")} only for itself` : ""].filter(Boolean).join("; ");
-        const pic = (r, dim) => `<span class="src${dim ? " off" : ""}" title="${esc(UMAP[r.id]?.n || "")}: ${dim ? dimWhy(r) : `from its ${r.on.map(l => SRC_NAME[l]).join(", ")}${r.v ? `: ${fmtPower(c, r.v)}${r.v[3] ? " per spark" : ""}${r.v[2] ? " for itself" : ""}` : ""}`}"><span class="pw"><img src="${uImg(r.id)}" alt="" data-u="${r.id}"${!dim && r.on.join("") === "P" ? ` class="viasp"` : ""}>${r.sphIds?.length ? `<span class="sphi">${r.sphIds.map((sid, k) => `<img src="${iImg(sid)}" alt="" class="${sphTeamOf(r.sph[k], r.i) ? "" : "own"}" title="${esc(TEAM_I?.[sid]?.name || "")}${sphTeamOf(r.sph[k], r.i) ? "" : ": only for this unit"}">`).join("")}</span>` : ""}</span><small>${(dim ? dimCap(r) : r.on.filter(l => l !== "H").map(l => SRC_NAME[l]).join(" ")) || "sphere"}</small>${!dim && r.v ? `<em>${fmtShort(c, r.v)}${r.v[3] ? " per spark" : ""}${r.v[2] ? " self" : ""}</em>` : ""}</span>`;
-        return `<div><span class="cl ${on.length ? "ok" : off.length ? "part" : "no"}">${on.length ? "✓" : "✗"} ${esc(TAGS.labels[c] || c)}${best ? `<small> ${fmtPower(c, best)}${best[3] ? " per spark" : ""}${best[2] ? " self" : ""}</small>` : ""}${off.length && !on.length ? `<button class="gbtn small blue cfind" data-find="${c}">Find</button>` : ""}</span>${src.length ? team.map((id, i) => { const r = src.find(x => x.i === i); return r ? pic(r, !r.on.length) : `<span class="nos"></span>`; }).join("") : `<span class="cfrow"><button class="gbtn small blue" data-find="${c}">Find</button></span>`}</div>`; }).join("")}</div>
+        // the short line in the note a tap opens: "it's on its BB and UBB, but it casts its SBB"
+        const tipOf = r => { const nm = ls => ls.map(l => SRC_NAME[l]).join(" and "), cast = [...r.now].find(l => "BSU".includes(l)), its = cast ? `its ${SRC_NAME[cast]}` : "another skill", sk = r.off.filter(l => "LEBSU".includes(l));
+          return [r.self.length ? `its ${nm(r.self)} ${r.self.length > 1 ? "give" : "gives"} it only to itself` : "", sk.length ? `it's on its ${nm(sk)}, but it casts ${its}` : "",
+            r.off.includes("P") ? `its SP adds it to its ${nm(r.spSk || []) || "other skills"}${sk.length ? "" : `, but it casts ${its}`}` : "", r.off.includes("D") ? "only with a Dual BB" : ""].filter(Boolean).join("; ") + "."; };
+        // the skill it would need to cast for it to count (BB first, then SBB, UBB): the "Cast BB" button on a tap
+        const altOf = r => { const ls = new Set([...r.off.filter(l => "BSU".includes(l)), ...(r.off.includes("P") ? (r.spSk || []).filter(l => "BSU".includes(l)) : [])]);
+          const l = ["B", "S", "U"].find(x => ls.has(x)); return l ? SRC_NAME[l] : ""; };
+        // why a grey unit doesn't count, in a sentence (a tap on it, or a mouse over it, shows it)
+        const dimWhy = r => { const nm = ls => ls.map(l => SRC_NAME[l]).join(" and "), cast = [...r.now].find(l => "BSU".includes(l)), sk = r.off.filter(l => "LEBSU".includes(l));
+          return [r.self.length ? `its ${nm(r.self)} ${r.self.length > 1 ? "give" : "gives"} it only to itself` : "",
+            sk.length ? `it's on its ${nm(sk)}, and it casts ${cast ? `its ${SRC_NAME[cast]}` : "another skill"} in the battle check (choose its skill on its Battle check row)` : "",
+            r.off.includes("P") ? `the SP picked for it adds it to its ${r.spSk?.length ? nm(r.spSk) : "other skills"}${sk.length ? "" : `, but it casts ${cast ? `its ${SRC_NAME[cast]}` : "another skill"} in the battle check (choose its skill on its Battle check row, or pick SP for the skill it casts)`}` : "",
+            r.off.includes("D") ? "it gets it only from a Dual BB" : ""].filter(Boolean).join("; and "); };
+        const pic = (r, dim) => `<span class="src${dim ? ` off${r.self.length ? " self" : altOf(r) ? " alt" : ""}` : ""}"${dim ? ` data-i="${r.i}" data-alt="${altOf(r)}" data-tip="${esc(`<b>${esc(UMAP[r.id]?.n || "")}</b>: ${tipOf(r)}`)}"` : ""} title="${esc(UMAP[r.id]?.n || "")}${dim ? `${r.self.length ? " has it only for itself" : " doesn't give it to the team right now"}: ${esc(dimWhy(r))}.` : `: from its ${r.on.map(l => SRC_NAME[l]).join(", ")}${r.v ? `: ${fmtPower(c, r.v)}${r.v[3] ? " per spark" : ""}${r.v[2] ? " for itself" : ""}` : ""}`}"><span class="pw"><img src="${uImg(r.id)}" alt="" data-u="${r.id}"${!dim && r.on.join("") === "P" ? ` class="viasp"` : ""}>${r.sphIds?.length ? `<span class="sphi">${r.sphIds.map((sid, k) => `<img src="${iImg(sid)}" alt="" class="${sphTeamOf(r.sph[k], r.i) ? "" : "own"}" title="${esc(TEAM_I?.[sid]?.name || "")}${sphTeamOf(r.sph[k], r.i) ? "" : ": only for this unit"}">`).join("")}</span>` : ""}</span><small>${(dim ? dimCap(r) : r.on.filter(l => l !== "H").map(l => SRC_NAME[l]).join(" ")) || "sphere"}</small>${!dim && r.v ? `<em>${fmtShort(c, r.v)}${r.v[3] ? " per spark" : ""}${r.v[2] ? " self" : ""}</em>` : ""}</span>`;
+        const selfOnly = !on.length && off.some(r => r.self.length);  // only units buffing themselves: ◐, not ✗
+        return `<div><span class="cl ${on.length ? "ok" : selfOnly ? "selfc" : off.length ? "part" : "no"}">${on.length ? "✓" : selfOnly ? "◐" : "✗"} ${esc(TAGS.labels[c] || c)}${best ? `<small> ${fmtPower(c, best)}${best[3] ? " per spark" : ""}${best[2] ? " self" : ""}</small>` : selfOnly ? `<small>only for itself</small>` : ""}${off.length && !on.length ? `<button class="gbtn small blue cfind" data-find="${c}">Find</button>` : ""}</span>${src.length ? team.map((id, i) => { const r = src.find(x => x.i === i); return r ? pic(r, !r.on.length) : `<span class="nos"></span>`; }).join("") : `<span class="cfrow"><button class="gbtn small blue" data-find="${c}">Find</button></span>`}</div>`; }).join("")}</div>
       <p class="small dim" style="margin:8px 0 0">It counts the units' extra skills, the skill each one casts in the battle check (its SBB unless you change it there), the SP picked for them and their spheres' effects for all allies; leader skills for the leader and the friend. A BB's buff while the unit casts its SBB, or a UBB's, doesn't count. Green ring: only from its SP.</p></div>
-    ${matchupHtml(team)}`;
+    ${matchupHtml(team)}</div></div>`;
   if ($("muchart")) $("muchart").onclick = elementChart;
-  jumpBar(v, [...v.querySelectorAll(":scope > .sec")]);
+  jumpBar(v, [...v.querySelectorAll(".tpane > .sec")]);
   v.querySelectorAll("[data-t]").forEach(b => b.onclick = () => { if (+b.dataset.t === TCUR) return teamMenu(); TCUR = +b.dataset.t; saveTeams(); renderTeam(); });
   if ($("tnew")) $("tnew").onclick = () => {
     const n = TEAMS.length; TEAMS[n] = Array(6).fill(null); TTYPE[n] = Array(6).fill("lord"); TSPH[n] = Array.from({ length: 6 }, () => [null, null]); TELG[n] = Array(6).fill(null); TSPE[n] = Array(6).fill(null); TOMNI[n] = Array(6).fill(0); TCAST[n] = Array(6).fill(null); TNAMES[n] = null;
@@ -3332,6 +3417,8 @@ async function renderTeam() {
   v.querySelectorAll("[data-x]").forEach(b => b.onclick = () => { const i = +b.dataset.x, s = teamSnap(), t = TCUR, n = UMAP[team[i]]?.n;
     team[i] = null; resetSlot(i); saveTeams(); renderTeam(); undoToast(`${n || "Unit"} taken out`, () => teamRestore(t, s)); });
   v.querySelectorAll("[data-u]").forEach(b => b.onclick = () => go(`#/unit/${b.dataset.u}`));
+  // a grey unit in What the team covers: a tap says why it doesn't count (a mouse shows it on hover too), Open still opens it
+  v.querySelectorAll(".cov .src.off [data-u]").forEach(b => b.onclick = () => { const s = b.closest(".src"); covTip(b, s.dataset.tip, s.dataset.alt, +s.dataset.i); });
   v.querySelectorAll("[data-find]").forEach(b => b.onclick = () => {
     let s = team.findIndex((x, i) => !x && i !== 5); if (s < 0) s = team[5] ? 4 : 5;
     go(`#/pick/${s}?role=${b.dataset.find}`);
@@ -3369,7 +3456,7 @@ async function renderTeam() {
     // the most units can cast every turn and that hits hardest is kept
     const I = await load("items"), cands = await autoFillAsync(team, fillEl, S, 5), news = [0, 1, 2, 3, 4, 5].filter(i => !before[i]);
     const cast0 = [...TCAST[TCUR]], spe0 = JSON.stringify(TSPE[TCUR]);
-    for (const c of cands) {  // each team with its SP and skills set the way Fill sets them, then the battle check you see
+    const judge = async c => {  // a team with its SP and skills set the way Fill sets them, then the battle check you see
       TCAST[TCUR] = [...cast0]; TSPE[TCUR] = JSON.parse(spe0);
       for (const i of news) if (c.t[i] && UMAP[c.t[i]]?.r === 8) TSPE[TCUR][i] = await bestSpFor(c.t[i], omniOf(i)[1], c.spNeed[i], i === 0 || i === 5, TOMNI[TCUR][i] || 0, castNow(i, c.t[i]));
       await bestCasts(c.t, news.filter(i => c.t[i]));
@@ -3380,9 +3467,51 @@ async function renderTeam() {
       c.can = B.can; c.rate = rate; c.roles = COVER.filter(x => providers(c.t, x).length).length;
       c.dmg = B.rows.reduce((a, r) => a + (r.sFull || r.sDmg || 0) * (B.ok(r) ? 1 : .5) * (1 + (dmgInfo(r.id, r.i).hp || 0) / 10), 0) * mult;
       c.casts = [...TCAST[TCUR]]; c.spe = JSON.stringify(TSPE[TCUR]);
+    };
+    for (const c of cands) await judge(c);
+    // the score: roles covered, units that cast every turn, sparks, damage (against the hardest-hitting team judged)
+    const all = [...cands], score = c => c.roles * 10 + c.can * 8 + c.rate * 8 + c.dmg / Math.max(1, ...all.map(x => x.dmg)) * 15;
+    const top = () => all.reduce((a, c) => score(c) > score(a) ? c : a, all[0]);
+    // the swap check: each team is built one slot at a time, so one a single swap away that scores higher was never
+    // tried. Each unit Fill can use, in each slot it filled: the quick damage estimate keeps the best few that lose no
+    // role, those are judged the same way, and the best one is kept when it beats the team (FILL_SWAP.rounds times)
+    let best = top();
+    if (best && news.length) {
+      const pool = fillPool(fillEl, S); let t0 = performance.now();
+      for (let round = 0; round < FILL_SWAP.rounds; round++) {
+        TCAST[TCUR] = [...best.casts]; TSPE[TCUR] = JSON.parse(best.spe);  // the team's own skills and SP for the estimates
+        const roles0 = COVER.filter(x => providers(best.t, x).length).length, opts = [];
+        // a big pool (Any element: 900 units) is screened first: each unit in one leader slot and one other, the best 40
+        // of each go on to every slot (the estimate is the slow part: 0.45 ms a team on a phone)
+        let use = pool;
+        if (pool.length > FILL_SWAP.screen) {
+          const lead = news.find(s => s === 0 || s === 5), other = news.find(s => s !== 0 && s !== 5), keepIds = new Set();
+          for (const s of [lead, other]) { if (s === undefined) continue; const fresh = new Set([s]);
+            const est = pool.filter(u => !best.t.includes(u.id)).map(u => { const t = best.t.slice(); t[s] = u.id; return [u, teamDamage(t, null, fresh)]; });
+            est.sort((x, y) => y[1] - x[1]).slice(0, 40).forEach(([u]) => keepIds.add(u.id));
+            await new Promise(r => setTimeout(r, 0)); t0 = performance.now(); }
+          use = pool.filter(u => keepIds.has(u.id));
+        }
+        for (const s of news) { const fresh = new Set([s]);  // the unit swapped in casts its own default skill, not the one it replaces
+          for (const u of use) {
+            if (best.t.includes(u.id)) continue;
+            const t = best.t.slice(); t[s] = u.id; opts.push({ t, s, est: teamDamage(t, null, fresh) });
+            if (performance.now() - t0 > 40) { await new Promise(r => setTimeout(r, 0)); t0 = performance.now(); }  // the page keeps drawing
+          } }
+        // the best by the estimate that lose no role (roles checked only until enough are found: it's the slow part)
+        const short = [];
+        for (const o of opts.sort((a, b) => b.est - a.est)) { if (short.length >= FILL_SWAP.keep) break; if (COVER.filter(x => providers(o.t, x).length).length >= roles0) short.push(o); }
+        let won = null;
+        for (const o of short) {
+          const c = { t: o.t, spNeed: { ...best.spNeed } }; delete c.spNeed[o.s];
+          await judge(c); all.push(c);
+          if (score(c) > score(won || best)) won = c;
+        }
+        if (!won) break;
+        best = won;
+      }
     }
-    const mxd = Math.max(1, ...cands.map(c => c.dmg));
-    const pick = cands.map(c => ({ ...c, score: c.roles * 10 + c.can * 8 + c.rate * 8 + c.dmg / mxd * 15 })).sort((a, b) => b.score - a.score)[0];
+    const pick = top();
     TCAST[TCUR] = pick ? pick.casts : cast0; TSPE[TCUR] = JSON.parse(pick ? pick.spe : spe0);
     let n = 0; const spNeed = pick?.spNeed || {};
     if (pick) for (const s of news) if (pick.t[s]) { team[s] = pick.t[s]; n++; }
@@ -3394,6 +3523,26 @@ async function renderTeam() {
   $("tclear").onclick = () => { if (!team.some(Boolean)) return; const s = teamSnap(), t = TCUR;
     TEAMS[TCUR] = Array(6).fill(null); for (let i = 0; i < 6; i++) resetSlot(i); saveTeams(); renderTeam(); undoToast(`${teamName(t)} cleared`, () => teamRestore(t, s)); };
 }
+
+// a small note by a faded unit in What the team covers: why it doesn't give it to the team, with Cast BB (when that's
+// the reason) and Open; a tap elsewhere, a scroll or leaving the page closes it
+const closeCovTip = () => $("covtip")?.remove();
+function covTip(img, html, sk, i) {
+  closeCovTip();
+  const tip = document.createElement("div"); tip.className = "covtip"; tip.id = "covtip";
+  tip.innerHTML = `<div>${html}</div><div class="ctb">${sk ? `<button class="gbtn small" data-act="cast">Cast ${esc(sk)}</button>` : ""}<button class="gbtn small dark" data-act="open">Open</button></div>`;
+  document.body.append(tip);
+  const r = img.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight, low = innerHeight - (parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--navh")) || 0) - 8;
+  const top = r.bottom + 8 + h > low ? r.top - h - 8 : r.bottom + 8;
+  tip.style.left = `${Math.max(8, Math.min(innerWidth - w - 8, r.left + r.width / 2 - w / 2)) + scrollX}px`; tip.style.top = `${top + scrollY}px`;
+  tip.querySelector("[data-act=open]").onclick = () => { closeCovTip(); go(`#/unit/${img.dataset.u}`); };
+  const c = tip.querySelector("[data-act=cast]");
+  if (c) c.onclick = () => { closeCovTip(); const was = TCAST[TCUR][i]; TCAST[TCUR][i] = sk; saveSquad(); renderTeam();  // as its Battle check row would
+    undoToast(`${UMAP[img.dataset.u]?.n || "It"} casts its ${sk} now`, () => { TCAST[TCUR][i] = was; saveSquad(); renderTeam(); }); };
+}
+document.addEventListener("click", e => { if ($("covtip") && !e.target.closest?.("#covtip, .cov .src.off")) closeCovTip(); }, true);
+document.addEventListener("scroll", closeCovTip, { capture: true, passive: true });
+addEventListener("hashchange", closeCovTip);
 
 // the open team's tab: rename, copy or delete the team
 function teamMenu() {
@@ -3812,7 +3961,7 @@ $("eball").onclick = () => {
 addEventListener("hashchange", route);
 // a computer screen: the tab buttons go up in the header, next to ★; back at the bottom on a phone
 const wide = matchMedia("(min-width: 1000px)"), navEl = document.querySelector(".nav");
-const placeNav = () => wide.matches ? $("favtab").before(navEl) : $("cmpbar").before(navEl);
+const placeNav = () => $("cmpbar").before(navEl);  // a bar down the left side on a PC (its CSS), along the bottom on a phone
 placeNav(); wide.onchange = placeNav;
 // tapping the tab you're on goes back to the top of its list
 document.querySelectorAll(".nav button").forEach(b => b.onclick = () =>
