@@ -296,6 +296,10 @@ details > summary::before { content: "▸ "; } details[open] > summary::before {
 .qlist.drops li { padding: 4px 0; } .qlist.drops li + li { border-top: 1px solid rgba(255,255,255,.06); }
 .chance { font-size: 10.5px; padding: 0 7px; border-radius: 999px; line-height: 17px; background: linear-gradient(#7ad67a, #2a8f3a); font-family: Rodin, Arial, sans-serif; text-shadow: var(--ol); }
 .rot { font-size: 10px; padding: 0 6px; border-radius: 999px; line-height: 16px; margin-left: 4px; white-space: nowrap; vertical-align: 1px; cursor: help; background: linear-gradient(#7fd3ff, #2a6fb8); color: #fff; font-family: Rodin, Arial, sans-serif; font-weight: normal; text-shadow: var(--ol); }
+.rot.wk { background: linear-gradient(#8fe27a, #2f8a36); }  /* on now: this week's featured event, a Vortex dungeon open today */
+.gate .when { display: block; font-size: 11px; color: var(--dim); margin-top: 1px; } .gate.shut b { opacity: .6; }
+.wkday { display: flex; gap: 8px; padding: 5px 0; border-top: 1px solid rgba(255,255,255,.07); font-size: 13px; } .wkday .d { flex: none; width: 92px; color: var(--dim); } .wkday.today .d { color: var(--gold); }
+.wkq { cursor: pointer; text-decoration: underline; text-decoration-color: rgba(255,255,255,.3); text-underline-offset: 2px; }
 /* on a computer, the explanation shows while the pointer is on the tag */
 @media (hover: hover) and (pointer: fine) { .rot { position: relative; } .rot:hover::after { content: attr(data-tip); position: absolute; left: 0; top: calc(100% + 4px); z-index: 20; width: 260px; white-space: normal; padding: 6px 8px; border-radius: 6px; border: 1px solid #7fd3ff; background: #0d1830; color: #e8f4ff; font-size: 12px; line-height: 1.35; text-shadow: none; font-family: Arial, sans-serif; } }
 .boss { font-size: 10px; padding: 0 6px; border-radius: 999px; line-height: 16px; background: linear-gradient(#ff7a6b, #b8232a); text-shadow: var(--ol); }
@@ -997,8 +1001,25 @@ function saveU() { store.set("bf.units", { ...uState, els: [...uState.els], rar:
 // ways to get a unit in Revived right now (bfrevive.net, usrc.json): c = capture, g = summon gate, r = clear reward, s = event shop
 let USRC = null;
 const GETS = [["w", "This week"], ["g", "Summon"], ["c", "Capture"], ["rs", "Reward / shop"]];
-// the featured summon gate a unit is in this week (bit 1 of the gate's flags), if any: [gate id, % per pull]
-const weekGate = id => (USRC?.u?.[id]?.g || []).find(([g]) => USRC.g[g]?.[1] & 1);
+// a summon gate's price and when it's open, from Revived's game server (usrc.json "g": [title, 1 featured | 2 rotating,
+// gems a pull, honor points a pull, featured until, featured next], times in seconds). A rotating gate opens only in its
+// featured weeks, from a Monday 08:00 UTC for 7 days. The dates are of the day the data was made and the app is offline,
+// so a date that has passed is worked forward (its next week has begun) or left out; data without dates says what it did
+const WEEK_S = 7 * 86400, nowS = () => Date.now() / 1000;
+const dayFmt = t => new Date(t * 1000).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+function gateState(G, now = nowS()) {
+  const [, f = 0, gems = 0, honor = 0, until = 0, next = 0] = G || [];
+  const price = gems > 0 ? `${gems} gem${gems === 1 ? "" : "s"} a pull` : honor > 0 ? `${honor} honor points a pull` : "";
+  const st = (open, feat, text) => ({ price, open, feat, text });
+  if (f & 1 && until && now < until) return st(true, true, `Featured until ${dayFmt(until)}` + (next === until ? " and next week too" : next > until ? `, back ${dayFmt(next)}` : ""));
+  if (f & 2 && next && now >= next && now < next + WEEK_S) return st(true, true, `Featured until ${dayFmt(next + WEEK_S)}`);
+  if (f & 1 && !until) return st(true, true, "Featured this week");
+  if (!(f & 2)) return st(true, false, "Always open");
+  if (next > now) return st(false, false, `${next - now <= WEEK_S ? "Featured from" : "Back"} ${dayFmt(next)}`);
+  return st(false, false, "Rotating gate");
+}
+// the featured summon gate a unit is in this week, if any: [gate id, % per pull]
+const weekGate = id => (USRC?.u?.[id]?.g || []).find(([g]) => gateState(USRC.g[g]).feat);
 // Reward / shop also counts a game mode's reward (details.json "modes": Frontier, Hunter Rank, Grand Quest, achievement)
 let UDET = null;
 const hasSrc = id => { const s = USRC?.u?.[id] || {}; return [...uState.get].some(k => k === "w" ? weekGate(id) : k === "rs" ? s.r || s.s || UDET?.[id]?.modes : s[k]); };
@@ -1323,11 +1344,35 @@ const banOf = p => { const parts = p.split(/ [›>] /).map(s => s.trim().replace
 // a quest path as HTML: "Area › Dungeon › Quest", with its banner on the left when it has one
 // a quest in one of the Vortex's event areas (events.json, from the game's area table): Revived opens them in turns
 let EVT = new Set();
-const rotTag = p => EVT.has(String(p || "").split(/ [›>] /)[0].trim()) ? ` <span class="rot" role="button" tabindex="0" data-tip="Revived opens its Vortex events in turns, so this quest isn't always there. Check the Vortex in the game.">Rotating event</span>` : "";
+// the week's calendar from Revived's game server (week.json, bfrevive.net's This week page): this week's featured event
+// and the next (they change on Monday 08:00 UTC, "ends"), the Vortex dungeons open every day and the extra ones of each
+// weekday (a day in the game starts at 15:00 UTC; "monday" is the start of one). Offline, so worked forward from the
+// data's dates: after "ends" the next event is this week's, a week later the events aren't known any more
+let WK = {};
+const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+function weekNow(now = nowS()) {
+  if (!WK.ends || !Array.isArray(WK.vortex)) return null;
+  const rolled = now >= WK.ends, stale = now >= WK.ends + WEEK_S;
+  return { event: stale ? "" : rolled ? WK.next : WK.event, ends: rolled ? WK.ends + WEEK_S : WK.ends, next: rolled ? "" : WK.next, stale,
+    today: WK.monday ? ((Math.floor((now - WK.monday) / 86400) % 7) + 7) % 7 : -1, daily: WK.daily || [], vortex: WK.vortex,
+    dayStart: WK.monday ? new Date(WK.monday * 1000).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) : "" };
+}
+const rotPill = (cls, label, tip) => ` <span class="rot${cls}" role="button" tabindex="0" data-tip="${esc(tip)}">${label}</span>`;
+// a quest path's tag: this week's (or next week's) featured event, a Vortex dungeon's weekday, else a rotating event area
+function rotTag(p) {
+  const parts = String(p || "").split(/ [›>] /).map(s => s.trim()), W = weekNow();
+  if (W) {
+    if (W.event && parts.includes(W.event)) return rotPill(" wk", "Featured this week", `Featured this week: this event's missions pay event tokens and its Bazaar is open until ${dayFmt(W.ends)}.`);
+    if (W.next && parts.includes(W.next)) return rotPill("", "Featured next week", `Featured next week: this event's missions pay event tokens and its Bazaar opens from ${dayFmt(W.ends)}.`);
+    const d = W.vortex.findIndex(l => l.some(n => parts.includes(n)));
+    if (d >= 0) return rotPill(d === W.today ? " wk" : "", d === W.today ? "Open today" : `${DAYS[d]}s`, `This Vortex dungeon opens on ${DAYS[d]}s${W.dayStart ? ` (a day in the game starts at ${W.dayStart} your time)` : ""}.`);
+  }
+  return EVT.has(parts[0]) ? rotPill("", "Rotating event", ROT_INFO) : "";
+}
 const ROT_INFO = "Rotating event: Revived opens its Vortex events in turns, so this quest isn't always there. Check the Vortex in the game.";
 // a computer shows it while the pointer is on the tag (CSS); a phone, on a tap
 const HOVER = matchMedia("(hover: hover) and (pointer: fine)");
-document.addEventListener("click", e => { if (e.target.closest?.(".rot")) { e.stopPropagation(); e.preventDefault(); if (!HOVER.matches) { $("toast").classList.add("long"); toast(ROT_INFO, 4000); } } }, true);
+document.addEventListener("click", e => { const r = e.target.closest?.(".rot"); if (r) { e.stopPropagation(); e.preventDefault(); if (!HOVER.matches) { $("toast").classList.add("long"); toast(r.dataset.tip || ROT_INFO, 4000); } } }, true);
 const qpath = p => { const b = banOf(p), t = esc(p.replace(/ > /g, " › ")) + rotTag(p);
   return b ? `<span class="qpath"><img class="qban" src="/thumbs/b/${b}.webp" alt="" loading="lazy" onerror="this.remove()"><span>${t}</span></span>` : t; };
 // a tap on a banner shows it big with its quest (before the row's own tap, if it has one)
@@ -1573,8 +1618,10 @@ const unitLink = id => UMAP[id] ? `<span class="ulink" data-unit="${id}">${esc(U
 function unitSrcHtml(S, id) {
   const s = S?.u?.[id]; if (!s || !(s.g || s.c || s.r || s.s)) return "";
   const out = [];
-  if (s.g) out.push(["Summon", foldList(s.g, ([g, p]) => `<li class="glink" data-gate="${g}"><b>${esc(S.g[g]?.[0] || `Gate ${g}`)}</b><span class="fxm"><span class="chance">${p}%</span><span class="fxt">per pull</span><span class="fxt">≈${in10(p)}% in 10 pulls</span>${
-    S.g[g]?.[1] & 1 ? `<span class="boss">This week</span>` : ""}</span></li>`, 3)]);
+  // each gate with its price and when it's open: "This week · until Mon 9 Nov", or "Back Mon 23 Nov" for a rotating one
+  if (s.g) out.push(["Summon", foldList(s.g, ([g, p]) => { const st = gateState(S.g[g]), when = st.feat ? st.text.replace(/^Featured (?:this week)?\s*/, "") : st.text === "Always open" ? "" : st.text;
+    return `<li class="glink" data-gate="${g}"><b>${esc(S.g[g]?.[0] || `Gate ${g}`)}</b><span class="fxm"><span class="chance">${p}%</span><span class="fxt">per pull</span><span class="fxt">≈${in10(p)}% in 10 pulls</span>${
+      st.price ? `<span class="fxt">${st.price}</span>` : ""}${st.feat ? `<span class="boss">This week</span>` : ""}${when ? `<span class="fxt">${when}</span>` : ""}</span></li>`; }, 3)]);
   if (s.c) out.push(["Capture", foldList(s.c, ([m, cap, appear, n, boss, as]) => `<li><b>${qpath(srcQuest(S, m))}</b><span class="fxm"><span class="chance">${cap}%</span><span class="fxt">capture</span>${
     n > 1 ? `<span class="fxt">×${n}</span>` : ""}${appear < 100 ? `<span class="fxt">in ${appear}% of runs</span>` : ""}${boss ? `<span class="boss">Boss</span>` : ""}${as ? `<span class="fxt">fights as ${unitLink(as)}</span>` : ""}</span></li>`)]);
   if (s.r) out.push(["Clear reward", foldList(s.r, ([m, first, n]) => `<li><b>${qpath(srcQuest(S, m))}</b><span class="fxm"><span class="fxt">${first === 1 ? "first clear" : "every clear"}</span>${n > 1 ? `<span class="fxt">×${n}</span>` : ""}</span></li>`)]);
@@ -1602,9 +1649,11 @@ async function showGate(g) {
   const list = Object.entries(S.u).map(([id, s]) => [UMAP[id], s.g?.find(x => x[0] == g)?.[1]]).filter(x => x[0] && x[1])
     .sort((a, b) => b[0].r - a[0].r || b[1] - a[1] || a[0].n.localeCompare(b[0].n));
   const omni = list.filter(x => x[0].r === 8).length, top = list.filter(x => x[0].r >= 7).length, have = list.filter(x => mine.has(x[0].id)).length;
-  $("page").innerHTML = `<div class="sec"><h3 class="purple">${esc(G[0])}</h3><p class="small" style="margin:0">${list.length} units${top ? ` · ${top} of them 7★ or Omni${omni ? ` (${omni} Omni)` : ""}` : ""}${
-    G[1] & 1 ? " · featured this week" : G[1] & 2 ? " · rotating gate" : ""}</p>${mine.size ? `<p class="small" style="margin:4px 0 0">You have <b>${have}</b> of them in your box.</p>` : ""}
-    <p class="small dim" style="margin:4px 0 0">Chance per pull from Revived's game server, and the chance to get the unit at least once in 10 pulls. Gem price shows in the game.</p>
+  const st = gateState(G);  // its price and when it's open (a rotating gate only in its featured weeks)
+  $("page").innerHTML = `<div class="sec"><h3 class="purple">${esc(G[0])}</h3><p class="small" style="margin:0">${list.length} units${top ? ` · ${top} of them 7★ or Omni${omni ? ` (${omni} Omni)` : ""}` : ""}</p>
+    <p class="small" style="margin:4px 0 0" id="gwhen">${st.price ? `<b>${st.price}</b> · ` : ""}${st.feat ? `<span class="boss">This week</span> ` : ""}${st.text}${G[1] & 2 && !st.open ? " (a rotating gate opens only in its featured weeks)" : ""}</p>${
+    mine.size ? `<p class="small" style="margin:4px 0 0">You have <b>${have}</b> of them in your box.</p>` : ""}
+    <p class="small dim" style="margin:4px 0 0">Chance per pull, price and dates from Revived's game server, and the chance to get the unit at least once in 10 pulls.</p>
     ${have ? `<div class="chipwrap" style="margin-top:8px"><button class="chip ${gateHide ? "on" : ""}" id="ghide">Hide units I have</button></div>` : ""}</div><div id="glist"></div>`;
   const row = ([u, p]) => { const d = listRow(u); d.querySelector(".badges").insertAdjacentHTML("beforeend", `<span class="badge pw">${p}% per pull</span><span class="badge">≈${in10(p)}% in 10 pulls</span>`); d.redraw = () => row([u, p]); return d; };
   const draw = () => { const shown = gateHide && have ? list.filter(x => !mine.has(x[0].id)) : list; NAV_LIST = shown.map(x => x[0].id); paged($("glist"), shown, row, "list"); };
@@ -1613,8 +1662,25 @@ async function showGate(g) {
   window.scrollTo(0, 0);
 }
 const gatesHtml = S => { const n = {}; for (const s of Object.values(S.u || {})) for (const [g] of s.g || []) n[g] = (n[g] || 0) + 1;
-  const gates = Object.entries(S.g || {}).filter(([g]) => n[g]).sort((a, b) => (b[1][1] & 1) - (a[1][1] & 1));
-  return gates.length ? `<div class="sec"><h3 class="purple">Summon gates</h3>${gates.map(([g, [t, f]]) => `<div class="gate" data-gate="${g}"><b>${esc(t)}</b>${f & 1 ? `<span class="boss">This week</span>` : ""}<span class="n">${n[g]} units ›</span></div>`).join("")}</div>` : ""; };
+  // this week's featured gates first, then the ones always open, then the rotating ones by the day they're back
+  const gates = Object.entries(S.g || {}).filter(([g]) => n[g]).map(([g, G]) => [g, G, gateState(G)])
+    .sort((a, b) => b[2].feat - a[2].feat || b[2].open - a[2].open || (a[1][5] || 9e12) - (b[1][5] || 9e12));
+  return gates.length ? `<div class="sec"><h3 class="purple">Summon gates</h3>${gates.map(([g, [t], st]) => `<div class="gate${st.open ? "" : " shut"}" data-gate="${g}"><b>${esc(t)}<span class="when">${
+    [st.price, st.text].filter(Boolean).join(" · ")}</span></b>${st.feat ? `<span class="boss">This week</span>` : ""}<span class="n">${n[g]} units ›</span></div>`).join("")}</div>` : ""; };
+// the week in Revived, on the Quests tab: its featured event and the next, the Vortex dungeons by day (week.json)
+let DRP = null, WK_PATHS = null;  // the drop finder's data once it's loaded, and every path its search looks through
+function weekHtml() {
+  const W = weekNow(); if (!W) return "";
+  // a name is a search link when the Quests search finds it: a place with drops, or one where a unit can be captured
+  if (!WK_PATHS && DRP?.paths && USRC?.u) WK_PATHS = [...DRP.paths, ...Object.values(USRC.u).flatMap(s => (s.c || []).map(([m]) => srcQuest(USRC, m)))].map(x => x.toLowerCase());
+  const known = n => (WK_PATHS || []).some(x => x.includes(n.toLowerCase())), q = n => known(n) ? `<span class="wkq" data-q="${esc(n)}">${esc(n)}</span>` : esc(n);
+  const days = W.vortex.map((l, d) => l.length ? `<div class="wkday${d === W.today ? " today" : ""}"><span class="d">${DAYS[d]}${d === W.today ? " · today" : ""}</span><span>${l.map(q).join(", ")}</span></div>` : "").join("");
+  return `<div class="sec" id="wksec"><h3 class="green">This week in Revived</h3>${
+    W.event ? `<p class="small" style="margin:0"><b>Featured event: ${q(W.event)}</b> until ${dayFmt(W.ends)}. Its missions pay event tokens and its Bazaar is open.${W.next ? ` Next week: ${q(W.next)}.` : ""}</p>`
+      : `<p class="small dim" style="margin:0">${W.stale ? "This week's featured event isn't in this version's data: update the app, or check the game." : "No featured event this week."}</p>`}
+    ${W.daily.length ? `<div class="wkday" style="margin-top:8px"><span class="d">Every day</span><span>${W.daily.map(q).join(", ")}</span></div>` : ""}${days}
+    <p class="small dim" style="margin:6px 0 0">Vortex dungeons, from Revived's game server.${W.dayStart ? ` A day in the game starts at ${W.dayStart} your time.` : ""} Featured summon gates are below.</p></div>`;
+}
 
 async function evoChain(id) {
   const chain = [id]; const seen = new Set(chain);
@@ -1929,7 +1995,7 @@ const DROP_EXAMPLES = ["Blue Claw", "Kagan Desert", "Excelsior Lead", "Holy Blad
 let dropRecent = store.get("bf.dq", []);
 function dropChips() {
   const chips = (title, list) => list.length ? `<div class="sec"><h3 class="blue">${title}</h3><div class="chipwrap">${list.map(t => `<button class="chip on" data-q="${esc(t)}">${esc(t)}</button>`).join("")}</div></div>` : "";
-  $("dres").innerHTML = chips("Recent searches", dropRecent) + chips("Try", DROP_EXAMPLES.filter(t => !dropRecent.includes(t))) + gatesHtml(USRC || {});
+  $("dres").innerHTML = chips("Recent searches", dropRecent) + chips("Try", DROP_EXAMPLES.filter(t => !dropRecent.includes(t))) + weekHtml() + gatesHtml(USRC || {});
   $("dres").querySelectorAll("[data-gate]").forEach(b => b.onclick = () => go(`#/gate/${b.dataset.gate}`));
   $("dres").querySelectorAll("[data-q]").forEach(b => b.onclick = () => { $("dq").value = b.dataset.q; renderDrops(); saveDropSearch(); });
 }
@@ -1940,7 +2006,7 @@ function saveDropSearch() {
 }
 async function renderDrops() {
   const q = $("dq").value.trim().toLowerCase();
-  if (q.length < 2) { await load("drops"); USRC = await load("usrc"); if (!$("dq").value.trim()) dropChips(); return; }
+  if (q.length < 2) { DRP = await load("drops"); USRC = await load("usrc"); if (!$("dq").value.trim()) dropChips(); return; }
   const [Dr, I, S] = await Promise.all([load("drops"), load("items"), load("usrc")]), places = new Map(), revived = new Set();
   if ($("dq").value.trim().toLowerCase() !== q) return;  // a newer search is on its way
   // rows: [item name, place (number into Dr.paths), 1 = Revived's own data, best chance % or null]
@@ -2272,15 +2338,22 @@ function sphereCut(sid) {
   return Math.max(0, ...parts.map(x => { const m = x.match(/(\d+(?:\.\d+)?)\s*%/);
     return m ? +m[1] : /slight|small/.test(x) ? 10 : /considerabl/.test(x) ? 25 : /great|huge|enorm|massive/.test(x) ? 30 : 15; }));
 }
+const HASC = { d: null, m: new Map() };  // the skills a unit has, as letters: once per unit (for the loaded details)
+function hasOf(id) { if (HASC.d !== TEAM_D) { HASC.d = TEAM_D; HASC.m = new Map(); } let h = HASC.m.get(id);
+  if (h === undefined) HASC.m.set(id, h = (TEAM_D?.[id]?.skills || []).map(s => CAST_L[s.label]).filter(Boolean).join("") || (UMAP[id]?.r >= 6 ? "BS" : "B"));
+  return h; }
 function castNow(i, id, fresh) {  // fresh: a unit not in the slot yet casts its default skill
-  const has = (TEAM_D?.[id]?.skills || []).map(s => CAST_L[s.label]).filter(Boolean).join("") || (UMAP[id]?.r >= 6 ? "BS" : "B"), set = !fresh && CAST_L[TCAST[TCUR]?.[i]];
+  const has = hasOf(id), set = !fresh && CAST_L[TCAST[TCUR]?.[i]];
   return "E" + (i === 0 || i === 5 ? "L" : "") + (set && has.includes(set) ? set : has.includes("S") ? "S" : "B");
 }
 const onSkill = (x, now) => [...x[1]].some(l => now.includes(l));  // an SP option for a skill it uses
 // where a squad unit gets a role: on = from what it uses (skill letters, P: the SP picked for it), off = only from the rest
 // a role a skill gives only the unit itself (tags.json "self": the wiki's "To self", or "boosts own …")
 const selfOf = (id, code) => TAGS.self?.[id]?.[code] || "";
-const teamLetters = (id, code) => [...(TAGS.units[id]?.[code] || "")].filter(l => !selfOf(id, code).includes(l));
+const TLC = new Map();  // once per unit and role (the tags don't change after they load)
+const teamLetters = (id, code) => { const k = id + "|" + code; let r = TLC.get(k);
+  if (!r) { r = [...(TAGS.units[id]?.[code] || "")].filter(l => !selfOf(id, code).includes(l)); if (TAGS.units[id]) TLC.set(k, r); }
+  return r; };
 // a sphere's tag for a role on unit id: its own part is skipped when only for other elements ("(Water, Light)"); a part
 // for all allies stays (its holder number 0 then)
 // x[0]: 1 for all allies (or on the foes), 2 only through the leader skill (a 107 "adds to LS": the leader or the friend), 0 its holder's
@@ -2321,6 +2394,9 @@ function addToTeam(id) {
 // fill empty slots one by one with the unit that covers the most of what is still missing (only one element if chosen):
 // from your box, or the 7★ and Omni units you can get in Revived (S = usrc.json, "o": evolving one you get counts)
 let fillEl = store.get("bf.fillel", "");
+// while Fill works out a team (in short turns, so the page stays alive): taps on the team and the tabs do nothing
+let FILLING = false;
+document.addEventListener("click", e => { if (FILLING && e.target.closest?.("#v-team, .nav, #favtab")) { e.stopPropagation(); e.preventDefault(); } }, true);
 // the missing roles an SP build can add to a unit's skills within cap SP, the cheapest first
 function spFill(id, roles, leaderToo, cap, now) {
   const adds = spAdds(id, leaderToo, now), out = []; let used = 0;
@@ -2329,13 +2405,19 @@ function spFill(id, roles, leaderToo, cap, now) {
 }
 // what a unit in a slot gives the team for a role, as a number: the game's team number for the skill it would cast, else
 // the skill text's (its ES and LS too), not a heal per spark, not what's only for itself
+const TVC = { d: null, m: new Map() };  // once per unit, role and the skills it uses (for the loaded details)
 function teamVal(id, s, c, fresh) {
-  const now = castNow(s, id, fresh); let v = 0;
+  const now = castNow(s, id, fresh);
+  if (TVC.d !== TEAM_D) { TVC.d = TEAM_D; TVC.m = new Map(); }
+  const key = id + "|" + c + "|" + now, known = TVC.m.get(key); if (known !== undefined) return known;
+  let v = 0;
   for (const l of teamLetters(id, c)) if (now.includes(l) && !TAGS.powerAll?.[id]?.[c]?.["~" + l]) {
     const g = (TEAM_D?.[id]?.skills || []).find(x => CAST_L[x.label] === l);
     v = Math.max(v, g?.buffs?.[c] || TAGS.powerAll?.[id]?.[c]?.[l] || 0);
   }
-  return Math.min(v, c === "heal" ? 10000 : v);
+  const r = Math.min(v, c === "heal" ? 10000 : v);
+  if (TEAM_D && TAGS.units[id]) TVC.m.set(key, r);
+  return r;
 }
 const NUM_ROLES = ["mit", "heal", "bbf", "atk", "bbatk", "spark", "crit", "critrate", "elem"];
 const DMG_ROLES = ["atk", "bbatk", "critrate", "crit", "elem", "spark"];
@@ -2349,8 +2431,11 @@ const ES_WORD = { crit: /boosts? critical damage(?! reduc)/, critrate: /boosts? 
   elem: /boosts? (?:[a-z]+ )?elemental (?:weakness )?damage(?! reduc)/, bbatk: /boosts? bb atk/ };
 // "raises Atk parameter limits to 180000", "raises Atk limit to 190k": a player unit's ATK is capped at 99,999 otherwise
 // (also "raises Atk parameters limits to 200000", "raise Atk limit to 200k", "from 150000 to 180000", "to 160": thousands)
-const atkLimitOf = t => { const m = String(t || "").match(/raises? (?:max )?atk (?:parameters? )?limits? (?:from \d+k? )?to (\d+)\s*(k\b)?/i);
-  if (!m) return 0; const v = +m[1] * (m[2] ? 1000 : 1); return v < 1000 ? v * 1000 : v; };
+const ALIM = new Map();  // remembered per text (Fill asks for the same ones thousands of times)
+const atkLimitOf = t => { const s = String(t || ""); let r = ALIM.get(s); if (r !== undefined) return r;
+  const m = s.match(/raises? (?:max )?atk (?:parameters? )?limits? (?:from \d+k? )?to (\d+)\s*(k\b)?/i);
+  if (!m) r = 0; else { const v = +m[1] * (m[2] ? 1000 : 1); r = v < 1000 ? v * 1000 : v; }
+  ALIM.set(s, r); return r; };
 // a list of the game's passives ([[id, "params"], ...]) as damage numbers for a unit of element el (and the skill kind
 // k for BB ATK: 0 BB, 1 SBB, 2 UBB), as the game reads them (libgame.so BattleUnitPassive getters)
 // the element spark (10015) and critical damage (10016) buffs slot j's spheres add to the skill it casts (passive 66:
@@ -2360,9 +2445,15 @@ const sphPel = (j, label) => (TSPH[TCUR]?.[j] || []).flatMap(sid => (sid && TEAM
   .filter(a => (a[0] === "10015" || a[0] === "10016") && a[SPH_SK[label]]?.trim() === "1").map(a => { const v = a[1].split("&").map(Number);
     return [a[0] === "10015" ? "spark" : "crit", v[3], a[0] === "10015" ? v[0] : v[0] * 100, +a[2]]; }));
 const EL_NO = { fire: 1, water: 2, earth: 3, thunder: 4, light: 5, dark: 6 }, NO_EL = { 1: "fire", 2: "water", 3: "earth", 4: "thunder", 5: "light", 6: "dark" };
+// Remembered per list, element, skill and type: Fill asks for the same ones many thousands of times. The lists are the
+// loaded data's own arrays (fxOne, sphFx keep one array per effect and sphere), and nobody changes the answer.
+const FXR = new WeakMap(), FX_NONE = [], FX1 = new WeakMap(), fxOne = e => FX1.get(e) || (FX1.set(e, [[e[0], e[2]]]), FX1.get(e));
 function fxRole(list, el, k = 1, ty = 0) {  // ty: the unit's type, TYPES.indexOf + 1 (1 Lord … 5 Oracle)
-  const n = EL_NO[el] || 0, o = {}, add = (c, v) => { if (v > 0) o[c] = (o[c] || 0) + v; };
-  for (const [pid, raw] of list || []) { const p = String(raw).split(",").map(Number), g = i => p[i] || 0;
+  list = list || FX_NONE;
+  let memo = FXR.get(list); if (!memo) FXR.set(list, memo = new Map());
+  const n = EL_NO[el] || 0, key = n * 100 + k * 10 + ty, known = memo.get(key); if (known) return known;  // only the element's number counts
+  const o = {}, add = (c, v) => { if (v > 0) o[c] = (o[c] || 0) + v; };
+  for (const [pid, raw] of list) { const p = String(raw).split(",").map(Number), g = i => p[i] || 0;
     if (pid === "1") { add("atk", g(0)); add("critrate", g(3)); }
     else if (pid === "2") { if (n && (g(0) === n || g(1) === n)) { add("atk", g(2)); add("critrate", g(5)); } }
     else if (pid === "34") add("crit", g(0) * 100);
@@ -2377,11 +2468,26 @@ function fxRole(list, el, k = 1, ty = 0) {  // ty: the unit's type, TYPES.indexO
     else if (pid === "64") add("bbatk", g(k));
     else if (pid === "103") { if (g(4) === 1) add("bbatk", g(k)); }  // [BB, SBB, UBB, HP %, 1 above / 2 below]: at full HP
     else if (pid === "143") o.limit = Math.max(o.limit || 0, g(0)); }
-  return o;
+  memo.set(key, o); return o;
 }
 // a sphere's "adds the following effects to LS" passives (107: "P,v1$v2$..."), and its other ones
-const lsAddOf = sid => (TEAM_I?.[sid]?.fx || []).filter(f => f[0] === "107").map(f => { const [pid, rest] = String(f[1]).split(/,(.*)/s); return [pid, String(rest || "").split("$").join(",")]; });
-const sphFxOwn = sid => (TEAM_I?.[sid]?.fx || []).filter(f => f[0] !== "107");
+const SPH_NOFX = { ls: [], own: [] }, SPHFX = new WeakMap();  // worked out once per sphere
+const sphFx = sid => { const it = TEAM_I?.[sid]; if (!it) return SPH_NOFX; let r = SPHFX.get(it);
+  if (!r) SPHFX.set(it, r = { ls: (it.fx || []).filter(f => f[0] === "107").map(f => { const [pid, rest] = String(f[1]).split(/,(.*)/s); return [pid, String(rest || "").split("$").join(",")]; }),
+    own: (it.fx || []).filter(f => f[0] !== "107") });
+  return r; };
+const lsAddOf = sid => sphFx(sid).ls, sphFxOwn = sid => sphFx(sid).own;
+// An extra skill's effects (details "esfx") as passive lists for fxRole, for the unit itself and for the party: one
+// remembered pair of lists per set of effects whose condition holds in this team (most have no condition: one pair)
+const ESL = new WeakMap();
+function esLists(ef, team, j) {
+  let m = ESL.get(ef); if (!m) ESL.set(ef, m = { cond: ef.length > 30 || ef.some(e => e[3]?.[1]?.length), by: new Map() });
+  const pairs = ok => [ok.map(e => [e[0], e[2]]), ok.filter(e => e[1] === 2).map(e => [e[0], e[2]])];
+  if (ef.length > 30) return pairs(ef.filter(e => esCond(e[3], team, j)));  // too many for one number: not remembered
+  let mask = -1; if (m.cond) { mask = 0; ef.forEach((e, i) => { if (esCond(e[3], team, j)) mask |= 1 << i; }); }
+  let r = m.by.get(mask); if (!r) m.by.set(mask, r = pairs(m.cond ? ef.filter((e, i) => mask & (1 << i)) : ef));
+  return r;
+}
 // an extra skill effect's condition (the game's isEnableExtraPassive): [any one (1) or all (0), [[type, values], ...]]
 function esCond(cond, team, j) {
   if (!cond || !cond[1]?.length) return true;
@@ -2404,7 +2510,8 @@ function dmgInfo(id, i, fresh) {
 // wiki's units, for extra skills' effect targets ([] for the game's text); spOpts(i): the SP picked for slot i's skills
 const ES_SPH = new Map();  // a unit's spheres that switch on its extra skill, without the wiki (Fill asks often)
 function teamBuffs(team, kindOf, W = [], D = TEAM_D || {}, spOpts = () => []) {
-  const castG = i => (D?.[team[i]]?.skills || []).find(x => x.label === kindOf(i));
+  // the skill each slot casts and its game record don't change while these buffs are worked out: looked up once
+  const kc = [], kind = i => i in kc ? kc[i] : (kc[i] = kindOf(i)), gc = [], castG = i => i in gc ? gc[i] : (gc[i] = (D?.[team[i]]?.skills || []).find(x => x.label === kind(i)));
   const ELN = { fire: 1, water: 2, earth: 3, thunder: 4, light: 5, dark: 6 };
   // party buffs on unit u (slot) for a role: [all elements, its element] (ATK and crit rate come as both kinds)
   const pc = new Map(), party = (c, u) => { const ck = c + u; if (pc.has(ck)) return pc.get(ck); const el = ELN[(UMAP[team[u]]?.e || "").toLowerCase()]; let all = 0, mine = 0;
@@ -2419,7 +2526,7 @@ function teamBuffs(team, kindOf, W = [], D = TEAM_D || {}, spOpts = () => []) {
       if ((c === "spark" || c === "crit") && g) for (const [rc, e, v, who] of sphPel(j, g.label)) if (rc === c && e === el && (who !== 3 || j === u)) mine = Math.max(mine, v);
       if (c === "sparkcrit" && g?.psc) for (const [ch, b, who] of g.psc) if (who !== 3 || j === u) all = Math.max(all, ch / 100 * b);
       // the SP picked for the skill it casts: for its element if it names one, only for itself if it says "own"
-      const L = CAST_L[kindOf(j)] || "S", p5el = (g?.p5 || []).find(x => x[0] && (c === "atk" ? x[1] : x[2]))?.[0];
+      const L = CAST_L[kind(j)] || "S", p5el = (g?.p5 || []).find(x => x[0] && (c === "atk" ? x[1] : x[2]))?.[0];
       // an option with a number of its own for the UBB ("225% on SBB, 500% on UBB"): that one when it casts the UBB
       for (const x of spOpts(j)) { const v = (L === "U" && x.n.ubb?.[c]) || x.n[c] || 0; if (!v || !x.L.includes(L) || (/\bown\b|to self|\bself\b/.test(x.d) && j !== u)) continue;
         const xe = elsIn(x.d), en = /enhanc/.test(x.d) && p5el;
@@ -2456,18 +2563,18 @@ function teamBuffs(team, kindOf, W = [], D = TEAM_D || {}, spOpts = () => []) {
   // Elemental Paradigm (an Omni+ squad): its spark, critical and elemental damage, for the squad (not the friend)
   const par = paradigm(team), parX = { spark: 1, crit: 2, elem: 3 };
   // the game's own records where the saved tables have them (details "lsfx", "esfx"; items "fx"), else the texts
-  const kix = u => ({ BB: 0, SBB: 1, UBB: 2 })[kindOf(u)] ?? 1;
-  const passive = (c, u) => { const id = team[u], el = (UMAP[id]?.e || "").toLowerCase(), forMe = e => !e.els || e.els.includes(el), k = kix(u);
+  const kix = u => ({ BB: 0, SBB: 1, UBB: 2 })[kind(u)] ?? 1;
+  const esl = [], pvc = new Map(), passive = (c, u) => { const pk = c + u, known = pvc.get(pk); if (known !== undefined) return known; const id = team[u], el = (UMAP[id]?.e || "").toLowerCase(), forMe = e => !e.els || e.els.includes(el), k = kix(u);
     const ls = leads.reduce((a, j) => a + (D?.[team[j]]?.lsfx ? fxRole(D[team[j]].lsfx, el, k)[c] || 0 : lsFx(c, j).filter(forMe).reduce((s, e) => s + e.v, 0)), 0);
     const es = !SQ.es ? 0 : team.reduce((a, x, j) => { if (!x) return a; const ef = D?.[x]?.esfx;
-      if (ef) return a + ef.filter(e => (j === u || e[1] === 2) && esCond(e[3], team, j)).reduce((s, e) => s + (fxRole([[e[0], e[2]]], el, k)[c] || 0), 0);
+      if (ef) { const l = j in esl ? esl[j] : (esl[j] = esLists(ef, team, j)); return a + (fxRole(l[j === u ? 0 : 1], el, k)[c] || 0); }  // its own: all its effects; another's: the ones for the party
       return a + esFx(c, j).filter(e => e.ok && (j === u || e.all) && forMe(e)).reduce((s, e) => s + e.v, 0); }, 0);
     const pd = par && u < 5 && parX[c] ? PARADIGM[par.lv][parX[c]] : 0;
     // spheres: the holder's own only (the game gives a sphere's effects to its holder), plus the leader's and the
     // friend's spheres' "adds to LS" effects, for everyone
     const own = (TSPH[TCUR]?.[u] || []).reduce((a, sid) => a + (!sid ? 0 : TEAM_I?.[sid]?.fx ? fxRole(sphFxOwn(sid), el, k)[c] || 0 : sphTag(sid, c, id)?.[2] || 0), 0);
     const lsAdd = leads.reduce((a, j) => a + (TSPH[TCUR]?.[j] || []).reduce((s, sid) => s + (sid ? fxRole(lsAddOf(sid), el, k)[c] || 0 : 0), 0), 0);
-    return ls + es + pd + own + lsAdd; };
+    const r = ls + es + pd + own + lsAdd; pvc.set(pk, r); return r; };
   // its ATK limit from those records: leader skills, its extra skill (or one for the party), its spheres, "adds to LS"
   const fxLimit = u => { const id = team[u], el = (UMAP[id]?.e || "").toLowerCase(), L = l => fxRole(l, el).limit || 0;
     return Math.max(0, ...leads.map(j => L(D?.[team[j]]?.lsfx || [])), ...(SQ.es ? team.map((x, j) => !x ? 0 : Math.max(0, ...(D?.[x]?.esfx || []).filter(e => (j === u || e[1] === 2) && esCond(e[3], team, j)).map(e => L([[e[0], e[2]]])))) : []),
@@ -2492,6 +2599,11 @@ function roughDamage(t, fresh) {
 // how many first picks Fill's shortlist takes with each estimate (the battle check then picks among all the teams)
 const FILL_SHORT = { game: 5, rough: 5 };
 
+// a leader skill's ATK % for a unit of an element, from its text: once per leader and element (for the loaded details)
+const LSATK = { d: null, m: new Map() };
+function lsAtkOf(id, el) { if (LSATK.d !== TEAM_D) { LSATK.d = TEAM_D; LSATK.m = new Map(); } const k = id + "|" + el; let v = LSATK.m.get(k);
+  if (v === undefined) LSATK.m.set(k, v = statBoosts(lsText(id, null, TEAM_D || {})).filter(c => c.stats.includes("atk") && (!c.els || c.els.includes(el))).reduce((s, c) => s + c.pct, 0));
+  return v; }
 function teamDamage(t, half, fresh) {
   const kindOf = i => { const now = castNow(i, t[i], fresh?.has(i)); return now.includes("U") ? "UBB" : now.includes("S") ? "SBB" : now.includes("B") ? "BB" : null; };
   const B = teamBuffs(t, kindOf, [], TEAM_D || {}), leads = [0, 5].filter(j => t[j] && (j === 0 ? SQ.lead : SQ.friend));
@@ -2499,7 +2611,7 @@ function teamDamage(t, half, fresh) {
   return t.reduce((a, id, i) => {
     const g = id && B.castG(i), mods = g?.mods?.length ? g.mods : g?.dmg || g?.mod ? [g.dmg || g.mod] : [];
     if (!mods.length) return a;
-    const el = (UMAP[id]?.e || "").toLowerCase(), lsAtk = j => statBoosts(lsText(t[j], null, TEAM_D || {})).filter(c => c.stats.includes("atk") && (!c.els || c.els.includes(el))).reduce((s, c) => s + c.pct, 0);
+    const el = (UMAP[id]?.e || "").toLowerCase(), lsAtk = j => lsAtkOf(t[j], el);
     const pct = leads.reduce((s, j) => s + lsAtk(j), 0) + (SQ.es ? PA(i, "atk").E || 0 : 0) + B.partyAll("atk", i) + B.ownOf("atk", i);
     const bb = B.partyAll("bbatk", i) + B.passive("bbatk", i), tot = c => B.partyAll(c, i) + B.ownOf(c, i) + B.passive(c, i);
     const lim = Math.max(ATK_CAP, ...leads.map(j => atkLimitOf(TEAM_D?.[t[j]]?.leader?.desc)), SQ.es ? atkLimitOf(TEAM_D?.[id]?.extra) : 0,
@@ -2515,7 +2627,15 @@ function teamDamage(t, half, fresh) {
 // how much a newer unit counts (0 to 1 by release, times this): new units are usually stronger (power creep), not always
 const FILL_W = { newness: 8, old: 15 };  // old: what a unit from before release number 8000 counts less
 // keep: how many teams to give back (the best first, the team itself not changed); 1 fills the team with the best
-function autoFill(team, el, S, keep = 1) {
+// All at once (autoFill), or in short turns so the page keeps drawing while it works (autoFillAsync, the Fill button):
+// the work is the same steps either way (autoFillSteps stops after each slot it fills and each first pick it tries)
+function autoFill(team, el, S, keep = 1) { const it = autoFillSteps(team, el, S, keep); for (;;) { const s = it.next(); if (s.done) return s.value; } }
+async function autoFillAsync(team, el, S, keep = 1) {
+  const it = autoFillSteps(team, el, S, keep); let t = performance.now();
+  for (;;) { const s = it.next(); if (s.done) return s.value;
+    if (performance.now() - t > 40) { await new Promise(r => setTimeout(r, 0)); t = performance.now(); } }
+}
+function* autoFillSteps(team, el, S, keep = 1) {
   const can = new Set(S?.o || []);
   // units without skills (the custom ones, Summoner, Rainbow Crystal…) don't help a team
   const pool = UNITS.filter(u => (SQ.mineOnly ? mine.has(u.id) : u.r >= 7 && !u.f && (!can.size || can.has(u.id))) && (!el || u.e === el) && TAGS.units[u.id] && !/\(custom\)/i.test(u.n));
@@ -2545,11 +2665,12 @@ function autoFill(team, el, S, keep = 1) {
   }
   const missingIn = (t, spNeed) => COVER.filter(c => !providers(t, c).length && !Object.values(spNeed).some(r => r.includes(c)));
   // the rest of the empty slots, one at a time, the best unit for each
-  function finish(t, spNeed, from, est) {
+  function* finish(t, spNeed, from, est) {
     for (const s of empty.slice(from)) {
       const missing = missingIn(t, spNeed), tops = Object.fromEntries(NUM_ROLES.map(c => [c, top(t, c)]));
       const best = addDamage(pool.filter(u => !t.includes(u.id)).map(u => ({ u, r: rate(u, s, t, missing, tops) })), s, t, est)[0];
       if (best) { t[s] = best.u.id; if (best.r.sp.length) spNeed[s] = best.r.sp; }
+      yield;
     }
   }
   // a whole team: the roles it covers, its top numbers, its units' newness (its damage: teamDamage, below)
@@ -2561,9 +2682,10 @@ function autoFill(team, el, S, keep = 1) {
   if (empty.length) for (const [est, n] of [[(t, f) => teamDamage(t, null, f), FILL_SHORT.game], [roughDamage, FILL_SHORT.rough]]) {
     const s0 = empty[0], miss0 = missingIn(team, {}), tops0 = Object.fromEntries(NUM_ROLES.map(c => [c, top(team, c)]));
     const firsts = addDamage(pool.filter(u => !team.includes(u.id)).map(u => ({ u, r: rate(u, s0, team, miss0, tops0) })), s0, team, est).slice(0, n);
+    yield;
     for (const { u, r } of firsts) {
       const t = [...team], spNeed = {}; t[s0] = u.id; if (r.sp.length) spNeed[s0] = r.sp;
-      finish(t, spNeed, 1, est);
+      yield* finish(t, spNeed, 1, est);
       if (!cands.some(c => c.t.join() === t.join())) cands.push({ t, spNeed, w: worth(t, spNeed) });
     }
   }
@@ -2574,6 +2696,7 @@ function autoFill(team, el, S, keep = 1) {
       const missing = missingIn(t, spNeed); let best = null, bs = -Infinity, bsp = [];
       for (const u of pool) { if (t.includes(u.id)) continue; const r = rate(u, s, t, missing, undefined, true); if (r.score > bs) { bs = r.score; best = u; bsp = r.sp; } }
       if (best) { t[s] = best.id; if (bsp.length) spNeed[s] = bsp; }
+      yield;
     }
     if (!cands.some(c => c.t.join() === t.join())) cands.push({ t, spNeed, w: worth(t, spNeed), live: true });
   }
@@ -2821,6 +2944,25 @@ function sparkRate(members, order) {
   return { rate: all ? frames.reduce((a, fs) => a + hit(fs), 0) / all : 0, per: frames.map(fs => fs.length ? hit(fs) / fs.length : 0) };
 }
 const orders = a => a.length <= 1 ? [a] : a.flatMap((x, i) => orders([...a.slice(0, i), ...a.slice(i + 1)]).map(o => [x, ...o]));  // up to 6! = 720
+// The team's share alone, for trying every casting order quickly (the same number sparkRate gives): each unit's hit
+// frames once, moved 2 frames per place in the order, counted in one reused table. order: the members' numbers in
+// casting order (permsOf: every order of n members, in the order orders() makes them, made once).
+// null when a frame isn't a whole number from 0 up (then sparkRate does every order)
+const PERMS = {}, permsOf = n => PERMS[n] || (PERMS[n] = orders([...Array(n).keys()]));
+function sparkRates(members) {
+  const base = members.map(m => sparkFrames(m, 0)), n = members.length;
+  if (base.some(fs => fs.some(f => !Number.isInteger(f) || f < 0))) return null;
+  const uniq = base.map(fs => [...new Set(fs)]), all = base.reduce((a, fs) => a + fs.length, 0);
+  const cnt = new Int16Array(Math.max(0, ...base.map(fs => Math.max(0, ...fs))) + 2 * n + 1), pos = new Array(n);
+  return order => {
+    for (let p = 0; p < n; p++) pos[order[p]] = 2 * p;
+    for (let k = 0; k < n; k++) { const u = uniq[k], d = pos[k]; for (let x = 0; x < u.length; x++) cnt[u[x] + d]++; }
+    let hits = 0;
+    for (let k = 0; k < n; k++) { const fs = base[k], d = pos[k]; for (let x = 0; x < fs.length; x++) if (cnt[fs[x] + d] > 1) hits++; }
+    for (let k = 0; k < n; k++) { const u = uniq[k], d = pos[k]; for (let x = 0; x < u.length; x++) cnt[u[x] + d] = 0; }
+    return all ? hits / all : 0;
+  };
+}
 function sparkCheck(rows, W, D) {
   const members = rows.map(r => ({ r, id: r.id, slot: r.i, mv: W[r.i]?.mv, sp: (D?.[r.id]?.skills || []).find(x => x.label === r.s?.kind)?.sp }))
     .filter(m => m.mv && m.sp?.length && (m.mv[0] !== 1 || RUNUP[m.mv[1]]) && [1, 2, 3].includes(m.mv[0]));
@@ -2828,7 +2970,11 @@ function sparkCheck(rows, W, D) {
   if (members.length < 2) return null;
   const slotOrder = [...members].sort((a, b) => a.slot - b.slot), now = sparkRate(members, slotOrder);
   let best = { order: slotOrder, ...now };
-  for (const o of orders(members)) { const x = sparkRate(members, o); if (x.rate > best.rate + 1e-9) best = { order: o, ...x }; }
+  const fast = sparkRates(members);
+  if (fast) { let bo = null, br = best.rate;  // the first order that beats the best so far, as before; its full numbers after
+    for (const o of permsOf(members.length)) { const x = fast(o); if (x > br + 1e-9) { br = x; bo = o; } }
+    if (bo) { const o = bo.map(k => members[k]); best = { order: o, ...sparkRate(members, o) }; } }
+  else for (const o of orders(members)) { const x = sparkRate(members, o); if (x.rate > best.rate + 1e-9) best = { order: o, ...x }; }
   return { members, now, best, untimed: rows.filter(r => !members.some(m => m.r === r)), guessed: members.filter(m => m.tele === null) };
 }
 function sparkHtml(S) {
@@ -3137,13 +3283,18 @@ async function renderTeam() {
   $("maxcost").onchange = e => { SQ.maxcost = e.target.value.replace(/\D/g, ""); saveSquad(); renderTeam(); };
   $("tfillel").onchange = e => { fillEl = e.target.value; store.set("bf.fillel", fillEl); };
   $("tfill").onclick = async () => {
+    if (FILLING) return;
     if (!team.includes(null)) return toast("No empty slots");
     if (SQ.mineOnly && !mine.size) return toast("Your box is empty: hold a unit you have in a list, or open it and tap ＋ My box", 3000);
     toast("Working out the team…", 20000);  // until Fill is done (the next toast replaces it)
+    // let the message get on the screen first: the work below blocks the page for a moment (a frame, or 60 ms without one)
+    FILLING = true;  // taps on the team and the tabs wait until it's done (it works in short turns)
+    try {
+    await new Promise(r => { const t = setTimeout(r, 60); requestAnimationFrame(() => { clearTimeout(t); setTimeout(r, 0); }); });
     const snap = teamSnap(), at = TCUR, before = [...team], S = await load("usrc"), D = await load("details");
     // the best few teams by roles and buffs, each through the battle check (with BB where that helps): the one where
     // the most units can cast every turn and that hits hardest is kept
-    const I = await load("items"), cands = autoFill(team, fillEl, S, 5), news = [0, 1, 2, 3, 4, 5].filter(i => !before[i]);
+    const I = await load("items"), cands = await autoFillAsync(team, fillEl, S, 5), news = [0, 1, 2, 3, 4, 5].filter(i => !before[i]);
     const cast0 = [...TCAST[TCUR]], spe0 = JSON.stringify(TSPE[TCUR]);
     for (const c of cands) {  // each team with its SP and skills set the way Fill sets them, then the battle check you see
       TCAST[TCUR] = [...cast0]; TSPE[TCUR] = JSON.parse(spe0);
@@ -3164,6 +3315,7 @@ async function renderTeam() {
     if (pick) for (const s of news) if (pick.t[s]) { team[s] = pick.t[s]; n++; }
     saveTeams(); saveSquad(); renderTeam();
     n ? undoToast(`Added ${n} unit${n > 1 ? "s" : ""}`, () => teamRestore(at, snap)) : toast(`No ${fillEl ? fillEl + " " : ""}units left to add`);
+    } finally { FILLING = false; }
   };
   $("tshare").onclick = () => shareTeam(team, W);
   $("tclear").onclick = () => { if (!team.some(Boolean)) return; const s = teamSnap(), t = TCUR;
@@ -3626,7 +3778,7 @@ window.BFBack = () => {
 };
 
 (async () => {
-  const [U, T] = await Promise.all([load("units"), load("tags"), load("banners").then(b => { BAN = b; }), load("events").then(e => { EVT = new Set(e?.rotating || []); })]);
+  const [U, T] = await Promise.all([load("units"), load("tags"), load("banners").then(b => { BAN = b; }), load("events").then(e => { EVT = new Set(e?.rotating || []); }), load("week").then(w => { WK = w || {}; })]);
   TAGS = { labels: {}, units: {}, power: {}, powerUnit: {}, ...T };
   for (const p of Object.values(TAGS.power)) for (const [c, [v]] of Object.entries(p)) POWER_MAX[c] = Math.max(POWER_MAX[c] || 0, c === "heal" ? Math.min(v, 10000) : v);
   UNITS = Object.entries(U).map(([id, [n, r, e, c, h1, a1, d1, r1, hm, am, dm, rm, no]]) =>
