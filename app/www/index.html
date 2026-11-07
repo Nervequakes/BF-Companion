@@ -333,7 +333,10 @@ details > summary::before { content: "▸ "; } details[open] > summary::before {
 .count .umore { background: none; border: 0; padding: 0; font: inherit; text-shadow: inherit; }
 .rowlbl { flex: none; align-self: center; font-size: 11px; color: var(--dim); }
 /* what you can type in the Units search (searchSug): effects as chips with their unit count, and What can I search? */
-.sug { padding-top: 6px; } .sug .chip small, .shelp .chip small { font-size: 10.5px; opacity: .75; }
+.scroller.sug { max-height: 0; opacity: 0; padding-top: 0; padding-bottom: 0; overflow-y: hidden; pointer-events: none; transform: translateY(-4px); visibility: hidden;
+  transition: max-height .22s ease, opacity .18s ease, padding .22s ease, transform .22s ease, visibility 0s linear .22s; }  /* hidden once it's shut */
+.scroller.sug.show { max-height: 60px; opacity: 1; padding-top: 6px; padding-bottom: 2px; pointer-events: auto; transform: none; visibility: visible; transition-delay: 0s; }
+@media (prefers-reduced-motion: reduce) { .sug { transition: none; } } .sug .chip small, .shelp .chip small { font-size: 10.5px; opacity: .75; }
 .sug .sughelp { border-style: dashed; }
 .shelp { text-align: left; } .shelp .big { text-align: center; } .shelp .h { display: block; margin: 12px 0 2px; }
 .shelp .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 2px; } .shelp p { margin: 2px 0; }
@@ -434,7 +437,9 @@ select.gsel { height: 38px; font-size: 12.5px; padding: 0 10px; }
 .cov > .covh { min-height: 0; padding: 0 0 4px; border-top: 0; font-size: 10px; color: var(--dim); text-align: center; text-shadow: var(--ol); }
 .cov .cl { align-self: center; font-family: Rodin, Arial, sans-serif; font-size: 12px; line-height: 1.2; text-shadow: var(--ol); overflow-wrap: anywhere; }
 /* the role's best number on its own line, under the name, on every row */
-.cov .cl > small { display: block; margin-top: 2px; padding-left: .95em; } .cov .cl .cfind { display: block; margin-top: 4px; } .cov .cfrow { grid-column: 2 / -1; }
+.cov .cl > small { display: block; margin-top: 2px; padding-left: .95em; }
+/* Find: in the same place in every row the team doesn't cover, under the role's name, small (not out among the units) */
+.cov .cl .cfind { display: flex; width: fit-content; margin: 5px 0 0 .95em; padding: 2px 10px; min-height: 0; font-size: 11px; line-height: 16px; }
 .cov .ok { color: #7ad67a; } .cov .no { color: #ff8a7a; } .cov .part { color: #ff8a7a; } .cov .selfc { color: #8fd0ff; } .cov .cl small { color: var(--accent); font-size: 10.5px; }
 /* the unit's portrait as big as its column allows (36px, less on a narrow phone), every one at the top of its row; its
    spheres in a row on the portrait's bottom edge (not over its face, and not pushing the caption down: every caption
@@ -580,7 +585,7 @@ body.boxedit .totop { bottom: calc(var(--navh) + 78px); } body.boxedit .toast { 
       <div class="searchrow"><input id="uq" type="search" placeholder="Name, skill, role" autocomplete="off">
         <select id="usort"><option value="rarity">Rarity</option><option value="element">Element</option><option value="new">Newest</option><option value="archive">Archive No.</option><option value="name">Name</option><option value="atk">ATK</option><option value="hp">HP</option><option value="def">DEF</option><option value="rec">REC</option><option value="cost">Cost</option><option value="power">Strongest (role)</option></select>
         <button class="iconbtn fbtn" id="ufbtn" title="Filters" aria-label="Filters"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg><span id="ufn"></span></button></div>
-      <div class="scroller sug" id="usug" hidden></div>
+      <div class="scroller sug" id="usug"></div>
       <div id="ufilters">
         <div class="scroller" id="uel"></div>
         <div class="scroller" id="urar"></div>
@@ -597,7 +602,7 @@ body.boxedit .totop { bottom: calc(var(--navh) + 78px); } body.boxedit .toast { 
     <div class="count" id="ecount"></div><div id="elist" style="padding-top:10px"></div>
   </section>
   <section class="view" id="v-spheres">
-    <div class="bar2"><div class="searchrow"><input id="sq" type="search" placeholder="Search spheres and items…" autocomplete="off"></div><div class="scroller" id="stype"></div><div class="scroller" id="sel"></div></div>
+    <div class="bar2"><div class="searchrow"><input id="sq" type="search" placeholder="Search spheres and items…" autocomplete="off"></div><div class="scroller sug" id="ssug"></div><div class="scroller" id="stype"></div><div class="scroller" id="sel"></div></div>
     <div class="count" id="scount"></div><div id="slist" style="padding-top:10px"></div>
   </section>
   <section class="view" id="v-drops">
@@ -690,7 +695,7 @@ async function showAbout() {
       <div class="upd" id="upd"></div></div>` : ""}
     <p class="dim small">Data from the game's own files, <b>bfrevive.net</b> and the Brave Frontier Wiki.${canUpdate() ? "" : window.BFApp ? " No internet, no account, nothing collected."
       : document.querySelector("script[data-goatcounter]")  // the website's visit counter (put in by its build, never in the app)
-        ? " No account, no ads. Visits are counted with GoatCounter: no cookies, nothing that tells who you are. Your favorites, box and teams stay in this browser."
+        ? " No account, no ads. Your favorites, box and teams stay in this browser."  // not "nothing collected": visits are counted (the user: "remove the mention of goatedcount")
         : " No account, no ads, nothing collected: your favorites, box and teams stay in this browser."} Fan-made: not affiliated with gumi or the BF Revive team.</p>
     ${window.BFApp ? `<p class="small">New versions: <b>github.com/Nervequakes/BF-Companion</b></p>
     <div class="btnrow" style="justify-content:center"><button class="gbtn blue" id="copylink">Copy link</button><button class="gbtn mclose">Close</button></div>`
@@ -1346,18 +1351,19 @@ function searchSug() {
   let html = "";
   if (!raw) { if (document.activeElement === $("uq")) html = `<span class="rowlbl">Try:</span>${SUG_TRY.map(v => chipQ(v, esc(v))).join("")}`; }
   else if (raw.length >= 2) {
-    const got = ` ${q} `, hits = [];
+    const got = ` ${q} `, hits = [], inQ = [];
     for (const [c, l] of Object.entries(TAGS.labels)) {
       const ll = l.toLowerCase();
-      if (got.includes(` ${ll} `)) continue;  // already in the search
+      if (got.includes(` ${ll} `)) { inQ.push([c, l]); continue; }  // already in the search: shown as found
       if (ll.includes(q)) hits.push([c, l, l]);
       else if (last.length >= 2 && ll.split(/[\s/]+/).some(w => w.startsWith(last))) hits.push([c, l, head ? `${head} ${l}` : l]);
     }
-    if (hits.length) html = `<span class="rowlbl">Effects:</span>${hits.map(([c, l, v]) => chipQ(v, `${esc(l)} <small>${roleCount(c)}</small>`)).join("")}`;
+    if (hits.length || inQ.length) html = `<span class="rowlbl">Effects:</span>${inQ.map(([c, l]) => `<span class="chip on" title="Searched: the units with it">✓ ${esc(l)} <small>${roleCount(c)}</small></span>`).join("")}${hits.map(([c, l, v]) => chipQ(v, `${esc(l)} <small>${roleCount(c)}</small>`)).join("")}`;
   }
-  if (html) html += `<button class="chip sughelp">What can I search?</button>`;
-  box.innerHTML = html; box.hidden = !html; fadeSoon();
-  if (html && !SKTXT) skillText().then(() => { if (!box.hidden) searchSug(); });  // the counts with the skill texts in
+  if (html || raw) html += `<button class="chip sughelp">What can I search?</button>`;  // with anything typed
+  if (html) box.innerHTML = html;  // closing, it keeps its chips while it slides shut
+  box.classList.toggle("show", !!html); fadeSoon();
+  if (html && !SKTXT) skillText().then(() => { if (box.classList.contains("show")) searchSug(); });  // the counts with the skill texts in
 }
 function setUnitQuery(v) { $("uq").value = v; uState.q = v; searchX(); renderUnits(); searchSug(); }
 // every effect (a tap searches it, with how many units have it) and the other words the search understands
@@ -2089,6 +2095,124 @@ function refreshItemMarks() {
   for (const el of $("slist").querySelectorAll(".item[data-i]")) { const t = el.querySelector(".t"), has = !!t.querySelector(".ifav");
     if (has !== ifavs.has(el.dataset.i)) has ? t.querySelector(".ifav").remove() : t.insertAdjacentHTML("afterbegin", IFSTAR); }
 }
+// what the Items search understands, like the Units one (the user: "this search bar should work like the unit bar, like
+// typing mit att etc"): an effect is found in a sphere's description, and the damage ones also in the game's own numbers
+// (fxRole: Ragnarok Edict only says "Boosts all Atk related abilities")
+const ITEM_FX = [
+  ["Damage reduction", /damage reduction|reduces damage|mitigat/],
+  ["ATK boost", /\batk\b(?! (?:parameter )?limit)|\battack\b(?! of)|all parameters/, "atk"],
+  ["Critical damage", /critical damage/, "crit"],
+  ["Critical rate", /critical (?:hit )?rate/, "critrate"],
+  ["Spark damage", /spark damage|spark critical/, "spark"],
+  ["Elemental damage", /elemental damage|elements? to attack/, "elem"],
+  ["BB ATK", /\bbb atk\b/, "bbatk"],
+  ["ATK limit", /atk (?:parameter )?limits?|max atk/, "limit"],
+  ["BB gauge", /bb gauge|\bbc\b/],
+  ["OD gauge", /\bod gauge|overdrive/],
+  ["HP recovery", /restores? hp|recovers? hp|hp recovery|\bheal/],
+  ["DEF ignore", /ignores? def|def ignore/],
+  ["Status null / cure", /status ailment|negates (?:all )?status|\bcures?\b/],
+  ["KO resist", /resistance against ko|\bko\b|angel idol|survive/],
+  ["Damage reflect", /reflect|counter/],
+  ["Evasion", /evasion|dodge|evade/],
+  ["All parameters", /all parameters/],
+];
+// the words players use, read as an effect's own name (that name, typed, stays as it is: see canonQ)
+const ITEM_WORDS = [
+  [/\b(?:mit|mitig\w*|mitigators?|dmg reduction|dr)\b/g, "damage reduction"],
+  [/\bcrit(?:ical)? ?(?:dmg|damage)\b/g, "critical damage"], [/\bcrit(?:ical)? ?(?:hit )?(?:rate|chance)\b/g, "critical rate"],
+  [/\b(?:ele|elem|element(?:al)?) ?(?:dmg|damage)\b/g, "elemental damage"], [/\bspark ?dmg\b/g, "spark damage"],
+  [/\b(?:bc|bc fill|bb fill|bb gen|bc gen|bb regen|gauge fill)\b/g, "bb gauge"], [/\bod ?(?:fill|gen|regen)\b/g, "od gauge"],
+  [/\b(?:heals?|healer|healing|regen|hp rec(?:overy)?)\b/g, "hp recovery"], [/\bdef ?(?:pierce|piercing|ign)\b|\bignore def\b/g, "def ignore"],
+  [/\b(?:cleanse|status null|ailment null|status cure|null)\b/g, "status null / cure"], [/\b(?:ko resist|angel idol|guts)\b/g, "ko resist"],
+  [/\batk (?:cap|limit)\b/g, "atk limit"], [/\b(?:dodge|evade)\b/g, "evasion"], [/\b(?:all stats|all params?)\b/g, "all parameters"],
+  [/\b(?:atk|att|attack)(?: (?:up|buff|boost))?\b/g, "atk boost"],
+];
+const ICANON = new Map();
+function canonItemQ(q) {
+  let r = ICANON.get(q); if (r !== undefined) return r;
+  const keep = [], edge = c => !c || !/[a-z0-9]/.test(c); let t = q;
+  for (const l of ITEM_FX.map(x => x[0].toLowerCase()).sort((a, b) => b.length - a.length))
+    for (let i = t.indexOf(l); i >= 0; i = t.indexOf(l, i + 1))
+      if (edge(t[i - 1]) && edge(t[i + l.length])) { const m = `\u0001${keep.push(l) - 1}\u0001`; t = t.slice(0, i) + m + t.slice(i + l.length); i += m.length - 1; }
+  r = ITEM_WORDS.reduce((x, [re, to]) => x.replace(re, to), t).replace(/\u0001(\d+)\u0001/g, (_, i) => keep[i]);
+  ICANON.set(q, r); return r;
+}
+const ITXT = new WeakMap(), itemTxt = s => { let t = ITXT.get(s); if (t === undefined) ITXT.set(s, t = `${s.desc || ""} ${s.type || ""}`.toLowerCase()); return t; };
+function itemHasFx(s, label) {
+  const f = ITEM_FX.find(x => x[0].toLowerCase() === label); if (!f) return false;
+  return f[1].test(itemTxt(s)) || !!(f[2] && s.fx?.length && fxRole(s.fx, "")[f[2]] > 0);
+}
+// the effects named in a search ("fire critical damage": critical damage), and its other words
+const IPARSED = {};
+function parseItemQ(q) {
+  if (IPARSED[q]) return IPARSED[q];
+  let rest = ` ${q} `; const fx = [];
+  for (const l of ITEM_FX.map(x => x[0].toLowerCase()).sort((a, b) => b.length - a.length)) if (rest.includes(` ${l} `)) { fx.push(l); rest = rest.replace(` ${l} `, " "); }
+  return IPARSED[q] = { fx, words: rest.split(/\s+/).filter(Boolean) };
+}
+// a word on its own: an element (a sphere that names it), a rarity ("7"), or in its name or description
+function itemWordHit(s, w) {
+  if (ELS.some(e => e.toLowerCase() === w)) return new RegExp(`\\b${w}\\b`).test(itemTxt(s));
+  const r = w.match(/^([1-8])(?:\*|★|star)?$/); if (r) return s.rarity === +r[1];
+  return s.name.toLowerCase().includes(w) || w.length >= 2 && itemTxt(s).includes(w);  // "hp" next to other words
+}
+function itemHit(s, q) {
+  if (!q) return true;
+  // a players' word is read as its effect only ("mit" isn't "limit")
+  const c = canonItemQ(q);
+  if (c === q && (s.name.toLowerCase().includes(q) || q.length >= 3 && itemTxt(s).includes(q))) return true;  // ("Calamity" isn't mit)
+  const { fx, words } = parseItemQ(c);
+  if (!fx.length && words.length === 1 && /^(?:[1-8](?:\*|★|star)?|fire|water|earth|thunder|light|dark)$/.test(words[0])) return itemWordHit(s, words[0]);  // "7", "fire" on their own
+  if (!fx.length && words.length < 2) return false;  // one plain word: its name or description only (above)
+  return fx.every(l => itemHasFx(s, l)) && words.every(w => itemWordHit(s, w));
+}
+// as on the Units tab: the effects that hold what's typed, with how many spheres and items have each, a few to try on an
+// empty box, and What can I search?
+const IFX_N = {};
+const itemFxCount = (I, label) => IFX_N[label] ??= Object.values(I).filter(s => s.name && itemHasFx(s, label.toLowerCase())).length;
+const ISUG_TRY = ["Damage reduction", "ATK boost", "Spark damage", "BB gauge", "fire atk", "7 crit dmg"];
+// effects are searched only with the Spheres chip or a sphere type on (the user: "the search result should only show when
+// sphere filter is enabled otherwise no"); with All, Items or Craftable a search finds names, as before
+const sphMode = () => !["All", "Items", "Craftable"].includes(sType);
+async function itemSug() {
+  const box = $("ssug"); if (!box) return;
+  if (!sphMode()) { box.classList.remove("show"); return; }
+  const I = await load("items"), raw = $("sq").value.trim().toLowerCase(), q = canonItemQ(raw), words = q.split(/\s+/), last = words[words.length - 1], head = words.slice(0, -1).join(" ");
+  const chipQ = (v, html) => `<button class="chip" data-sq="${esc(v)}">${html}</button>`;
+  let html = "";
+  if (!raw) { if (document.activeElement === $("sq")) html = `<span class="rowlbl">Try:</span>${ISUG_TRY.map(v => chipQ(v, esc(v))).join("")}`; }
+  else if (raw.length >= 2) {
+    const got = ` ${q} `, hits = [], inQ = [];
+    for (const [l] of ITEM_FX) {
+      const ll = l.toLowerCase();
+      if (got.includes(` ${ll} `)) { inQ.push(l); continue; }
+      if (ll.includes(q)) hits.push([l, l]);
+      else if (last.length >= 2 && ll.split(/[\s/]+/).some(w => w.startsWith(last))) hits.push([l, head ? `${head} ${l}` : l]);
+    }
+    if (hits.length || inQ.length) html = `<span class="rowlbl">Effects:</span>${inQ.map(l => `<span class="chip on" title="Searched: the spheres with it">✓ ${esc(l)} <small>${itemFxCount(I, l)}</small></span>`).join("")}${hits.map(([l, v]) => chipQ(v, `${esc(l)} <small>${itemFxCount(I, l)}</small>`)).join("")}`;
+  }
+  if (html || raw) html += `<button class="chip sughelp">What can I search?</button>`;  // with anything typed
+  if (html) box.innerHTML = html;  // closing, it keeps its chips while it slides shut
+  box.classList.toggle("show", !!html); fadeSoon();
+}
+function setItemQuery(v) { $("sq").value = v; searchX(); renderSpheres(); itemSug(); }
+const ISEARCH_WORDS = ["mit", "dr", "atk", "crit dmg", "crit rate", "ele dmg", "bc fill", "od fill", "heal", "def pierce", "cleanse", "guts", "atk cap", "dodge", "all stats"];
+const ISEARCH_TEXT = ["when hp is", "first turn", "guarding", "female"];
+async function itemSearchHelp() {
+  const I = await load("items"), c = (v, html) => `<button class="chip" data-sq="${esc(v)}">${html || esc(v)}</button>`;
+  const types = [...new Set(Object.values(I).filter(s => s.type).map(s => s.type))].sort();
+  modal(`<div class="about shelp"><div class="big">What can I search?</div>
+    <p class="small">A sphere's or item's name, or what it does. Words go together: ${["fire atk", "7 crit dmg", "light spark"].map(v => `<b>${v}</b>`).join(", ")}.</p>
+    <b class="h">Effects</b><p class="small dim">Tap one to search it. The number is how many spheres and items have it.</p>
+    <div class="chips">${ITEM_FX.map(([l]) => c(l, `${esc(l)} <small>${itemFxCount(I, l)}</small>`)).join("")}</div>
+    <b class="h">Sphere types</b><div class="chips">${types.map(t => c(t)).join("")}</div>
+    <b class="h">Element and rarity</b><p class="small dim">An element finds the spheres that name it.</p><div class="chips">${[...ELS.map(e => e.toLowerCase()), "7", "6", "5"].map(v => c(v)).join("")}</div>
+    <b class="h">Players' words</b><p class="small dim">Read as the effect they mean.</p><div class="chips">${ISEARCH_WORDS.map(v => c(v)).join("")}</div>
+    <b class="h">Words from a description</b><p class="small dim">Anything in what a sphere or item does, 3 letters or more.</p><div class="chips">${ISEARCH_TEXT.map(v => c(v)).join("")}</div>
+    <div class="btnrow" style="justify-content:center"><button class="gbtn mclose">Close</button></div></div>`);
+  $("mbox").querySelectorAll("[data-sq]").forEach(b => b.onclick = () => { $("modal").hidden = true; setItemQuery(b.dataset.sq); });
+}
 async function renderSpheres() {
   const [I, R] = await Promise.all([load("items"), load("recipes")]), q = $("sq").value.trim().toLowerCase();
   const all = Object.values(I).filter(s => s.name);
@@ -2116,14 +2240,16 @@ async function renderSpheres() {
   const pick = { All: () => true, Spheres: s => s.type, Items: s => !s.type, Craftable: craftable }[sType] || (s => s.type === sType);
   const label = { All: "spheres and items", Spheres: "spheres", Items: "items", Craftable: "craftable items" }[sType] || `${sType} spheres`;
   const elRe = sEl && new RegExp(`\\b${sEl}\\b`, "i");
-  const match = s => (!q || s.name.toLowerCase().includes(q)) && (!sRev || s.ok === 1) && (!elRe || elRe.test(s.desc || "")) && (!sFav || ifavs.has(s.id));
+  const fx = sphMode(), named = s => !q || s.name.toLowerCase().includes(q);
+  const match = s => (fx ? itemHit(s, q) : named(s)) && (!sRev || s.ok === 1) && (!elRe || elRe.test(s.desc || "")) && (!sFav || ifavs.has(s.id));
   // a search looks through the chip's own list; when that has none, through everything (said so)
   let list = all.filter(s => match(s) && pick(s)), wider = false;
   if (q && !list.length && sType !== "All") { list = all.filter(match); wider = list.length > 0; }
   list.sort((a, b) => (b.rarity || 0) - (a.rarity || 0) || a.name.localeCompare(b.name) || (b.ok || 0) - (a.ok || 0));  // two of a name: Revived's first
+  if (q && (!fx || canonItemQ(q) === q)) list.sort((a, b) => !a.name.toLowerCase().includes(q) - !b.name.toLowerCase().includes(q));  // name matches first (stable)
   const guess = !!q && !list.length;  // nothing anywhere: the closest names
   if (guess) list.push(...closeNames(q, all.filter(s => (!sRev || s.ok === 1) && (!sFav || ifavs.has(s.id))), s => s.name, s => s.rarity || 0).slice(0, 12));
-  const n = list.length, res = `${n} result${n === 1 ? "" : "s"}`, typed = $("sq").value.trim();
+  const n = list.length, typed = $("sq").value.trim(), asRead = fx && q && canonItemQ(q) !== q ? ` (read as “${canonItemQ(q)}”)` : "", res = `${n} result${n === 1 ? "" : "s"}${asRead}`;
   const only = `${sFav ? " in your favorites" : ""}${sRev && sType !== "Craftable" ? " you can get in Revived" : ""}${sEl ? ` that name ${sEl}` : ""}`;
   $("scount").textContent = guess && n ? `No exact match for “${typed}”${only}. Did you mean:`
     : wider ? `No ${label} with “${typed}”${only}: ${res} in all spheres and items`
@@ -2133,6 +2259,9 @@ async function renderSpheres() {
     d.innerHTML = `<img loading="lazy" decoding="async" src="${iImg(s.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1"><div class="t">${ifavs.has(s.id) ? IFSTAR : ""}${esc(s.name)} <span class="dim small">${s.rarity ? `${s.rarity}${STAR}` : ""}</span>${craftable(s) ? `<span class="craft">craftable</span>` : nogTag(s)}</div><div class="s">${esc(s.type ? s.type + " · " : "Item · ")}${esc(s.desc)}</div></div>`;
     return d; }, "");
   if (sFav && !n && !q) $("slist").innerHTML = `<div class="empty"><b>No favorite ${label} yet</b>Open a sphere or item and tap the ${FAVSTAR} at the top to keep it here and on the ${FAVSTAR} tab.</div>`;
+  if (q && !n) $("slist").innerHTML = fx ? `<div class="empty"><b>Nothing matches</b>Try another word, or turn the filters off.<button class="ulink" style="display:block;margin:8px auto 0" onclick="itemSearchHelp()">What can I search?</button></div>`
+    : `<div class="empty"><b>Nothing matches</b>Try another name. To search what a sphere does (mit, crit dmg…), pick “Spheres” above.</div>`;
+  itemSug();  // the chips follow the chip picked
 }
 // Elgifs: extra skills a unit learns when an Imbued Tablet Elgif carrying one is fused into it (the game's own list)
 const ELGIF = "50792", EMGIF = "60812";
@@ -3791,7 +3920,7 @@ async function renderTeam() {
             r.off.includes("D") ? "it gets it only from a Dual BB" : ""].filter(Boolean).join("; and "); };
         const pic = (r, dim) => `<span class="src${dim ? ` off${r.self.length ? " self" : altOf(r) ? " alt" : ""}` : ""}"${dim ? ` data-i="${r.i}" data-alt="${altOf(r)}" data-tip="${esc(`<b>${esc(UMAP[r.id]?.n || "")}</b>: ${tipOf(r)}`)}"` : ""} title="${esc(UMAP[r.id]?.n || "")}${dim ? `${r.self.length ? " has it only for itself" : " doesn't give it to the team right now"}: ${esc(dimWhy(r))}.` : `: from its ${r.on.map(l => SRC_NAME[l]).join(", ")}${r.v ? `: ${fmtPower(c, r.v)}${r.v[3] ? " per spark" : ""}${r.v[2] ? " for itself" : ""}` : ""}`}"><span class="pw"><img src="${uImg(r.id)}" alt="" data-u="${r.id}"${!dim && r.on.join("") === "P" ? ` class="viasp"` : ""}>${r.sphIds?.length ? `<span class="sphi">${r.sphIds.map((sid, k) => `<img src="${iImg(sid)}" alt="" class="${sphTeamOf(r.sph[k], r.i) ? "" : "own"}" title="${esc(TEAM_I?.[sid]?.name || "")}${sphTeamOf(r.sph[k], r.i) ? "" : ": only for this unit"}">`).join("")}</span>` : ""}</span><small>${(dim ? dimCap(r) : r.on.filter(l => l !== "H").map(l => SRC_NAME[l]).join(" ")) || "sphere"}</small>${!dim && r.v ? `<em>${fmtShort(c, r.v)}${r.v[3] ? " per spark" : ""}${r.v[2] ? " self" : ""}</em>` : ""}</span>`;
         const selfOnly = !on.length && off.some(r => r.self.length);  // only units buffing themselves: ◐, not ✗
-        return `<div><span class="cl ${on.length ? "ok" : selfOnly ? "selfc" : off.length ? "part" : "no"}">${on.length ? "✓" : selfOnly ? "◐" : "✗"} ${esc(TAGS.labels[c] || c)}${best ? `<small> ${fmtPower(c, best)}${best[3] ? " per spark" : ""}${best[2] ? " self" : ""}</small>` : selfOnly ? `<small>only for itself</small>` : ""}${off.length && !on.length ? `<button class="gbtn small blue cfind" data-find="${c}">Find</button>` : ""}</span>${src.length ? team.map((id, i) => { const r = src.find(x => x.i === i); return r ? pic(r, !r.on.length) : `<span class="nos"></span>`; }).join("") : `<span class="cfrow"><button class="gbtn small blue" data-find="${c}">Find</button></span>`}</div>`; }).join("")}</div>
+        return `<div><span class="cl ${on.length ? "ok" : selfOnly ? "selfc" : off.length ? "part" : "no"}">${on.length ? "✓" : selfOnly ? "◐" : "✗"} ${esc(TAGS.labels[c] || c)}${best ? `<small> ${fmtPower(c, best)}${best[3] ? " per spark" : ""}${best[2] ? " self" : ""}</small>` : selfOnly ? `<small>only for itself</small>` : ""}${!on.length ? `<button class="gbtn small blue cfind" data-find="${c}" aria-label="Find units for ${esc(TAGS.labels[c] || c)}">Find</button>` : ""}</span>${src.length ? team.map((id, i) => { const r = src.find(x => x.i === i); return r ? pic(r, !r.on.length) : `<span class="nos"></span>`; }).join("") : ""}</div>`; }).join("")}</div>
       <p class="small dim" style="margin:8px 0 0">It counts the units' extra skills, the skill each one casts in the battle check (its SBB unless you change it there), the SP picked for them and their spheres' effects for all allies; leader skills for the leader and the friend. A BB's buff while the unit casts its SBB, or a UBB's, doesn't count. Green ring: only from its SP.</p></div>
     ${matchupHtml(team)}</div><button class="gbtn small blue tmore" hidden>▾ More</button></div>`;
   if ($("muchart")) $("muchart").onclick = elementChart;
@@ -4391,7 +4520,9 @@ $("page").addEventListener("touchend", e => {
 $("favtab").onclick = () => go(tab === "favs" ? "#/units" : "#/favs");
 $("back").onclick = () => history.back();
 $("viewmode").onclick = () => { viewMode = viewMode === "grid" ? "list" : "grid"; store.set("bf.view", viewMode); tab === "favs" ? renderFavs() : renderUnits(); };
-let st; $("sq").oninput = () => { clearTimeout(st); st = setTimeout(renderSpheres, 80); };
+let st; $("sq").oninput = () => { clearTimeout(st); itemSug(); st = setTimeout(renderSpheres, 80); };
+$("sq").addEventListener("focus", itemSug); $("sq").addEventListener("blur", () => setTimeout(itemSug, 300));
+$("ssug").onclick = e => { const b = e.target.closest("[data-sq]"); if (b) setItemQuery(b.dataset.sq); else if (e.target.closest(".sughelp")) itemSearchHelp(); };
 let et; $("eq").oninput = () => { clearTimeout(et); et = setTimeout(renderElgifs, 80); };
 let dt; $("dq").oninput = () => { clearTimeout(dt); dt = setTimeout(renderDrops, 120); };
 $("dq").onchange = saveDropSearch;  // Enter or closing the keyboard keeps the search in "Recent searches"
