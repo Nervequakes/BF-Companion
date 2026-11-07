@@ -332,6 +332,11 @@ details > summary::before { content: "▸ "; } details[open] > summary::before {
 @media (min-width: 1000px) { .tier .eu { width: 84px; } .tier .eu img { width: 72px; height: 72px; } }
 .count .umore { background: none; border: 0; padding: 0; font: inherit; text-shadow: inherit; }
 .rowlbl { flex: none; align-self: center; font-size: 11px; color: var(--dim); }
+/* what you can type in the Units search (searchSug): effects as chips with their unit count, and What can I search? */
+.sug { padding-top: 6px; } .sug .chip small, .shelp .chip small { font-size: 10.5px; opacity: .75; }
+.sug .sughelp { border-style: dashed; }
+.shelp { text-align: left; } .shelp .big { text-align: center; } .shelp .h { display: block; margin: 12px 0 2px; }
+.shelp .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 2px; } .shelp p { margin: 2px 0; }
 .qlist.drops li { padding: 4px 0; } .qlist.drops li + li { border-top: 1px solid rgba(255,255,255,.06); }
 .chance { font-size: 10.5px; padding: 0 7px; border-radius: 999px; line-height: 17px; background: linear-gradient(#7ad67a, #2a8f3a); font-family: Rodin, Arial, sans-serif; text-shadow: var(--ol); }
 .rot { font-size: 10px; padding: 0 6px; border-radius: 999px; line-height: 16px; margin-left: 4px; white-space: nowrap; vertical-align: 1px; cursor: help; background: linear-gradient(#7fd3ff, #2a6fb8); color: #fff; font-family: Rodin, Arial, sans-serif; font-weight: normal; text-shadow: var(--ol); }
@@ -575,6 +580,7 @@ body.boxedit .totop { bottom: calc(var(--navh) + 78px); } body.boxedit .toast { 
       <div class="searchrow"><input id="uq" type="search" placeholder="Name, skill, role" autocomplete="off">
         <select id="usort"><option value="rarity">Rarity</option><option value="element">Element</option><option value="new">Newest</option><option value="archive">Archive No.</option><option value="name">Name</option><option value="atk">ATK</option><option value="hp">HP</option><option value="def">DEF</option><option value="rec">REC</option><option value="cost">Cost</option><option value="power">Strongest (role)</option></select>
         <button class="iconbtn fbtn" id="ufbtn" title="Filters" aria-label="Filters"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg><span id="ufn"></span></button></div>
+      <div class="scroller sug" id="usug" hidden></div>
       <div id="ufilters">
         <div class="scroller" id="uel"></div>
         <div class="scroller" id="urar"></div>
@@ -1032,8 +1038,11 @@ async function showTiers() {
     if (me !== drawing || nav !== NAV) return;  // another chip was tapped, or the page left
     const rows = tierRows(DET, P, el, tierRole).map(([t, us]) => [t, us.filter(s => shown(s.u))]), n = rows.reduce((k, [, us]) => k + us.length, 0);
     $("tcount").textContent = `${n} ${el} Omni units${tierGet === "rv" ? " you can get in Revived" : tierGet === "box" ? " in your box" : ""}${tierRole === "all" ? "" : ` · ranked on ${label[tierRole]}`}`;
+    // a tier with none of the units shown isn't drawn (the user: "hide empty tiers"): a role few units have, or your box
+    const full = rows.filter(([, us]) => us.length);
     $("tiers").innerHTML = tierGet === "box" && !mine.size ? `<div class="empty"><b>Your box is empty</b>Mark the units you own (Units tab: ✎ Edit box, hold a unit in any list, or ＋ My box on a unit) to see where yours stand.</div>`
-      : rows.map(([t, us]) => `<div class="tier"><div class="tl t${t}">${t}</div><div class="tu">${us.length ? us.map(({ u, why }) =>
+      : !full.length ? `<div class="empty"><b>No ${el} Omni units ${tierGet === "box" ? "in your box" : tierGet === "rv" ? "you can get" : "here"}</b>Pick another element or role.</div>`
+      : full.map(([t, us]) => `<div class="tier"><div class="tl t${t}">${t}</div><div class="tu">${us.length ? us.map(({ u, why }) =>
         `<div class="eu${mine.has(u.id) ? " got" : ""}" data-id="${u.id}" onclick="go('#/unit/${u.id}')"><img src="${uImg(u.id)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'"><div class="gname">${esc(u.n)}</div><small class="twhy">${why.map(esc).join("<br>")}</small></div>`).join("")
         : `<span class="dim small">none</span>`}</div></div>`).join("");
     $("tiers").dataset.ready = `${el}/${tierRole}/${tierGet}`;
@@ -1213,7 +1222,17 @@ const PLAYER_WORDS = [
   [/\brevivers?\b|\bko resist\b/g, "revive / ko resist"], [/\batk (?:buffer|up)\b|\battack buff\b/g, "atk buff"],
   [/\bcrit(?:ical)? ?(?:dmg|damage)\b/g, "critical damage"], [/\bcrit(?:ical)? ?(?:hit )?rate\b|\bcrit chance\b/g, "critical rate"],
 ];
-const canonQ = q => PLAYER_WORDS.reduce((s, [re, to]) => s.replace(re, to), q);
+// an effect's own name stays as it is ("status cure / null" isn't read again as "status cure" + "/ null")
+const CANON = new Map();
+const canonQ = q => { let r = CANON.get(q); if (r !== undefined) return r;
+  const keep = []; let t = q;
+  // as whole words only: "taunter" and "atk buffer" are still players' words for Taunt and ATK buff
+  const edge = c => !c || !/[a-z0-9]/.test(c);
+  for (const l of Object.values(TAGS.labels).map(x => x.toLowerCase()).sort((a, b) => b.length - a.length))
+    for (let i = t.indexOf(l); i >= 0; i = t.indexOf(l, i + 1))
+      if (edge(t[i - 1]) && edge(t[i + l.length])) { const m = `\u0001${keep.push(l) - 1}\u0001`; t = t.slice(0, i) + m + t.slice(i + l.length); i += m.length - 1; }
+  r = PLAYER_WORDS.reduce((x, [re, to]) => x.replace(re, to), t).replace(/\u0001(\d+)\u0001/g, (_, i) => keep[i]);
+  CANON.set(q, r); return r; };
 function searchHit(u, q) {
   if (!q) return true;
   q = canonQ(q);
@@ -1221,6 +1240,7 @@ function searchHit(u, q) {
   if (name.includes(q) || phraseHit(u, q)) return true;
   const { roles, words } = parseQuery(q);
   if (!words.length && roles.length) return roles.every(c => roleOf(u.id, c, true));  // only role names: "mitigation", "status cure / null"
+  if (!roles.length && words.length === 1 && isAttr(words[0])) return attrHit(u, words[0]);  // "6", "omni", "fire" on their own
   if (roles.length + words.length < 2) return false;
   return roles.every(c => roleOf(u.id, c, true)) && words.every(t => isAttr(t) ? attrHit(u, t) : name.includes(t) || phraseHit(u, t));
 }
@@ -1280,7 +1300,7 @@ async function renderUnits() {
   const list = filteredUnits(), bySkill = q ? list.filter(u => !u.n.toLowerCase().includes(q)).length : 0, role = activeRole();
   NAV_LIST = list.map(u => u.id);
   const asRole = q && canonQ(q) !== q ? ` (read as “${canonQ(q)}”)` : "";
-  $("ucount").textContent = `${list.length} units${uState.miss ? " not in your box" : ""}${uState.sort === "archive" ? " · Unit Archive order" : ""}${uState.q ? ` matching “${uState.q}”${asRole}${bySkill ? ` (${bySkill} by skill or role)` : ""}` : ""}${
+  $("ucount").textContent = `${list.length} unit${list.length === 1 ? "" : "s"}${uState.miss ? " not in your box" : ""}${uState.sort === "archive" ? " · Unit Archive order" : ""}${uState.q ? ` matching “${uState.q}”${asRole}${bySkill ? ` (${bySkill} by skill or role)` : ""}` : ""}${
     uState.sort === "power" ? role ? ` · strongest ${TAGS.labels[role]} first` : " · pick a role to sort by strength" : ""}`;
   // with a Get it or role filter on, the units it finds that the rarity chips hide (This week's 4★ and 5★ DEEMO
   // units): how many, and a tap turns those rarities on
@@ -1296,7 +1316,7 @@ async function renderUnits() {
   if (!list.length) {
     const close = q ? closeNames(q, UNITS, u => u.n, u => u.r).slice(0, 12) : [];
     $("ulist").innerHTML = uState.mine && !mine.size ? `<div class="empty"><b>Your box is empty</b>Your box is the units you own in the game: mark them here, hold one in any list for a moment, or open one and tap <b>＋ My box</b>. The app then shows a ✓ on them, can fill teams from them and tells you which gate units you're missing.<div class="btnrow" style="justify-content:center"><button class="gbtn green" id="ueditnow">✎ Edit my box</button></div></div>`
-      : `<div class="empty"><b>No units match</b>${close.length ? "Did you mean one of these? (any element or rarity)" : "Try another name or turn filters back on."}</div>`;
+      : `<div class="empty"><b>No units match</b>${close.length ? "Did you mean one of these? (any element or rarity)" : "Try another name or turn filters back on."}${q ? `<button class="ulink" style="display:block;margin:8px auto 0" onclick="searchHelp()">What can I search?</button>` : ""}</div>`;
     if ($("ueditnow")) $("ueditnow").onclick = () => setBoxEdit(true);
     if (close.length) { NAV_LIST = close.map(u => u.id); const g = document.createElement("div"); g.className = "grid"; g.append(...close.map(u => gridCell(u))); $("ulist").append(g); }
     return;
@@ -1309,6 +1329,51 @@ async function renderUnits() {
   paged($("ulist"), items, x => { if (!("head" in x)) return cell(x);
     const h = document.createElement("div"); h.className = "ghead"; if (x.head) h.style.setProperty("--el", `var(--${x.head})`);
     h.innerHTML = `${orb(x.head)}<b>${x.head || "No element"}</b><span>${n[x.head]} unit${n[x.head] > 1 ? "s" : ""}</span>`; return h; }, viewMode === "grid" ? "grid" : "list");
+}
+// what you can type in the Units search, shown as you go (a player: "idk what im able to search and not"): the effects
+// (role names) that hold what's typed, or whose words start with its last word, each with how many units have it (a
+// tap puts it in place of what was typed: "fire omni bb" → "fire omni bb atk"); on an empty box, a few to try. Each
+// row ends with What can I search? (searchHelp)
+// how many units a search for the effect finds (with the skill texts in, once they're loaded; till then its role)
+const ROLE_N = {}, roleCount = c => { if (ROLE_N[c] != null) return ROLE_N[c];
+  const l = TAGS.labels[c].toLowerCase(), n = UNITS.filter(u => SKTXT ? searchHit(u, l) : roleOf(u.id, c, true)).length;
+  if (SKTXT) ROLE_N[c] = n; return n; };
+const SUG_TRY = ["BB ATK", "Mitigation", "Spark", "Heal", "fire omni", "add elements"];
+function searchSug() {
+  const box = $("usug"); if (!box) return;
+  const raw = $("uq").value.trim().toLowerCase(), q = canonQ(raw), words = q.split(/\s+/), last = words[words.length - 1], head = words.slice(0, -1).join(" ");
+  const chipQ = (v, html) => `<button class="chip" data-sq="${esc(v)}">${html}</button>`;
+  let html = "";
+  if (!raw) { if (document.activeElement === $("uq")) html = `<span class="rowlbl">Try:</span>${SUG_TRY.map(v => chipQ(v, esc(v))).join("")}`; }
+  else if (raw.length >= 2) {
+    const got = ` ${q} `, hits = [];
+    for (const [c, l] of Object.entries(TAGS.labels)) {
+      const ll = l.toLowerCase();
+      if (got.includes(` ${ll} `)) continue;  // already in the search
+      if (ll.includes(q)) hits.push([c, l, l]);
+      else if (last.length >= 2 && ll.split(/[\s/]+/).some(w => w.startsWith(last))) hits.push([c, l, head ? `${head} ${l}` : l]);
+    }
+    if (hits.length) html = `<span class="rowlbl">Effects:</span>${hits.map(([c, l, v]) => chipQ(v, `${esc(l)} <small>${roleCount(c)}</small>`)).join("")}`;
+  }
+  if (html) html += `<button class="chip sughelp">What can I search?</button>`;
+  box.innerHTML = html; box.hidden = !html; fadeSoon();
+  if (html && !SKTXT) skillText().then(() => { if (!box.hidden) searchSug(); });  // the counts with the skill texts in
+}
+function setUnitQuery(v) { $("uq").value = v; uState.q = v; searchX(); renderUnits(); searchSug(); }
+// every effect (a tap searches it, with how many units have it) and the other words the search understands
+const SEARCH_WORDS = ["mit", "mitigator", "ele mit", "bc fill", "bb gen", "od gen", "healer", "def pierce", "ele dmg", "crit dmg", "crit rate", "cleanse", "debuffer", "taunter", "dodge", "ko resist", "atk buffer"];
+const SEARCH_TEXT = ["add elements", "spark damage", "probable", "hp each turn"];
+function searchHelp() {
+  const c = (v, html) => `<button class="chip" data-sq="${esc(v)}">${html || esc(v)}</button>`;
+  modal(`<div class="about shelp"><div class="big">What can I search?</div>
+    <p class="small">A unit's name, or what it does. Words go together: ${["fire omni mitigation", "water 7 heal", "dark def ignore"].map(v => `<b>${v}</b>`).join(", ")}.</p>
+    <b class="h">Effects</b><p class="small dim">Tap one to search it. The number is how many units have it. <b>Strongest (role)</b> in the sort menu puts the strongest first.</p>
+    <div class="chips">${Object.entries(TAGS.labels).map(([k, l]) => c(l, `${esc(l)} <small>${roleCount(k)}</small>`)).join("")}</div>
+    <b class="h">Element and rarity</b><div class="chips">${[...ELS.map(e => e.toLowerCase()), "omni", "7", "6", "5"].map(v => c(v)).join("")}</div>
+    <b class="h">Players' words</b><p class="small dim">Read as the effect they mean.</p><div class="chips">${SEARCH_WORDS.map(v => c(v)).join("")}</div>
+    <b class="h">Words from a skill</b><p class="small dim">Anything in a unit's skills, 3 letters or more.</p><div class="chips">${SEARCH_TEXT.map(v => c(v)).join("")}</div>
+    <div class="btnrow" style="justify-content:center"><button class="gbtn mclose">Close</button></div></div>`);
+  $("mbox").querySelectorAll("[data-sq]").forEach(b => b.onclick = () => { $("modal").hidden = true; setUnitQuery(b.dataset.sq); });
 }
 const chip = (html, on) => { const b = document.createElement("button"); b.className = "chip" + (on ? " on" : ""); b.innerHTML = html; return b; };
 // the filter rows fold away behind the filter button; folded, one line says what is filtered
@@ -1462,7 +1527,10 @@ function setupUnitFilters() {
   }
   $("usort").value = uState.sort; $("uq").value = uState.q;
   $("usort").onchange = e => { uState.sort = e.target.value; renderUnits(); };
-  let t; $("uq").oninput = e => { clearTimeout(t); t = setTimeout(() => { uState.q = e.target.value; renderUnits(); }, 70); };
+  let t; $("uq").oninput = e => { clearTimeout(t); searchSug(); t = setTimeout(() => { uState.q = e.target.value; renderUnits(); }, 70); };
+  // the box's suggestions: on a tap in it, and gone again a moment after you leave it (a tap on one lands first)
+  $("uq").addEventListener("focus", searchSug); $("uq").addEventListener("blur", () => setTimeout(searchSug, 300));
+  $("usug").onclick = e => { const b = e.target.closest("[data-sq]"); if (b) setUnitQuery(b.dataset.sq); else if (e.target.closest(".sughelp")) searchHelp(); };
 }
 
 // ---------------- unit page ----------------
