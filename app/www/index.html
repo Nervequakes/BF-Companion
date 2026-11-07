@@ -121,12 +121,15 @@ main { padding-bottom: calc(var(--navh) + 20px); }
 .badges { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 3px; }
 .badge { display: inline-flex; align-items: center; gap: 3px; font-size: 10.5px; padding: 1px 6px; border-radius: 6px; background: rgba(0,0,0,.6); text-shadow: var(--ol); border: 1px solid rgba(0,0,0,.6); }
 .badge.pw { background: linear-gradient(#5aa8ff, #1e5fe0); border-color: #9ccaff; }
-.gu .own { position: absolute; top: 1px; right: 1px; width: 19px; height: 19px; border-radius: 50%; background: linear-gradient(#7ad67a, #2a8f3a); border: 1px solid #c8f5c8;
-  font: 12px/17px Arial, sans-serif; color: #fff; text-shadow: var(--ol); box-shadow: 0 1px 2px #000; } .gu .own.f { right: 24px; }
-.gu .own.n { width: auto; min-width: 19px; padding: 0 4px; border-radius: 10px; font-size: 11px; }
-.gu .pcnt { position: absolute; left: 2px; top: 2px; z-index: 1; padding: 0 5px; border-radius: 9px; background: rgba(0,0,0,.82); border: 1px solid #ffd45c; color: #ffd45c; font: 11px/16px Rodin, Arial, sans-serif; text-shadow: var(--ol); }
 .copies { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin: 8px 12px 0; font-size: 12.5px; } .copies[hidden] { display: none; }
 .copies b { min-width: 22px; text-align: center; font-family: Rodin, Arial, sans-serif; color: var(--accent); }
+.gu .own { position: absolute; top: 1px; right: 1px; width: 19px; height: 19px; border-radius: 50%; background: linear-gradient(#7ad67a, #2a8f3a); border: 1px solid #c8f5c8;
+  font: 12px/17px Arial, sans-serif; color: #fff; text-shadow: var(--ol); box-shadow: 0 1px 2px #000; } .gu .own.f { right: 24px; }
+.gu .cpyw { position: absolute; left: 0; right: 0; top: 0; aspect-ratio: 1; pointer-events: none; }
+.gu .cpy { position: absolute; right: 2px; bottom: 2px; padding: 0 4px; border-radius: 8px; background: rgba(0,0,0,.82); border: 1px solid rgba(255,255,255,.45);
+  font: 10px/14px Rodin, Arial, sans-serif; color: #fff; text-shadow: var(--ol); }
+.badge.cpyb { background: rgba(0,0,0,.75); border-color: rgba(255,255,255,.4); }
+.gu .pcnt { position: absolute; left: 2px; top: 2px; z-index: 1; padding: 0 5px; border-radius: 9px; background: rgba(0,0,0,.82); border: 1px solid #ffd45c; color: #ffd45c; font: 11px/16px Rodin, Arial, sans-serif; text-shadow: var(--ol); }
 .pgot { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 10px 8px; margin-bottom: 10px; }
 .ptile { display: flex; flex-direction: column; text-align: center; min-width: 0; } .ptile img { width: 100%; aspect-ratio: 1; display: block; cursor: pointer; }
 .ptile .gname { font-size: 10px; line-height: 1.15; margin-top: 2px; text-shadow: var(--ol); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
@@ -537,9 +540,9 @@ body.boxedit .totop { bottom: calc(var(--navh) + 78px); } body.boxedit .toast { 
   /* the last section's bottom margin in the pane's scroll room (Firefox leaves a flex item's last margin out): a spacer after it */
   .tpane.tr::after { content: ""; order: 99; flex: none; height: 1px; }
   .tpane.tr > .tcov { order: 1; } .tpane.tr > .tmu { order: 2; } .tpane.tr > .tbc { order: 3; } .tpane.tr > .tls { order: 4; }
-  /* while the pane has more below, its bottom fades and ▾ More floats over it (paneMore); both in the pane's grid cell */
+  /* while the pane has more below, its bottom fades (.tfade) and ▾ More floats over it (paneMore); both in the pane's grid cell */
   .tpane.tl { grid-area: 1 / 1; } .tpane.tr { grid-area: 1 / 2; }
-  .tpane.tr.more { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 72px), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 72px), transparent); }
+  .tpane.tr.tfade { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 72px), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 72px), transparent); }
   .tpanes > .tmore { grid-area: 1 / 2; align-self: end; justify-self: center; position: sticky; bottom: 30px; z-index: 3; box-shadow: 0 2px 12px #000c; }
   /* lists of cards (spheres and items, Elgifs, the pickers): as many side by side as fit */
   :is(#slist, #elist, #splist, #ellist) > div:not(.more) { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 8px; padding: 0 10px; }
@@ -1148,7 +1151,7 @@ function tapUnit(u, d, onTap) {
 }
 function gridCell(u, onTap, role) {
   const d = document.createElement("div"); d.className = "gu"; d.onclick = () => tapUnit(u, d, onTap);
-  d.innerHTML = `<img loading="lazy" decoding="async" src="${uImg(u.id)}" alt="" onerror="this.style.visibility='hidden'">${favs.has(u.id) ? `<img class="fav" src="/static/star_fav.png" alt="★">` : ""}${mine.has(u.id) ? (n => `<span class="own ${favs.has(u.id) ? "f" : ""}${n > 1 ? " n" : ""}" title="In my box${n > 1 ? ` ×${n}` : ""}">${n > 1 ? `×${n}` : "✓"}</span>`)(copiesOf(u.id)) : ""}${powerTag(u, role)}${uState.sort === "archive" && u.ar ? `<div class="ano">No. ${u.ar}</div>` : ""}<div class="gname">${esc(u.n)}</div>`;
+  d.innerHTML = `<img loading="lazy" decoding="async" src="${uImg(u.id)}" alt="" onerror="this.style.visibility='hidden'">${favs.has(u.id) ? `<img class="fav" src="/static/star_fav.png" alt="★">` : ""}${mine.has(u.id) ? (n => `<span class="own ${favs.has(u.id) ? "f" : ""}" title="In my box${n > 1 ? `, ${n} copies` : ""}">✓</span>${n > 1 ? `<span class="cpyw"><b class="cpy" title="${n} copies in your box">×${n}</b></span>` : ""}`)(copiesOf(u.id)) : ""}${powerTag(u, role)}${uState.sort === "archive" && u.ar ? `<div class="ano">No. ${u.ar}</div>` : ""}<div class="gname">${esc(u.n)}</div>`;
   return marked(d, u, () => gridCell(u, onTap, role));
 }
 function listRow(u, onTap, role) {
@@ -1156,7 +1159,7 @@ function listRow(u, onTap, role) {
   if (u.e) d.style.setProperty("--el", `var(--${u.e})`);
   const p = role && powerOf(u.id, role);
   d.innerHTML = `<img loading="lazy" decoding="async" src="${uImg(u.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1">
-    <div class="ln">${uState.sort === "archive" && u.ar ? `<span class="ano">No. ${u.ar}</span> ` : ""}${favs.has(u.id) ? FAVSTAR + " " : ""}${esc(u.n)}</div><div class="badges">${unitBadges(u)}${mine.has(u.id) ? `<span class="badge own">✓ My box${copiesOf(u.id) > 1 ? ` ×${copiesOf(u.id)}` : ""}</span>` : ""}${p ? `<span class="badge pw">${esc(TAGS.labels[role])} ${fmtPower(role, p)} · ${SKILL_NAMES[p[1]]}</span>` : ""}</div>
+    <div class="ln">${uState.sort === "archive" && u.ar ? `<span class="ano">No. ${u.ar}</span> ` : ""}${favs.has(u.id) ? FAVSTAR + " " : ""}${esc(u.n)}</div><div class="badges">${unitBadges(u)}${mine.has(u.id) ? `<span class="badge own">✓ My box</span>${copiesOf(u.id) > 1 ? `<span class="badge cpyb">×${copiesOf(u.id)} copies</span>` : ""}` : ""}${p ? `<span class="badge pw">${esc(TAGS.labels[role])} ${fmtPower(role, p)} · ${SKILL_NAMES[p[1]]}</span>` : ""}</div>
     <div class="ls"><div><span>HP</span>${fmt(u.hp)}</div><div><span>ATK</span>${fmt(u.atk)}</div><div><span>DEF</span>${fmt(u.def)}</div><div><span>REC</span>${fmt(u.rec)}</div></div></div>`;
   return marked(d, u, () => listRow(u, onTap, role));
 }
@@ -1337,7 +1340,7 @@ function paneMore(v) {
   const ro = new ResizeObserver(() => upd()), upd = () => {
     if (!p.isConnected) return ro.disconnect();
     const more = PANES.matches && p.scrollHeight - p.clientHeight - p.scrollTop > 8;
-    p.classList.toggle("more", more); btn.hidden = !more;
+    p.classList.toggle("tfade", more); btn.hidden = !more;  // not "more": that's the lists' "load more" row (centred)
   };
   p.addEventListener("scroll", upd, { passive: true });
   ro.observe(p); [...p.children].forEach(c => ro.observe(c));
@@ -2236,7 +2239,9 @@ async function renderDrops() {
 // PULLS: t its title, g the gate it's from (or null), n copies by unit, o the order they were added
 let PULLS = Object.assign({ t: "", g: null, n: {}, o: [] }, store.get("bf.pulls", {}));
 const savePulls = () => { PULLS.o = PULLS.o.filter(id => PULLS.n[id] > 0); store.set("bf.pulls", PULLS); };
-const pullList = () => PULLS.o.filter(id => PULLS.n[id] > 0 && UMAP[id]).map(id => UMAP[id]).sort((a, b) => b.r - a.r || PULLS.n[b.id] - PULLS.n[a.id] || a.n.localeCompare(b.n));
+// the rarest first, then in the order you added them: a tile doesn't move when its count goes up (the user: "it sometimes
+// switch place when numbers goes up")
+const pullList = () => PULLS.o.filter(id => PULLS.n[id] > 0 && UMAP[id]).map(id => UMAP[id]).sort((a, b) => b.r - a.r || PULLS.o.indexOf(a.id) - PULLS.o.indexOf(b.id));
 function pullAdd(id, d) { PULLS.n[id] = Math.max(0, (PULLS.n[id] || 0) + d); if (PULLS.n[id] && !PULLS.o.includes(id)) PULLS.o.push(id); if (!PULLS.n[id]) delete PULLS.n[id]; savePulls(); }
 async function showPulls(gate) {
   const nav = NAV, S = await load("usrc");
@@ -3655,6 +3660,11 @@ async function renderTeam() {
       <div class="ssph">${sphereChip(i, 0)}${sphereChip(i, 1)}${elgifChip(i)}</div>${spChip(i, id)}${sameType(i) ? `<div class="sphwarn">Two ${esc(sameType(i))} spheres: the game doesn't let a unit hold two of one type. Change one.</div>` : ""}
       <div class="sca">${i > 0 && i < 5 ? `<button class="gbtn small" data-lead="${i}">Lead</button>` : ""}<button class="gbtn small dark" data-s="${i}">Change</button><button class="gbtn small red" data-x="${i}" aria-label="Remove">✕</button></div>
     </div>`; };
+  // a redraw (a skill picked in the battle check, a sphere, Omni+) keeps you where you were (the user: "when changing the
+  // skill the page goes all the way up, i want to stay at the section"): the new right pane on a PC would start at its
+  // top, and on a phone the page, shorter for a moment while its pictures come back, would pull you up
+  const keep = v.offsetParent && v.firstElementChild ? { y: scrollY, pane: v.querySelector(".tpane.tr")?.scrollTop || 0 } : null;
+  if (keep) v.style.minHeight = `${v.offsetHeight}px`;
   // two panes (side by side on a PC): what you edit, then what it does (on a PC the cover table first)
   v.innerHTML = `<div class="tpanes"><div class="tpane tl"><div class="sec" style="padding:8px" data-jump="Field">
       <div class="tabs2 teams">${TEAMS.map((t, i) => `<button class="${i === TCUR ? "on" : ""}" data-t="${i}">${esc(teamName(i))}${i === TCUR ? " ✎" : ""}</button>`).join("")}${
@@ -3834,6 +3844,15 @@ async function renderTeam() {
   $("tshare").onclick = () => shareTeam(team, W);
   $("tclear").onclick = () => { if (!team.some(Boolean)) return; const s = teamSnap(), t = TCUR;
     TEAMS[TCUR] = Array(6).fill(null); for (let i = 0; i < 6; i++) resetSlot(i); saveTeams(); renderTeam(); undoToast(`${teamName(t)} cleared`, () => teamRestore(t, s)); };
+  if (keep) {
+    const p = v.querySelector(".tpane.tr"); if (p && keep.pane) p.scrollTop = keep.pane;
+    if (Math.abs(scrollY - keep.y) > 1) scrollTo(0, keep.y);
+    // the height it had, till its pictures are in (at most 1.5 s)
+    const imgs = [...v.querySelectorAll("img")].filter(i => !i.complete), free = () => { v.style.minHeight = ""; };
+    if (!imgs.length) requestAnimationFrame(free);
+    else Promise.race([Promise.all(imgs.map(i => new Promise(r => { i.addEventListener("load", r, { once: true }); i.addEventListener("error", r, { once: true }); }))),
+      new Promise(r => setTimeout(r, 1500))]).then(free);
+  }
 }
 
 // a small note by a faded unit in What the team covers: why it doesn't give it to the team, with Cast BB (when that's
