@@ -106,6 +106,7 @@ main { padding-bottom: calc(var(--navh) + 20px); }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 8px 6px; padding: 10px 10px 0; }
 .gu { position: relative; text-align: center; cursor: pointer; }
 .gu img { width: 100%; aspect-ratio: 1; display: block; }
+.gu .ano, .lu .ano { font: 9.5px/1.2 Rodin, Arial, sans-serif; color: var(--accent); text-shadow: var(--ol); } .gu .ano { margin-top: 3px; } .lu .ano { font-size: 11px; }
 .gu .gname { font-size: 10.5px; line-height: 1.15; margin-top: 3px; text-shadow: var(--ol); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .gu .rr { position: absolute; left: 50%; transform: translateX(-50%); top: calc(100% - 46px); font-family: Rodin, Arial, sans-serif; font-size: 11px; text-shadow: var(--ol); color: var(--accent); white-space: nowrap; }
 .gu img.fav { position: absolute; top: 0; right: 0; width: 22px; height: 22px; aspect-ratio: auto; filter: drop-shadow(0 1px 1px #000); }
@@ -542,7 +543,7 @@ body.boxedit .totop { bottom: calc(var(--navh) + 78px); } body.boxedit .toast { 
   <section class="view on" id="v-units">
     <div class="bar2">
       <div class="searchrow"><input id="uq" type="search" placeholder="Name, skill, role" autocomplete="off">
-        <select id="usort"><option value="rarity">Rarity</option><option value="element">Element</option><option value="new">Newest</option><option value="name">Name</option><option value="atk">ATK</option><option value="hp">HP</option><option value="def">DEF</option><option value="rec">REC</option><option value="cost">Cost</option><option value="power">Strongest (role)</option></select>
+        <select id="usort"><option value="rarity">Rarity</option><option value="element">Element</option><option value="new">Newest</option><option value="archive">Archive No.</option><option value="name">Name</option><option value="atk">ATK</option><option value="hp">HP</option><option value="def">DEF</option><option value="rec">REC</option><option value="cost">Cost</option><option value="power">Strongest (role)</option></select>
         <button class="iconbtn fbtn" id="ufbtn" title="Filters" aria-label="Filters"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg><span id="ufn"></span></button></div>
       <div id="ufilters">
         <div class="scroller" id="uel"></div>
@@ -1113,7 +1114,7 @@ function tapUnit(u, d, onTap) {
 }
 function gridCell(u, onTap, role) {
   const d = document.createElement("div"); d.className = "gu"; d.onclick = () => tapUnit(u, d, onTap);
-  d.innerHTML = `<img loading="lazy" decoding="async" src="${uImg(u.id)}" alt="" onerror="this.style.visibility='hidden'">${favs.has(u.id) ? `<img class="fav" src="/static/star_fav.png" alt="★">` : ""}${mine.has(u.id) ? `<span class="own ${favs.has(u.id) ? "f" : ""}" title="In my box">✓</span>` : ""}${powerTag(u, role)}<div class="gname">${esc(u.n)}</div>`;
+  d.innerHTML = `<img loading="lazy" decoding="async" src="${uImg(u.id)}" alt="" onerror="this.style.visibility='hidden'">${favs.has(u.id) ? `<img class="fav" src="/static/star_fav.png" alt="★">` : ""}${mine.has(u.id) ? `<span class="own ${favs.has(u.id) ? "f" : ""}" title="In my box">✓</span>` : ""}${powerTag(u, role)}${uState.sort === "archive" && u.no ? `<div class="ano">No. ${u.no}</div>` : ""}<div class="gname">${esc(u.n)}</div>`;
   return marked(d, u, () => gridCell(u, onTap, role));
 }
 function listRow(u, onTap, role) {
@@ -1121,7 +1122,7 @@ function listRow(u, onTap, role) {
   if (u.e) d.style.setProperty("--el", `var(--${u.e})`);
   const p = role && powerOf(u.id, role);
   d.innerHTML = `<img loading="lazy" decoding="async" src="${uImg(u.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1">
-    <div class="ln">${favs.has(u.id) ? FAVSTAR + " " : ""}${esc(u.n)}</div><div class="badges">${unitBadges(u)}${mine.has(u.id) ? `<span class="badge own">✓ My box</span>` : ""}${p ? `<span class="badge pw">${esc(TAGS.labels[role])} ${fmtPower(role, p)} · ${SKILL_NAMES[p[1]]}</span>` : ""}</div>
+    <div class="ln">${uState.sort === "archive" && u.no ? `<span class="ano">No. ${u.no}</span> ` : ""}${favs.has(u.id) ? FAVSTAR + " " : ""}${esc(u.n)}</div><div class="badges">${unitBadges(u)}${mine.has(u.id) ? `<span class="badge own">✓ My box</span>` : ""}${p ? `<span class="badge pw">${esc(TAGS.labels[role])} ${fmtPower(role, p)} · ${SKILL_NAMES[p[1]]}</span>` : ""}</div>
     <div class="ls"><div><span>HP</span>${fmt(u.hp)}</div><div><span>ATK</span>${fmt(u.atk)}</div><div><span>DEF</span>${fmt(u.def)}</div><div><span>REC</span>${fmt(u.rec)}</div></div></div>`;
   return marked(d, u, () => listRow(u, onTap, role));
 }
@@ -1137,7 +1138,8 @@ function paged(container, items, make, cls) {
   new IntersectionObserver((es, ob) => { if (es.some(e => e.isIntersecting)) { more.remove(); step(); if (n >= items.length) ob.disconnect(); else { ob.unobserve(more); ob.observe(more); } } }, { rootMargin: "1200px" }).observe(more);
 }
 const elOrder = u => (ELS.indexOf(u.e) + 1) || 9;  // Fire, Water, Earth, Thunder, Light, Dark, then units without one
-const SORTS = { rarity: (a, b) => b.r - a.r || b.no - a.no, element: (a, b) => elOrder(a) - elOrder(b) || b.r - a.r || b.no - a.no, new: (a, b) => b.no - a.no || b.r - a.r, name: (a, b) => a.n.localeCompare(b.n),
+// archive: the game's Unit Archive order (its unit number; a unit without one at the end)
+const SORTS = { archive: (a, b) => (a.no || 1e9) - (b.no || 1e9) || +a.id - +b.id, rarity: (a, b) => b.r - a.r || b.no - a.no, element: (a, b) => elOrder(a) - elOrder(b) || b.r - a.r || b.no - a.no, new: (a, b) => b.no - a.no || b.r - a.r, name: (a, b) => a.n.localeCompare(b.n),
   atk: (a, b) => b.atk - a.atk, hp: (a, b) => b.hp - a.hp, def: (a, b) => b.def - a.def, rec: (a, b) => b.rec - a.rec, cost: (a, b) => b.c - a.c || b.r - a.r };
 // one word or phrase: the name, or (3+ letters) the skill text or a role ("spark", "def ignore", "mitigation")
 const phraseHit = (u, q) => q.length >= 3 && (!!SKTXT?.[u.id]?.includes(q) || Object.entries(TAGS.labels).some(([c, l]) => l.toLowerCase().includes(q) && TAGS.units[u.id]?.[c]));
@@ -1223,8 +1225,9 @@ function closeNames(q, items, name, rank = () => 0) {
 // anyRarity: as if every rarity chip were on
 function filteredUnits(anyRarity) {
   const q = uState.q.trim().toLowerCase(), rars = RARITY.filter(r => uState.rar.has(r[0]));
-  const list = UNITS.filter(u => (!u.e || uState.els.has(u.e)) && (anyRarity || q || uState.mine || !rars.length || rars.some(r => r[2](u))) && (q || uState.mine || !u.f)
-    && (!uState.mine || mine.has(u.id)) && [...uState.roles].every(c => roleOf(u.id, c, true)) && (!uState.get.size || hasSrc(u.id)) && searchHit(u, q));
+  // fodder (Imps, Crystals, Metal units…) show with their rarity like any unit: the archive has them too
+  const list = UNITS.filter(u => (!u.e || uState.els.has(u.e)) && (anyRarity || q || uState.mine || !rars.length || rars.some(r => r[2](u)))
+    && (!uState.mine || mine.has(u.id)) && (!uState.miss || !mine.has(u.id)) && [...uState.roles].every(c => roleOf(u.id, c, true)) && (!uState.get.size || hasSrc(u.id)) && searchHit(u, q));
   const role = activeRole();
   if (uState.sort === "power" && role) return list.sort(byPower(role));  // strongest first
   list.sort(SORTS[uState.sort] || SORTS.rarity);
@@ -1240,7 +1243,7 @@ async function renderUnits() {
   const list = filteredUnits(), bySkill = q ? list.filter(u => !u.n.toLowerCase().includes(q)).length : 0, role = activeRole();
   NAV_LIST = list.map(u => u.id);
   const asRole = q && canonQ(q) !== q ? ` (read as “${canonQ(q)}”)` : "";
-  $("ucount").textContent = `${list.length} units${uState.q ? ` matching “${uState.q}”${asRole}${bySkill ? ` (${bySkill} by skill or role)` : ""}` : ""}${
+  $("ucount").textContent = `${list.length} units${uState.miss ? " not in your box" : ""}${uState.sort === "archive" ? " · Unit Archive order" : ""}${uState.q ? ` matching “${uState.q}”${asRole}${bySkill ? ` (${bySkill} by skill or role)` : ""}` : ""}${
     uState.sort === "power" ? role ? ` · strongest ${TAGS.labels[role]} first` : " · pick a role to sort by strength" : ""}`;
   // with a Get it or role filter on, the units it finds that the rarity chips hide (This week's 4★ and 5★ DEEMO
   // units): how many, and a tap turns those rarities on
@@ -1277,12 +1280,13 @@ function filterSummary() {
   const parts = [];
   parts.push(uState.els.size === ELS.length ? "All elements" : [...uState.els].join(", ") || "No element");
   parts.push(uState.mine ? "My box" : [...uState.rar].map(k => RAR_SHORT[k]).join(", ") || "All rarities");
+  if (uState.miss) parts.push("not in my box");
   if (uState.roles.size) parts.push([...uState.roles].map(c => TAGS.labels[c]).join(" + "));
   if (uState.get.size) parts.push(GETS.filter(g => uState.get.has(g[0])).map(g => g[1]).join(" / "));
   return parts.join(" · ");
 }
 function updateFilterUI() {
-  const n = (uState.els.size < ELS.length ? 1 : 0) + uState.roles.size + uState.get.size + (uState.mine ? 1 : 0);
+  const n = (uState.els.size < ELS.length ? 1 : 0) + uState.roles.size + uState.get.size + (uState.mine ? 1 : 0) + (uState.miss ? 1 : 0);
   $("ufn").textContent = n || ""; $("ufbtn").classList.toggle("on", !!uState.showFilters);
   $("ufilters").hidden = !uState.showFilters; $("usum").hidden = !!uState.showFilters;
   $("usum").innerHTML = `${esc(filterSummary())} <b>▾</b>`;
@@ -1379,9 +1383,12 @@ function setupUnitFilters() {
   rb.onclick = () => { uState.showRoles = !uState.showRoles; roles.hidden = !uState.showRoles; rbLabel(); saveU(); };
   rar.prepend(rb);  // first, so it's visible without scrolling the row
   const mb = chip("✓ My box", uState.mine); mb.id = "umine";
-  mb.onclick = () => { uState.mine = !uState.mine; mb.classList.toggle("on", uState.mine); renderUnits(); };
+  // what a collector still misses: the units not in the box (one of the two at a time)
+  const mx = chip("✗ Not in my box", uState.miss); mx.id = "umiss";
+  mb.onclick = () => { uState.mine = !uState.mine; if (uState.mine) uState.miss = false; mb.classList.toggle("on", uState.mine); mx.classList.toggle("on", uState.miss); renderUnits(); };
+  mx.onclick = () => { uState.miss = !uState.miss; if (uState.miss) uState.mine = false; mx.classList.toggle("on", uState.miss); mb.classList.toggle("on", uState.mine); renderUnits(); };
   $("uedit").onclick = () => setBoxEdit(!boxEdit);  // on the count line, so it's there with the filters folded too
-  rb.after(mb);
+  rb.after(mb); mb.after(mx);
   roles.hidden = !uState.showRoles;
   for (const [c, label] of Object.entries(TAGS.labels)) {
     const b = chip(esc(label), uState.roles.has(c));
@@ -2164,6 +2171,8 @@ async function renderDrops() {
 }
 
 // ---------------- favorites ----------------
+// how much of the game's Unit Archive (the units with a number) is in a box, in whole percent (above 0 shows at least 1)
+const ARCH_PCT = box => { const all = UNITS.filter(u => u.no).length, n = box.filter(u => u.no).length; return n ? Math.max(1, Math.floor(n / all * 100)) : 0; };
 async function renderFavs() {
   const list = UNITS.filter(u => favs.has(u.id)).sort((a, b) => b.r - a.r || a.n.localeCompare(b.n));
   NAV_LIST = list.map(u => u.id);
@@ -2182,7 +2191,7 @@ async function renderFavs() {
   const rar = count((u, k) => k === "low" ? u.r < 6 : u.r === k, [[8, `${OMNI}Omni`], [7, `7${STAR}`], [6, `6${STAR}`], ["low", `5${STAR} and below`]]);
   const els = count((u, k) => u.e === k, ELS.map(e => [e, orb(e)]));
   $("fbox").innerHTML = `<div class="sec"><h3 class="green">My box</h3>${box.length
-    ? `<p class="small" style="margin:0 0 6px"><b>${box.length}</b> unit${box.length > 1 ? "s" : ""} marked as yours</p><div class="badges">${rar.map(([l, n]) => `<span class="badge star">${l} ×${n}</span>`).join("")}</div>
+    ? `<p class="small" style="margin:0 0 6px"><b>${box.length}</b> unit${box.length > 1 ? "s" : ""} marked as yours · <b>${ARCH_PCT(box)}%</b> of the Unit Archive (${box.filter(u => u.no).length.toLocaleString("en")} of ${UNITS.filter(u => u.no).length.toLocaleString("en")})</p><div class="badges">${rar.map(([l, n]) => `<span class="badge star">${l} ×${n}</span>`).join("")}</div>
       <div class="badges" style="margin-top:5px">${els.map(([l, n]) => `<span class="badge">${l}×${n}</span>`).join("")}</div>`
     : `<p class="small" style="margin:0">Your box is empty. Mark the units you own to filter lists and build teams from them.</p>`}
     <details class="why"><summary>What is My box for?</summary><ul>
@@ -2192,7 +2201,15 @@ async function renderFavs() {
       <li>Summon gates show how many of their units you already have, and can hide those so you see what you're missing.</li>
       <li>On a unit page, Similar units shows yours first: alternatives you can use right away.</li>
       <li>Mark many at once with <b>✎ Edit my box</b> (its <b>All shown</b> marks every unit the filters show), or one at a time: hold a unit in any list for a moment (hold it again to take it out), or tap <b>＋ My box</b> on its page. It stays on this phone only.</li></ul></details>
-    <div class="btnrow" style="margin-bottom:0">${box.length ? `<button class="gbtn blue small" id="fshow">Show my box</button>` : ""}<button class="gbtn green small" id="fedit">✎ Edit my box</button></div></div>`;
+    <div class="btnrow" style="margin-bottom:0">${box.length ? `<button class="gbtn blue small" id="fshow">Show my box</button>` : ""}<button class="gbtn green small" id="fedit">✎ Edit my box</button><button class="gbtn small dark" id="farch">Unit archive</button></div></div>`;
+  // the Unit archive: every unit in the game's order, box editing on, so a collector ticks them off one after another
+  $("farch").onclick = () => {
+    Object.assign(uState, { sort: "archive", q: "", mine: false, miss: false }); uState.els = new Set(ELS); uState.rar = new Set(RARITY.map(r => r[0])); uState.roles.clear(); uState.get.clear();
+    $("uq").value = ""; $("usort").value = "archive";
+    document.querySelectorAll("#uel .chip").forEach((c, k) => k < ELS.length && c.classList.add("on")); document.querySelectorAll("#urar [data-rar]").forEach(c => c.classList.add("on"));
+    document.querySelectorAll("#urole .chip").forEach(c => c.classList.remove("on")); $("umine")?.classList.remove("on"); $("umiss")?.classList.remove("on");
+    tabsDrawn.add("units"); go("#/units"); renderUnits(); setBoxEdit(true);
+  };
   if ($("fshow")) $("fshow").onclick = () => { uState.mine = true; uState.q = ""; $("uq").value = ""; $("umine").classList.add("on"); tabsDrawn.add("units"); go("#/units"); renderUnits(); };
   $("fedit").onclick = () => { go("#/units"); setBoxEdit(true); };
   $("fcount").textContent = list.length ? `${list.length} favorite units` : "";
