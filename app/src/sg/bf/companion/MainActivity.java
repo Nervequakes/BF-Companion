@@ -11,15 +11,20 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ClipData;
 import android.content.ClipboardManager;
+import android.content.ContentProvider;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInstaller;
+import android.database.Cursor;
+import android.database.MatrixCursor;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
+import android.provider.OpenableColumns;
 import android.provider.Settings;
 import android.util.Base64;
 import android.view.View;
@@ -39,6 +44,7 @@ import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -138,7 +144,7 @@ public class MainActivity extends Activity {
         return "application/octet-stream";
     }
 
-    /** Called from the page: pictures (PNG or GIF) and links go to the gallery or the share sheet, text to the clipboard. */
+    /** Called from the page: pictures (PNG or GIF) and links go to the gallery or the share sheet, text and a copied picture to the clipboard. */
     private class Bridge {
         @JavascriptInterface
         public void shareImage(String base64Png, String name, boolean share) { shareFile(base64Png, name, "image/png", share); }
@@ -171,6 +177,31 @@ public class MainActivity extends Activity {
             });
         }
 
+        /** A picture to the clipboard, not the gallery: kept in the app's cache (only the one copied last) and read
+         *  through Pictures below by the app it's pasted in. False if it couldn't be written. */
+        @JavascriptInterface
+        public boolean copyImage(String base64Png, String name) {
+            File dir = new File(getCacheDir(), Pictures.DIR);
+            deleteAll(dir);
+            String n = name.replaceFirst("(?i)\\.png$", "").replaceAll("[^\\w -]+", "").trim();
+            String file = (n.isEmpty() ? "Picture" : n) + ".png";
+            if (!dir.mkdirs()) return false;
+            try (OutputStream out = new FileOutputStream(new File(dir, file))) {
+                out.write(Base64.decode(base64Png, Base64.DEFAULT));
+            } catch (IOException | IllegalArgumentException e) {
+                deleteAll(dir);
+                return false;
+            }
+            // a new address each time, so a chat app doesn't paste the picture it read before
+            Uri uri = new Uri.Builder().scheme("content").authority(Pictures.AUTHORITY)
+                .appendPath(Long.toString(System.currentTimeMillis())).appendPath(file).build();
+            runOnUiThread(() -> {
+                ClipboardManager cm = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+                cm.setPrimaryClip(ClipData.newUri(getContentResolver(), file, uri));
+            });
+            return true;
+        }
+
         /** Asks GitHub for the newest release; the page hears back through BFUpdate.onCheck. */
         @JavascriptInterface
         public void checkUpdate() { new Thread(MainActivity.this::check).start(); }
@@ -195,6 +226,50 @@ public class MainActivity extends Activity {
             getContentResolver().delete(uri, null, null);  // no empty picture left in the gallery
             return null;
         }
+    }
+
+    /** The picture copied last (copyImage), read-only, for the app it's pasted in: not exported, Android's clipboard
+     *  lets the app that reads the clip read this one file. Nothing else is served. */
+    public static class Pictures extends ContentProvider {
+        static final String AUTHORITY = "sg.bf.companion.pictures", DIR = "copied";
+
+        private File file(Uri u) {
+            String n = u.getLastPathSegment();
+            if (n == null || !n.matches("[\\w -]+\\.png")) return null;
+            File f = new File(new File(getContext().getCacheDir(), DIR), n);
+            return f.isFile() ? f : null;
+        }
+
+        @Override public boolean onCreate() { return true; }
+
+        @Override public String getType(Uri u) { return "image/png"; }
+
+        @Override
+        public ParcelFileDescriptor openFile(Uri u, String mode) throws FileNotFoundException {
+            File f = file(u);
+            if (f == null || mode.contains("w")) throw new FileNotFoundException("No such picture");
+            return ParcelFileDescriptor.open(f, ParcelFileDescriptor.MODE_READ_ONLY);
+        }
+
+        /** Its name and size, which some apps ask for before they read it. */
+        @Override
+        public Cursor query(Uri u, String[] cols, String sel, String[] args, String sort) {
+            File f = file(u);
+            if (f == null) return null;
+            String[] c = cols != null ? cols : new String[] { OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE };
+            Object[] row = new Object[c.length];
+            for (int i = 0; i < c.length; i++)
+                row[i] = OpenableColumns.DISPLAY_NAME.equals(c[i]) ? f.getName() : OpenableColumns.SIZE.equals(c[i]) ? (Object) f.length() : null;
+            MatrixCursor m = new MatrixCursor(c, 1);
+            m.addRow(row);
+            return m;
+        }
+
+        @Override public Uri insert(Uri u, ContentValues v) { return null; }
+
+        @Override public int delete(Uri u, String sel, String[] args) { return 0; }
+
+        @Override public int update(Uri u, ContentValues v, String sel, String[] args) { return 0; }
     }
 
     private void toast(String msg) { Toast.makeText(this, msg, Toast.LENGTH_SHORT).show(); }

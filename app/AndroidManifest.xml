@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="sg.bf.companion" android:versionCode="65" android:versionName="5.6.43">
+    package="sg.bf.companion" android:versionCode="66" android:versionName="5.6.44">
     <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="34" />
     <!-- The app shows data bundled inside it. These two are only for "Check for updates" (off unless you turn it on):
          asking GitHub for the newest release, and handing its APK to Android's installer. -->
@@ -17,5 +17,8 @@
         </activity>
         <!-- Android's answer to an update install -->
         <receiver android:name=".MainActivity$Installed" android:exported="false" />
+        <!-- Copy picture: the copied picture, for the app it's pasted in (only through the clipboard) -->
+        <provider android:name=".MainActivity$Pictures" android:authorities="sg.bf.companion.pictures"
+            android:exported="false" android:grantUriPermissions="true" />
     </application>
 </manifest>

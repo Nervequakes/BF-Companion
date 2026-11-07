@@ -64,6 +64,25 @@ jobs:
           open(p, "w", encoding="utf-8").write(t.replace("</title>\n", "</title>\n" + tags, 1))
           EOF
           grep -c 'og:image' site/index.html
+      - name: Visit counter (GoatCounter), the website only and never the app, when the GOATCOUNTER variable names one
+        env:
+          GC: ${{ vars.GOATCOUNTER }}
+        run: |
+          if [ -n "$GC" ]; then
+            python3 - <<'EOF' || echo "::warning::The visit counter wasn't added (GOATCOUNTER should be the code in <code>.goatcounter.com)"
+          import os, re
+          code = os.environ["GC"].strip()
+          assert re.fullmatch(r"[a-z0-9-]+", code), code
+          tag = f'<script data-goatcounter="https://{code}.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>\n'
+          p = "site/index.html"
+          t = open(p, encoding="utf-8").read()
+          assert t.count("</head>") == 1 and "<script data-goatcounter=" not in t
+          open(p, "w", encoding="utf-8").write(t.replace("</head>", tag + "</head>", 1))
+          EOF
+            grep -c '<script data-goatcounter=' site/index.html || true
+          else
+            echo "no visit counter: the GOATCOUNTER variable isn't set"
+          fi
       - name: A page per unit for shared links (bfcompanion.app/u/<id>), with the unit in the link preview
         run: python3 .github/unit_pages.py site "${{ steps.pages.outputs.base_url }}"
       - uses: actions/upload-pages-artifact@v3
