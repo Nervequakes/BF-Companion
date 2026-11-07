@@ -91,7 +91,7 @@ Slow download from GitHub? Get the APK from the **[Google Drive mirror](https://
 2. Open it and allow installing apps from your browser or file manager when Android asks.
 3. Done. For later versions you don't need this page: tap the logo, then *Privacy → Check for updates*.
 
-Android 7.0 or newer. About 115 MB, because every unit's artwork and animated sprite is included.
+Android 7.0 or newer. About 135 MB, because every unit's artwork and animated sprite is included.
 
 **Every version and what changed in it:** [Releases](../../releases). Older versions stay there to download.
 

@@ -123,6 +123,16 @@ main { padding-bottom: calc(var(--navh) + 20px); }
 .badge.pw { background: linear-gradient(#5aa8ff, #1e5fe0); border-color: #9ccaff; }
 .gu .own { position: absolute; top: 1px; right: 1px; width: 19px; height: 19px; border-radius: 50%; background: linear-gradient(#7ad67a, #2a8f3a); border: 1px solid #c8f5c8;
   font: 12px/17px Arial, sans-serif; color: #fff; text-shadow: var(--ol); box-shadow: 0 1px 2px #000; } .gu .own.f { right: 24px; }
+.gu .own.n { width: auto; min-width: 19px; padding: 0 4px; border-radius: 10px; font-size: 11px; }
+.gu .pcnt { position: absolute; left: 2px; top: 2px; z-index: 1; padding: 0 5px; border-radius: 9px; background: rgba(0,0,0,.82); border: 1px solid #ffd45c; color: #ffd45c; font: 11px/16px Rodin, Arial, sans-serif; text-shadow: var(--ol); }
+.copies { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin: 8px 12px 0; font-size: 12.5px; } .copies[hidden] { display: none; }
+.copies b { min-width: 22px; text-align: center; font-family: Rodin, Arial, sans-serif; color: var(--accent); }
+.pgot { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 10px 8px; margin-bottom: 10px; }
+.ptile { display: flex; flex-direction: column; text-align: center; min-width: 0; } .ptile img { width: 100%; aspect-ratio: 1; display: block; cursor: pointer; }
+.ptile .gname { font-size: 10px; line-height: 1.15; margin-top: 2px; text-shadow: var(--ol); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ptile .pc { display: flex; justify-content: center; align-items: center; gap: 5px; margin-top: auto; padding-top: 4px; }  /* at the tile's foot: a two-line name doesn't push its row down */
+.ptile .pc button { width: 26px; height: 26px; padding: 0; border-radius: 7px; border: 1px solid var(--gold3); background: #141a2e; color: var(--text); font-size: 15px; line-height: 1; cursor: pointer; }
+.ptile .pc b { min-width: 20px; font: 14px Rodin, Arial, sans-serif; color: var(--accent); }
 .badge.own { background: linear-gradient(#7ad67a, #2a8f3a); border-color: #c8f5c8; }
 .why ul { margin: 6px 0 0; padding-left: 18px; font-size: 12.5px; color: #ece6d6; } .why li { margin: 4px 0; } .why b { color: var(--accent); font-weight: normal; font-family: Rodin, Arial, sans-serif; }
 .about .news { text-align: left; background: rgba(0,0,0,.3); border-radius: 8px; padding: 8px 10px; margin: 10px 0; }
@@ -211,6 +221,15 @@ main { padding-bottom: calc(var(--navh) + 20px); }
 .okc { color: #7ad67a; } .noc { color: #ff8a7a; } .bcfull { color: var(--dim); } .bccap { color: var(--dim); } .bcfull b { color: #ffd76a; } .bcsph { display: flex; flex-wrap: wrap; gap: 2px 10px; font-size: 11px; color: var(--dim); margin-top: 2px; } .bcsph span { display: inline-flex; align-items: center; gap: 4px; } .bcsph img { width: 16px; height: 16px; border-radius: 3px; } .bcsph i { font-style: normal; } .bcl .okc, .bcl .noc { margin-left: 4px; font-size: 11px; white-space: nowrap; }
 .spark { margin-top: 8px; padding: 7px 9px; border-radius: 7px; background: rgba(0,0,0,.35); border-left: 3px solid #f2c94c; }
 .spark .bcl b { color: var(--accent); }
+/* the hit timeline: a row per unit, ticks on the frames it hits, gold where they spark */
+.sdet[hidden] { display: none; } .spark .sdbtn { display: block; }
+.stl { margin-top: 8px; display: grid; gap: 5px; } .stl .r { display: grid; grid-template-columns: minmax(0, 34%) minmax(0, 1fr); column-gap: 8px; align-items: center; }
+.stl .n { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stl .bar { position: relative; height: 14px; border-radius: 4px; background: rgba(255,255,255,.07); overflow: hidden; }
+.stl .bar i { position: absolute; top: 2px; bottom: 2px; width: 2px; margin-left: -1px; background: rgba(255,255,255,.32); } .stl .bar i.s { background: #ffd45c; box-shadow: 0 0 3px #ffd45c; }
+.stl .w { grid-column: 2; font-size: 10.5px; color: var(--dim); line-height: 1.3; } .stl .w > b:first-child { color: var(--accent); font-weight: normal; }
+.stl .sleg { font-size: 11px; color: var(--dim); line-height: 1.35; } .stl .sleg b { color: #ffd45c; font-weight: normal; } .stl .sg { color: #ff9a7a; font-weight: normal; }
+.stl .sax { display: flex; justify-content: space-between; margin-left: calc(34% + 8px); font-size: 10px; color: var(--dim); }
 .bctip { margin-top: 8px; padding: 7px 9px; border-radius: 7px; background: rgba(0,0,0,.35); border-left: 3px solid #6fd17a; } .sorder { margin: 5px 0 0; padding-left: 22px; font-size: 12.5px; } .sorder li { margin: 2px 0; }
 .item .sb { font-size: 11px; color: #9ff09f; margin: 1px 0 2px; }
 .item .t .sti { width: 14px; height: 14px; flex: none; }  /* not the 46px item icon size */
@@ -503,6 +522,7 @@ body.boxedit .totop { bottom: calc(var(--navh) + 78px); } body.boxedit .toast { 
   .editbar { left: calc(var(--railw) + 12px); }
 }
 /* ...and the long pages put their sections side by side (3 columns from 1700 px), their bars across the top */
+#fmine { display: none; }  /* a phone: your box behind its button (a computer shows it, below) */
 @media (min-width: 1000px) {
   #ubody, #dres, #page > .cols { columns: 2; column-gap: 0; }
   :is(#ubody, #dres, #page > .cols) > * { break-inside: avoid; }
@@ -514,13 +534,16 @@ body.boxedit .totop { bottom: calc(var(--navh) + 78px); } body.boxedit .toast { 
   .tpane.tr { position: sticky; top: calc(var(--toph) + var(--jumph)); max-height: calc(100vh - var(--toph) - var(--jumph)); overflow-y: auto; overscroll-behavior: contain;
     display: flex; flex-direction: column; padding-top: 12px; scrollbar-width: thin; scrollbar-color: var(--gold3) transparent; }
   .tpane.tr > .sec { margin: 0 10px 12px; scroll-margin-top: 12px; }  /* a jump scrolls the pane itself */
+  /* the last section's bottom margin in the pane's scroll room (Firefox leaves a flex item's last margin out): a spacer after it */
+  .tpane.tr::after { content: ""; order: 99; flex: none; height: 1px; }
   .tpane.tr > .tcov { order: 1; } .tpane.tr > .tmu { order: 2; } .tpane.tr > .tbc { order: 3; } .tpane.tr > .tls { order: 4; }
   /* lists of cards (spheres and items, Elgifs, the pickers): as many side by side as fit */
   :is(#slist, #elist, #splist, #ellist) > div:not(.more) { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 8px; padding: 0 10px; }
   :is(#slist, #elist, #splist, #ellist) .item { margin: 0; }
   /* the ★ tab: favorite spheres and items, recently viewed and My box in a row, the favorite units under them */
   #v-favs.on { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; }
-  #frecent { display: contents; } #fcount, #flist { grid-column: 1 / -1; }
+  #frecent { display: contents; } #fcount, #flist, #fmine { grid-column: 1 / -1; }
+  #fmine { display: block; }  /* your box's units under the favorites: the page has the room (renderFavs) */
 }
 @media (min-width: 1700px) { #ubody, #dres { columns: 3; } }
 @media (min-width: 700px) { .grid { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); } .hero { min-height: 300px; } .list { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); } }
@@ -570,7 +593,7 @@ body.boxedit .totop { bottom: calc(var(--navh) + 78px); } body.boxedit .toast { 
       <input id="dq" type="search" placeholder="Blue Claw, Kagan Desert, RC7…" style="width:100%" autocomplete="off"></div>
     <div id="dres"></div>
   </section>
-  <section class="view" id="v-favs"><div id="frecent"></div><div id="fbox"></div><div class="count" id="fcount"></div><div id="flist"></div></section>
+  <section class="view" id="v-favs"><div id="frecent"></div><div id="fbox"></div><div class="count" id="fcount"></div><div id="flist"></div><div id="fmine"></div></section>
   <section class="view" id="v-team"></section>
   <section id="page"></section>
 </main>
@@ -1061,7 +1084,12 @@ let ifavs = new Set(store.get("bf.ifavs", []));
 const ifavToggle = id => { ifavs.has(id) ? ifavs.delete(id) : ifavs.add(id); store.set("bf.ifavs", [...ifavs]); return ifavs.has(id); };
 // "My box": the units you have, marked by hand on their page (kept only on this phone)
 let mine = new Set(store.get("bf.mine", []));
-const saveMine = () => store.set("bf.mine", [...mine]);
+// copies of a unit beyond one (duplicates): {id: n}, only for n > 1; mine stays the set of units you have
+let mineN = store.get("bf.minen", {});
+const copiesOf = id => mine.has(id) ? (mineN[id] || 1) : 0;
+const saveMine = () => { for (const id of Object.keys(mineN)) if (!mine.has(id) || !(mineN[id] > 1)) delete mineN[id]; store.set("bf.mine", [...mine]); store.set("bf.minen", mineN); };
+function setCopies(id, n) { n = Math.max(0, Math.min(999, Math.floor(n) || 0));
+  if (n) { mine.add(id); if (n > 1) mineN[id] = n; else delete mineN[id]; } else { mine.delete(id); delete mineN[id]; } saveMine(); }
 let RECENT = store.get("bf.recent", []);  // [["u" | "i", id], ...] opened last, newest first
 function remember(t, id) { RECENT = [[t, id], ...RECENT.filter(([a, b]) => !(a === t && b === id))].slice(0, 16); store.set("bf.recent", RECENT); }
 function saveU() { store.set("bf.units", { ...uState, els: [...uState.els], rar: [...uState.rar], roles: [...uState.roles], get: [...uState.get] }); }
@@ -1095,7 +1123,7 @@ function unitBadges(u) {
   return `${u.r === 8 ? `<span class="badge star">${OMNI}OMNI</span>` : `<span class="badge star">${u.r}${starFor(u)}</span>`}${u.e ? `<span class="badge">${orb(u.e)}${u.e}</span>` : ""}${u.c ? `<span class="badge cost">COST ${u.c}</span>` : ""}`;
 }
 // a unit drawn in a list keeps how to draw itself again, so its ★ and ✓ can change without drawing the whole list
-const markSig = id => `${favs.has(id)}/${mine.has(id)}`;
+const markSig = id => `${favs.has(id)}/${copiesOf(id)}`;
 function marked(d, u, redraw) { d.dataset.id = u.id; d.redraw = redraw; d.sig = markSig(u.id); d.classList.toggle("got", mine.has(u.id)); return d; }
 const refreshMarks = root => root.querySelectorAll("[data-id]").forEach(d => d.redraw && d.sig !== markSig(d.dataset.id) && d.replaceWith(d.redraw()));
 // "Edit box": tapping units in the list marks them as yours (or not), one after another
@@ -1114,7 +1142,7 @@ function tapUnit(u, d, onTap) {
 }
 function gridCell(u, onTap, role) {
   const d = document.createElement("div"); d.className = "gu"; d.onclick = () => tapUnit(u, d, onTap);
-  d.innerHTML = `<img loading="lazy" decoding="async" src="${uImg(u.id)}" alt="" onerror="this.style.visibility='hidden'">${favs.has(u.id) ? `<img class="fav" src="/static/star_fav.png" alt="★">` : ""}${mine.has(u.id) ? `<span class="own ${favs.has(u.id) ? "f" : ""}" title="In my box">✓</span>` : ""}${powerTag(u, role)}${uState.sort === "archive" && u.no ? `<div class="ano">No. ${u.no}</div>` : ""}<div class="gname">${esc(u.n)}</div>`;
+  d.innerHTML = `<img loading="lazy" decoding="async" src="${uImg(u.id)}" alt="" onerror="this.style.visibility='hidden'">${favs.has(u.id) ? `<img class="fav" src="/static/star_fav.png" alt="★">` : ""}${mine.has(u.id) ? (n => `<span class="own ${favs.has(u.id) ? "f" : ""}${n > 1 ? " n" : ""}" title="In my box${n > 1 ? ` ×${n}` : ""}">${n > 1 ? `×${n}` : "✓"}</span>`)(copiesOf(u.id)) : ""}${powerTag(u, role)}${uState.sort === "archive" && u.ar ? `<div class="ano">No. ${u.ar}</div>` : ""}<div class="gname">${esc(u.n)}</div>`;
   return marked(d, u, () => gridCell(u, onTap, role));
 }
 function listRow(u, onTap, role) {
@@ -1122,7 +1150,7 @@ function listRow(u, onTap, role) {
   if (u.e) d.style.setProperty("--el", `var(--${u.e})`);
   const p = role && powerOf(u.id, role);
   d.innerHTML = `<img loading="lazy" decoding="async" src="${uImg(u.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1">
-    <div class="ln">${uState.sort === "archive" && u.no ? `<span class="ano">No. ${u.no}</span> ` : ""}${favs.has(u.id) ? FAVSTAR + " " : ""}${esc(u.n)}</div><div class="badges">${unitBadges(u)}${mine.has(u.id) ? `<span class="badge own">✓ My box</span>` : ""}${p ? `<span class="badge pw">${esc(TAGS.labels[role])} ${fmtPower(role, p)} · ${SKILL_NAMES[p[1]]}</span>` : ""}</div>
+    <div class="ln">${uState.sort === "archive" && u.ar ? `<span class="ano">No. ${u.ar}</span> ` : ""}${favs.has(u.id) ? FAVSTAR + " " : ""}${esc(u.n)}</div><div class="badges">${unitBadges(u)}${mine.has(u.id) ? `<span class="badge own">✓ My box${copiesOf(u.id) > 1 ? ` ×${copiesOf(u.id)}` : ""}</span>` : ""}${p ? `<span class="badge pw">${esc(TAGS.labels[role])} ${fmtPower(role, p)} · ${SKILL_NAMES[p[1]]}</span>` : ""}</div>
     <div class="ls"><div><span>HP</span>${fmt(u.hp)}</div><div><span>ATK</span>${fmt(u.atk)}</div><div><span>DEF</span>${fmt(u.def)}</div><div><span>REC</span>${fmt(u.rec)}</div></div></div>`;
   return marked(d, u, () => listRow(u, onTap, role));
 }
@@ -1138,8 +1166,8 @@ function paged(container, items, make, cls) {
   new IntersectionObserver((es, ob) => { if (es.some(e => e.isIntersecting)) { more.remove(); step(); if (n >= items.length) ob.disconnect(); else { ob.unobserve(more); ob.observe(more); } } }, { rootMargin: "1200px" }).observe(more);
 }
 const elOrder = u => (ELS.indexOf(u.e) + 1) || 9;  // Fire, Water, Earth, Thunder, Light, Dark, then units without one
-// archive: the game's Unit Archive order (its unit number; a unit without one at the end)
-const SORTS = { archive: (a, b) => (a.no || 1e9) - (b.no || 1e9) || +a.id - +b.id, rarity: (a, b) => b.r - a.r || b.no - a.no, element: (a, b) => elOrder(a) - elOrder(b) || b.r - a.r || b.no - a.no, new: (a, b) => b.no - a.no || b.r - a.r, name: (a, b) => a.n.localeCompare(b.n),
+// archive: the game's Unit Archive order (the game's own number for it; a unit without one at the end)
+const SORTS = { archive: (a, b) => (a.ar || 1e9) - (b.ar || 1e9) || +a.id - +b.id, rarity: (a, b) => b.r - a.r || b.no - a.no, element: (a, b) => elOrder(a) - elOrder(b) || b.r - a.r || b.no - a.no, new: (a, b) => b.no - a.no || b.r - a.r, name: (a, b) => a.n.localeCompare(b.n),
   atk: (a, b) => b.atk - a.atk, hp: (a, b) => b.hp - a.hp, def: (a, b) => b.def - a.def, rec: (a, b) => b.rec - a.rec, cost: (a, b) => b.c - a.c || b.r - a.r };
 // one word or phrase: the name, or (3+ letters) the skill text or a role ("spark", "def ignore", "mitigation")
 const phraseHit = (u, q) => q.length >= 3 && (!!SKTXT?.[u.id]?.includes(q) || Object.entries(TAGS.labels).some(([c, l]) => l.toLowerCase().includes(q) && TAGS.units[u.id]?.[c]));
@@ -1342,7 +1370,7 @@ function searchX() {
 const FOLD_OPEN = new Set();
 function foldNotes() {
   for (const p of document.querySelectorAll("p.small:not([data-fold]), p.dim:not([data-fold])")) {
-    if (!p.offsetParent || p.closest("details, #mbox, .toast")) continue;  // hidden for now (measured once shown), or already folds
+    if (!p.offsetParent || p.closest("details, #mbox, .toast, .sdet")) continue;  // hidden for now (measured once shown), or already folds
     p.dataset.fold = "";
     const lh = parseFloat(getComputedStyle(p).lineHeight) || 18;
     if (p.scrollHeight < lh * 5.5) continue;
@@ -1775,7 +1803,9 @@ async function showGate(g) {
     <p class="small" style="margin:4px 0 0" id="gwhen">${st.price ? `<b>${st.price}</b> · ` : ""}${st.feat ? `<span class="boss">This week</span> ` : ""}${st.text}${G[1] & 2 && !st.open ? " (a rotating gate opens only in its featured weeks)" : ""}</p>${
     mine.size ? `<p class="small" style="margin:4px 0 0">You have <b>${have}</b> of them in your box.</p>` : ""}
     <p class="small dim" style="margin:4px 0 0">Chance per pull, price and dates from Revived's game server, and the chance to get the unit at least once in 10 pulls.</p>
-    ${have ? `<div class="chipwrap" style="margin-top:8px"><button class="chip ${gateHide ? "on" : ""}" id="ghide">Hide units I have</button></div>` : ""}</div><div id="glist"></div>`;
+    ${have ? `<div class="chipwrap" style="margin-top:8px"><button class="chip ${gateHide ? "on" : ""}" id="ghide">Hide units I have</button></div>` : ""}
+    <div class="btnrow" style="margin:8px 0 0"><button class="gbtn small blue" id="gpulls">Pulls picture from this gate</button></div></div><div id="glist"></div>`;
+  $("gpulls").onclick = () => go(`#/pulls/${g}`);
   const row = ([u, p]) => { const d = listRow(u); d.querySelector(".badges").insertAdjacentHTML("beforeend", `<span class="badge pw">${p}% per pull</span><span class="badge">≈${in10(p)}% in 10 pulls</span>`); d.redraw = () => row([u, p]); return d; };
   const draw = () => { const shown = gateHide && have ? list.filter(x => !mine.has(x[0].id)) : list; NAV_LIST = shown.map(x => x[0].id); paged($("glist"), shown, row, "list"); };
   if ($("ghide")) $("ghide").onclick = () => { gateHide = !gateHide; store.set("bf.ghide", gateHide); $("ghide").classList.toggle("on", gateHide); draw(); };
@@ -1827,14 +1857,18 @@ async function showUnit(id) {
       <div class="info"><h2>${esc(u.n)}</h2><div class="stars">${u.r === 8 ? `<img class="omni" src="/static/omni.png" alt=""><span class="omnit">OMNI</span>` : `<img src="/static/${starFor(u) === ESTAR ? "star_elgif" : "star"}.png" alt="★">`.repeat(u.r)}</div>
         <div class="meta">${u.e ? `<span class="badge" id="elbadge">${orb(u.e)}${u.e}</span>` : ""}${u.c ? `<span class="badge cost">COST ${u.c}</span>` : ""}<span id="hmeta"></span></div></div></div>
     <div class="acts"><button class="gbtn" id="toteam">＋ Team</button><button class="gbtn blue ${CMP.includes(id) ? "on" : ""}" id="tocmp">⇄ Compare</button><button class="gbtn ${mine.has(id) ? "green" : "dark"}" id="tomine">${mine.has(id) ? "✓ In my box" : "＋ My box"}</button></div>
+    <div class="copies" id="ucopies" ${mine.has(id) ? "" : "hidden"}>Copies in your box<button class="gbtn small dark" id="cpm" aria-label="One fewer">−</button><b id="cpn">${copiesOf(id)}</b><button class="gbtn small dark" id="cpp" aria-label="One more">＋</button></div>
     <div id="ubody"><div class="empty">Loading…</div></div>`;
   $("favbtn").onclick = () => { favs.has(id) ? favs.delete(id) : favs.add(id); store.set("bf.favs", [...favs]); $("favbtn").classList.toggle("on"); toast(favs.has(id) ? "Added to favorites" : "Removed from favorites"); };
   if (art) { const a = page.querySelector(".hero .art"); a.classList.add("zoom"); a.onclick = () => modal(`<img src="${art.src}" alt="${esc(u.n)}" style="max-height:72vh"><div class="btnrow" style="justify-content:center"><button class="gbtn mclose">Close</button></div>`); }
   if ($("elbadge")) $("elbadge").onclick = elementChart;
   $("toteam").onclick = () => chooseTeam(id);
+  // copies in the box: − stops at one (the box button takes it out)
+  $("cpm").onclick = () => { setCopies(id, Math.max(1, copiesOf(id) - 1)); $("cpn").textContent = copiesOf(id); };
+  $("cpp").onclick = () => { setCopies(id, copiesOf(id) + 1); $("cpn").textContent = copiesOf(id); };
   $("tomine").onclick = () => {
     mine.has(id) ? mine.delete(id) : mine.add(id); saveMine();
-    $("tomine").textContent = mine.has(id) ? "✓ In my box" : "＋ My box"; $("tomine").classList.toggle("green", mine.has(id)); $("tomine").classList.toggle("dark", !mine.has(id));
+    $("tomine").textContent = mine.has(id) ? "✓ In my box" : "＋ My box"; $("tomine").classList.toggle("green", mine.has(id)); $("tomine").classList.toggle("dark", !mine.has(id)); $("ucopies").hidden = !mine.has(id); $("cpn").textContent = copiesOf(id);
     toast(mine.has(id) ? "Added to your box" : "Removed from your box");
   };
   $("tocmp").onclick = () => { toggleCompare(id); $("tocmp").classList.toggle("on", CMP.includes(id)); };
@@ -2170,9 +2204,177 @@ async function renderDrops() {
     + (!items.length && !ranked.length && !units.length && !capPlaces.length ? `<div class="empty"><b>Nothing found</b>Try another name.</div>` : "");
 }
 
+// ---------------- pulls: what you pulled, as a picture to share, and into the box ----------------
+// PULLS: t its title, g the gate it's from (or null), n copies by unit, o the order they were added
+let PULLS = Object.assign({ t: "", g: null, n: {}, o: [] }, store.get("bf.pulls", {}));
+const savePulls = () => { PULLS.o = PULLS.o.filter(id => PULLS.n[id] > 0); store.set("bf.pulls", PULLS); };
+const pullList = () => PULLS.o.filter(id => PULLS.n[id] > 0 && UMAP[id]).map(id => UMAP[id]).sort((a, b) => b.r - a.r || PULLS.n[b.id] - PULLS.n[a.id] || a.n.localeCompare(b.n));
+function pullAdd(id, d) { PULLS.n[id] = Math.max(0, (PULLS.n[id] || 0) + d); if (PULLS.n[id] && !PULLS.o.includes(id)) PULLS.o.push(id); if (!PULLS.n[id]) delete PULLS.n[id]; savePulls(); }
+async function showPulls(gate) {
+  const nav = NAV, S = await load("usrc");
+  if (nav !== NAV) return;  // left the page while it loaded
+  if (gate && S.g?.[gate]) { PULLS.g = gate; savePulls(); }
+  setTitle("Pulls picture", true); $("share").hidden = true;
+  const G = PULLS.g && S.g?.[PULLS.g];
+  const gateUnits = G ? Object.entries(S.u || {}).filter(([id, s]) => UMAP[id] && s.g?.some(x => x[0] == PULLS.g)).map(([id]) => UMAP[id]).sort((a, b) => b.r - a.r || a.n.localeCompare(b.n)) : [];
+  $("page").innerHTML = `<div class="sec"><h3 class="purple">Pulls picture</h3>
+      <p class="small" style="margin:0 0 8px">Tap the units you pulled, once for each copy. Then share the picture, or put them in your box.</p>
+      <input id="plt" type="text" placeholder="A title, like “300 pulls on Tokyo Ghoul”" value="${esc(PULLS.t)}" maxlength="60" style="width:100%">
+      ${G ? `<p class="small" style="margin:8px 0 0">The units of <b>${esc(G[0])}</b> · <button class="ulink" id="plany">any unit instead</button></p>` : ""}
+      <div class="searchrow" style="margin-top:8px"><input id="plq" type="search" placeholder="${G ? "Search this gate's units…" : "Search a unit you pulled…"}" autocomplete="off"></div>
+      <div class="count" id="plrc" style="padding:6px 0 0"></div><div id="plres"></div></div>
+    <div class="sec"><h3 class="green" id="plh">Your pulls</h3><div id="plgot"></div>
+      <div class="btnrow" style="margin-bottom:0"><button class="gbtn blue small" id="plshare">Share picture</button><button class="gbtn green small" id="plbox">Add to my box</button><button class="gbtn small dark" id="plclear">Clear</button></div></div>`;
+  const res = () => {
+    const q = $("plq").value.trim().toLowerCase();
+    const pool = G ? gateUnits : q.length >= 2 ? UNITS.filter(u => !/\(custom\)|\(new art\)|\(sam art\)/i.test(u.n)) : [];
+    const list = (q ? pool.filter(u => u.n.toLowerCase().includes(q)) : pool).sort((a, b) => b.r - a.r || a.n.localeCompare(b.n)).slice(0, 60);
+    $("plrc").textContent = list.length ? `Tap to add a copy${G && !q ? ` · ${gateUnits.length} units in this gate` : ""}` : q || G ? "No unit with that name" : "Type a name to find a unit";
+    paged($("plres"), list, u => { const d = gridCell(u, () => { pullAdd(u.id, 1); res(); got(); toast(`${u.n} ×${PULLS.n[u.id]}`); });
+      if (PULLS.n[u.id]) d.insertAdjacentHTML("beforeend", `<span class="pcnt">×${PULLS.n[u.id]}</span>`); return d; }, "grid");
+  };
+  const got = () => {
+    const list = pullList(), copies = list.reduce((a, u) => a + PULLS.n[u.id], 0);
+    $("plh").textContent = list.length ? `Your pulls · ${list.length} unit${list.length > 1 ? "s" : ""}${copies > list.length ? `, ${copies} copies` : ""}` : "Your pulls";
+    $("plgot").innerHTML = list.length ? `<div class="pgot">${list.map(u => `<div class="ptile" data-p="${u.id}"><img src="${uImg(u.id)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'"><div class="gname">${esc(u.n)}</div>
+      <div class="pc"><button data-d="-1" aria-label="One fewer">−</button><b>${PULLS.n[u.id]}</b><button data-d="1" aria-label="One more">＋</button></div></div>`).join("")}</div>`
+      : `<p class="small dim" style="margin:0 0 8px">Nothing yet: tap the units you pulled above.</p>`;
+    $("plgot").querySelectorAll("[data-p]").forEach(el => el.querySelectorAll("[data-d]").forEach(b => b.onclick = () => { pullAdd(el.dataset.p, +b.dataset.d); got(); res(); }));
+    $("plgot").querySelectorAll(".ptile img").forEach(i => i.onclick = () => go(`#/unit/${i.closest("[data-p]").dataset.p}`));
+    ["plshare", "plbox", "plclear"].forEach(k => $(k).disabled = !list.length);
+  };
+  $("plt").oninput = e => { PULLS.t = e.target.value; savePulls(); };
+  if ($("plany")) $("plany").onclick = () => { PULLS.g = null; savePulls(); showPulls(); };
+  $("plq").oninput = () => { clearTimeout(showPulls.t); showPulls.t = setTimeout(res, 150); };
+  $("plclear").onclick = () => { const was = JSON.stringify(PULLS); PULLS.n = {}; PULLS.o = []; savePulls(); got(); res();
+    undoToast("Pulls cleared", () => { PULLS = JSON.parse(was); savePulls(); got(); res(); }); };
+  $("plshare").onclick = () => pullPicture(G ? G[0] : "");
+  $("plbox").onclick = () => pullsToBox(got);
+  res(); got(); window.scrollTo(0, 0);
+}
+// put the pulls in the box: as pulled, or each one evolved to the last form of its line (its Omni where there is one);
+// copies add up (two pulled Sero-Anya: two more copies), and Undo puts the box back
+function pullsToBox(after) {
+  const list = pullList(), copies = list.reduce((a, u) => a + PULLS.n[u.id], 0);
+  modal(`<div class="about"><div class="big">Add to my box</div><p class="small">${list.length} unit${list.length > 1 ? "s" : ""}${copies > list.length ? `, ${copies} copies` : ""}: each copy adds one to the box (a unit you have already gets another copy).</p>
+    <div class="btnrow" style="justify-content:center;flex-wrap:wrap"><button class="gbtn green" id="pbas">As I pulled them</button><button class="gbtn blue" id="pbevo">Evolved to their last form</button></div>
+    <p class="small dim" style="margin:6px 0 0">Evolved: each one as the last form of its evolution line as the app knows it (from the units' pages), its Omni where the line has one.</p>
+    <div class="btnrow" style="justify-content:center"><button class="gbtn dark mclose">Cancel</button></div></div>`);
+  const put = async evolve => {
+    $("modal").hidden = true;
+    const before = [new Set(mine), { ...mineN }], added = {};
+    for (const u of list) { let id = u.id; if (evolve) { const c = await evoChain(u.id); id = c[c.length - 1] || u.id; } added[id] = (added[id] || 0) + PULLS.n[u.id]; }
+    for (const [id, n] of Object.entries(added)) setCopies(id, copiesOf(id) + n);
+    refreshMarks(document); if (after) after();
+    const n = Object.values(added).reduce((a, x) => a + x, 0);
+    undoToast(`${n} cop${n > 1 ? "ies" : "y"} put in your box${evolve ? ", evolved" : ""}`, () => { mine = before[0]; mineN = before[1]; saveMine(); refreshMarks(document); if (after) after(); }, 8000);
+  };
+  $("pbas").onclick = () => put(false); $("pbevo").onclick = () => put(true);
+}
+// an icon smaller than the picture's cell (the app's are 102 px) enlarged to it the way a photo editor would: Lanczos
+// (clean edges, no blocks: doubling pixel for pixel looked pixelated, the browser's smoothing blurry), then a light
+// sharpen; in premultiplied alpha, so the rounded corners get no dark fringe. Null if the canvas can't be read
+const LZW = {};
+// for each output pixel: its 6 source pixels (edges repeat) and their weights, in flat arrays (fast loops)
+function lanczosWeights(from, to) {
+  const k = `${from}>${to}`; if (LZW[k]) return LZW[k];
+  const lz = x => x === 0 ? 1 : Math.abs(x) >= 3 ? 0 : 3 * Math.sin(Math.PI * x) * Math.sin(Math.PI * x / 3) / (Math.PI * Math.PI * x * x);
+  const I = new Int32Array(to * 6), W = new Float32Array(to * 6);
+  for (let o = 0; o < to; o++) {
+    const c = (o + .5) * from / to - .5, lo = Math.floor(c) - 2; let sum = 0;
+    for (let t = 0; t < 6; t++) { const w = lz(c - lo - t); I[o * 6 + t] = Math.min(from - 1, Math.max(0, lo + t)); W[o * 6 + t] = w; sum += w; }
+    for (let t = 0; t < 6; t++) W[o * 6 + t] /= sum;
+  }
+  return (LZW[k] = [I, W]);
+}
+// the two passes of a separable filter (4 channels): along each row (src rows srcW wide), then down each column
+function hPass(src, dst, rows, S, srcW, I, W, taps) {
+  for (let y = 0; y < rows; y++) for (let x = 0; x < S; x++) {
+    let r = 0, g = 0, b = 0, a = 0;
+    for (let t = x * taps, e = t + taps; t < e; t++) { const q = (y * srcW + I[t]) << 2, w = W[t]; r += src[q] * w; g += src[q + 1] * w; b += src[q + 2] * w; a += src[q + 3] * w; }
+    const o = (y * S + x) << 2; dst[o] = r; dst[o + 1] = g; dst[o + 2] = b; dst[o + 3] = a;
+  }
+}
+function vPass(src, dst, S, I, W, taps) {
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    let r = 0, g = 0, b = 0, a = 0;
+    for (let t = y * taps, e = t + taps; t < e; t++) { const q = (I[t] * S + x) << 2, w = W[t]; r += src[q] * w; g += src[q + 1] * w; b += src[q + 2] * w; a += src[q + 3] * w; }
+    const o = (y * S + x) << 2; dst[o] = r; dst[o + 1] = g; dst[o + 2] = b; dst[o + 3] = a;
+  }
+}
+let UPR = null;  // one canvas kept on the CPU for reading icons (a new one each time read back from the GPU: 10× slower)
+function upscaleIcon(im, S, sharpen = .6) {
+  try {
+    const w = im.naturalWidth, h = im.naturalHeight;
+    if (!UPR) { const c = document.createElement("canvas"); UPR = c.getContext("2d", { willReadFrequently: true }); }
+    if (UPR.canvas.width !== w || UPR.canvas.height !== h) { UPR.canvas.width = w; UPR.canvas.height = h; } else UPR.clearRect(0, 0, w, h);
+    UPR.drawImage(im, 0, 0); const d = UPR.getImageData(0, 0, w, h).data, P = new Float32Array(w * h * 4);
+    for (let i = 0; i < w * h * 4; i += 4) { const a = d[i + 3] / 255; P[i] = d[i] * a; P[i + 1] = d[i + 1] * a; P[i + 2] = d[i + 2] * a; P[i + 3] = d[i + 3]; }
+    const [XI, XW] = lanczosWeights(w, S), [YI, YW] = lanczosWeights(h, S), A = new Float32Array(S * h * 4), B = new Float32Array(S * S * 4);
+    hPass(P, A, h, S, w, XI, XW, 6); vPass(A, B, S, YI, YW, 6);
+    // sharpen: the picture plus a part of its difference from a soft blur (a 5-tap gaussian, sigma 1.2)
+    const GI = new Int32Array(S * 5), GW = new Float32Array(S * 5), G = [.249, .707, 1, .707, .249].map(v => v / 2.912);
+    for (let o = 0; o < S; o++) for (let t = 0; t < 5; t++) { GI[o * 5 + t] = Math.min(S - 1, Math.max(0, o + t - 2)); GW[o * 5 + t] = G[t]; }
+    const T = new Float32Array(B.length), U = new Float32Array(B.length);
+    hPass(B, T, S, S, S, GI, GW, 5); vPass(T, U, S, GI, GW, 5);
+    const out = document.createElement("canvas"); out.width = out.height = S; const og = out.getContext("2d"), id = og.createImageData(S, S), o = id.data;
+    for (let k = 0; k < S * S * 4; k += 4) {
+      const a = Math.min(255, Math.max(0, B[k + 3] + sharpen * (B[k + 3] - U[k + 3])));
+      o[k + 3] = a;
+      for (let c = 0; c < 3; c++) { const v = Math.min(a, Math.max(0, B[k + c] + sharpen * (B[k + c] - U[k + c]))); o[k + c] = a ? v / a * 255 : 0; }
+    }
+    og.putImageData(id, 0, 0); return out;
+  } catch (e) { return null; }
+}
+// the pull picture: the title, how many and of what rarity, then every unit with its count, the rarest first.
+// Every icon is drawn 204 px square: a sharp one (204 px) as it is, the app's own share copy (thumbs/uhd, only for this
+// picture: the lists keep the 102 px ones) or the website's icon; a unit without one gets its 102 px icon enlarged with
+// upscaleIcon. The picture is that size, not scaled after
+async function pullPicture(gateName) {
+  const list = pullList(); if (!list.length) return;
+  toast("Drawing the picture…");
+  const css = getComputedStyle(document.documentElement), col = n => css.getPropertyValue(n).trim();
+  await document.fonts.load("40px Rodin").catch(() => {});
+  const CELL = 204, gap = 16, pad = 48, cols = list.length <= 16 ? 4 : list.length <= 40 ? 6 : 8, rows = Math.ceil(list.length / cols);
+  const WD = 2 * pad + cols * CELL + (cols - 1) * gap, top = 220, H = top + rows * (CELL + gap) + 84;
+  const icons = await Promise.all(list.map(async u => (!HD && await loadImg(`/thumbs/uhd/${u.id}.webp`)) || loadImg(uImg(u.id))));
+  const cv = document.createElement("canvas"); cv.width = WD; cv.height = H; const g = cv.getContext("2d");
+  const bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, "#141a2e"); bg.addColorStop(1, "#07090f"); g.fillStyle = bg; g.fillRect(0, 0, WD, H);
+  g.strokeStyle = col("--gold") || "#c9a24a"; g.lineWidth = 6; g.strokeRect(12, 12, WD - 24, H - 24);
+  const ot = (txt, x, y, size, color, max, align = "left") => { g.font = `${size}px Rodin, Arial, sans-serif`; g.textAlign = align; g.lineJoin = "round"; g.lineWidth = Math.max(5, size / 5); g.strokeStyle = "#000"; g.strokeText(txt, x, y, max); g.fillStyle = color; g.fillText(txt, x, y, max); };
+  const copies = list.reduce((a, u) => a + PULLS.n[u.id], 0), by = r => list.filter(u => u.r === r).reduce((a, u) => a + PULLS.n[u.id], 0);
+  ot(PULLS.t.trim() || "My pulls", pad, 104, 60, "#fff", WD - 2 * pad);
+  // the counts by rarity with the game's own marks: "8 units · 2 × [Omni] · 6 × 7[star]"
+  const [starI, omniI] = await Promise.all([loadImg("/static/star.png"), loadImg("/static/omni.png")]), acc = col("--accent") || "#ffd76a";
+  let lx = pad; const ly = 168, lf = 32, room = WD - pad;
+  const say = s => { if (lx >= room) return; ot(s, lx, ly, lf, acc, room - lx); lx += Math.min(g.measureText(s).width, room - lx); };
+  const mark = (im, h) => { if (!im || lx >= room) return; const w = im.naturalWidth / im.naturalHeight * h; g.drawImage(im, lx, ly - h + 6, w, h); lx += w; };
+  say(`${copies} unit${copies > 1 ? "s" : ""}`);
+  for (const r of [8, 7, 6, 5]) if (by(r)) { say(`  ·  ${by(r)} × `); if (r === 8) mark(omniI, 40); else { say(`${r}`); mark(starI, 34); } }
+  if (gateName) say(`  ·  ${gateName}`);
+  list.forEach((u, k) => {
+    const x = pad + (k % cols) * (CELL + gap), y = top + Math.floor(k / cols) * (CELL + gap), im = icons[k];
+    if (im) { const up = im.naturalWidth < CELL && upscaleIcon(im, CELL); g.imageSmoothingQuality = "high"; g.drawImage(up || im, x, y, CELL, CELL); }
+    else { g.fillStyle = "#222"; g.fillRect(x, y, CELL, CELL); }
+    const n = PULLS.n[u.id];
+    if (n > 1) { const t = `×${n}`, fs = 40; g.font = `${fs}px Rodin, Arial, sans-serif`; const w = g.measureText(t).width + 26, h = fs + 16;
+      const bx = x + CELL - w - 6, by2 = y + CELL - h - 6;
+      g.fillStyle = "rgba(0,0,0,.85)"; g.strokeStyle = "#ffd45c"; g.lineWidth = 4; g.beginPath(); if (g.roundRect) g.roundRect(bx, by2, w, h, h / 2); else g.rect(bx, by2, w, h); g.fill(); g.stroke();
+      ot(t, bx + w / 2, by2 + h / 2 + fs / 2.8, fs, "#ffd45c", w, "center"); }
+  });
+  ot("BF Companion", WD - pad, H - 34, 26, col("--dim") || "#999", 400, "right");
+  ot(new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }), pad, H - 34, 26, col("--dim") || "#999", 600);
+  const blob = await new Promise(r => cv.toBlob(r, "image/png")), name = `${(PULLS.t.trim() || "My pulls").replace(/[^\w -]+/g, "").slice(0, 40) || "My pulls"}.png`;
+  const b64 = await new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result.split(",")[1]); r.readAsDataURL(blob); });
+  if (window.BFApp) BFApp.shareImage(b64, name, true);
+  else { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; a.click(); toast("Picture saved"); }
+}
+
 // ---------------- favorites ----------------
-// how much of the game's Unit Archive (the units with a number) is in a box, in whole percent (above 0 shows at least 1)
-const ARCH_PCT = box => { const all = UNITS.filter(u => u.no).length, n = box.filter(u => u.no).length; return n ? Math.max(1, Math.floor(n / all * 100)) : 0; };
+// the game's Unit Archive in a box: its numbers there (an alt-art copy shares its original's), of all of them, and the
+// whole percent (above 0 shows at least 1)
+const ARCH = box => { const all = new Set(UNITS.filter(u => u.ar).map(u => u.ar)).size, n = new Set(box.filter(u => u.ar).map(u => u.ar)).size;
+  return { n, all, pct: n ? Math.max(1, Math.floor(n / all * 100)) : 0 }; };
 async function renderFavs() {
   const list = UNITS.filter(u => favs.has(u.id)).sort((a, b) => b.r - a.r || a.n.localeCompare(b.n));
   NAV_LIST = list.map(u => u.id);
@@ -2191,7 +2393,7 @@ async function renderFavs() {
   const rar = count((u, k) => k === "low" ? u.r < 6 : u.r === k, [[8, `${OMNI}Omni`], [7, `7${STAR}`], [6, `6${STAR}`], ["low", `5${STAR} and below`]]);
   const els = count((u, k) => u.e === k, ELS.map(e => [e, orb(e)]));
   $("fbox").innerHTML = `<div class="sec"><h3 class="green">My box</h3>${box.length
-    ? `<p class="small" style="margin:0 0 6px"><b>${box.length}</b> unit${box.length > 1 ? "s" : ""} marked as yours · <b>${ARCH_PCT(box)}%</b> of the Unit Archive (${box.filter(u => u.no).length.toLocaleString("en")} of ${UNITS.filter(u => u.no).length.toLocaleString("en")})</p><div class="badges">${rar.map(([l, n]) => `<span class="badge star">${l} ×${n}</span>`).join("")}</div>
+    ? `<p class="small" style="margin:0 0 6px"><b>${box.length}</b> unit${box.length > 1 ? "s" : ""} marked as yours${(c => c > box.length ? ` (${c.toLocaleString("en")} copies)` : "")(box.reduce((a, u) => a + copiesOf(u.id), 0))} · ${(a => `<b>${a.pct}%</b> of the Unit Archive (${a.n.toLocaleString("en")} of ${a.all.toLocaleString("en")})`)(ARCH(box))}</p><div class="badges">${rar.map(([l, n]) => `<span class="badge star">${l} ×${n}</span>`).join("")}</div>
       <div class="badges" style="margin-top:5px">${els.map(([l, n]) => `<span class="badge">${l}×${n}</span>`).join("")}</div>`
     : `<p class="small" style="margin:0">Your box is empty. Mark the units you own to filter lists and build teams from them.</p>`}
     <details class="why"><summary>What is My box for?</summary><ul>
@@ -2201,7 +2403,8 @@ async function renderFavs() {
       <li>Summon gates show how many of their units you already have, and can hide those so you see what you're missing.</li>
       <li>On a unit page, Similar units shows yours first: alternatives you can use right away.</li>
       <li>Mark many at once with <b>✎ Edit my box</b> (its <b>All shown</b> marks every unit the filters show), or one at a time: hold a unit in any list for a moment (hold it again to take it out), or tap <b>＋ My box</b> on its page. It stays on this phone only.</li></ul></details>
-    <div class="btnrow" style="margin-bottom:0">${box.length ? `<button class="gbtn blue small" id="fshow">Show my box</button>` : ""}<button class="gbtn green small" id="fedit">✎ Edit my box</button><button class="gbtn small dark" id="farch">Unit archive</button></div></div>`;
+    <div class="btnrow" style="margin-bottom:0">${box.length ? `<button class="gbtn blue small" id="fshow">Show my box</button>` : ""}<button class="gbtn green small" id="fedit">✎ Edit my box</button><button class="gbtn small dark" id="farch">Unit archive</button><button class="gbtn small blue" id="fpulls">Pulls picture</button></div></div>`;
+  $("fpulls").onclick = () => go("#/pulls");
   // the Unit archive: every unit in the game's order, box editing on, so a collector ticks them off one after another
   $("farch").onclick = () => {
     Object.assign(uState, { sort: "archive", q: "", mine: false, miss: false }); uState.els = new Set(ELS); uState.rar = new Set(RARITY.map(r => r[0])); uState.roles.clear(); uState.get.clear();
@@ -2212,6 +2415,13 @@ async function renderFavs() {
   };
   if ($("fshow")) $("fshow").onclick = () => { uState.mine = true; uState.q = ""; $("uq").value = ""; $("umine").classList.add("on"); tabsDrawn.add("units"); go("#/units"); renderUnits(); };
   $("fedit").onclick = () => { go("#/units"); setBoxEdit(true); };
+  // on a computer the page has room for your box itself, under the favorites (the rarest first), not only behind
+  // Show my box; a phone keeps the button. Previous / next on a unit page go through the list it was opened from
+  const mineList = PANES.matches ? box.slice().sort((a, b) => b.r - a.r || elOrder(a) - elOrder(b) || a.n.localeCompare(b.n)) : [];
+  renderFavs.ids = [list.map(u => u.id), mineList.map(u => u.id)];
+  if (!renderFavs.nav) { renderFavs.nav = true; ["flist", "fmine"].forEach((k, i) => $(k).addEventListener("click", () => NAV_LIST = renderFavs.ids[i], true)); }
+  $("fmine").innerHTML = mineList.length ? `<div class="count">${mineList.length} unit${mineList.length > 1 ? "s" : ""} in My box</div><div id="fminel"></div>` : "";
+  if (mineList.length) paged($("fminel"), mineList, viewMode === "grid" ? u => gridCell(u) : u => listRow(u), viewMode === "grid" ? "grid" : "list");
   $("fcount").textContent = list.length ? `${list.length} favorite units` : "";
   if (!list.length) return $("flist").innerHTML = `<div class="empty"><b>No favorite units yet</b>Open a unit, sphere or item and tap the ${FAVSTAR} to keep it here.</div>`;
   paged($("flist"), list, viewMode === "grid" ? u => gridCell(u) : u => listRow(u), viewMode === "grid" ? "grid" : "list");
@@ -3080,18 +3290,32 @@ const fullMod = s => { if (!s?.mod) return 0; const m = s.hps && [...(s.fx || []
 const short = n => n >= 1e6 ? `${(n / 1e6).toFixed(n >= 1e7 ? 1 : 2)}M` : n >= 1e4 ? `${Math.round(n / 1e3)}K` : n.toLocaleString("en");
 // The spark estimate, as the community's Automatic Sparking Simulator worked it out (by Hamza Khan and others; Project
 // Sparkle by BluuArc is its JavaScript port): a hit lands on its frame (the game's skill table), plus the skill's effect
-// delay (not for a teleporter), plus a run-up, plus 2 frames for each unit that cast before it. The run-up of one that
-// runs to the foe is below, by its speed type and slot; one that stays where it is takes its move speed in frames; a
-// teleporter, its delay where the community measured it (else none). Two units' hits on the same frame spark.
+// delay, plus a run-up, plus 2 frames for each unit that cast before it. The run-up of one that runs to the foe is
+// below, by its speed type and slot; one that stays where it is takes its move speed in frames; a teleporter, its move
+// animation (the game's unit_move_cgs file, details "mvf") plus its move speed frames: that's the community's measured
+// delay exactly for 22 of 26 forms. Without that file: the community's number (it has the effect delay in it), else
+// none (a guess, said so). Two units' hits on the same frame spark.
 const RUNUP = { 1: [20, 15, 18, 30, 40, 33], 2: [16, 13, 15, 24, 33, 27], 3: [13, 10, 12, 19, 26, 21],
   4: [9, 7, 8, 14, 19, 15], 5: [6, 4, 5, 9, 12, 9] };  // by slot: Leader (front middle), front top, front bottom, back top, back middle, Friend (back bottom)
 const TELEPORT = { ezra: 19, arthur: 11, zeis: 25, ciara: 32, kalon: 48, neferet: 34, gabriela: 30, mariela: 43, zenia: 21,
   carrol: 23, zalvard: 17, diastima: 21, licht: 15, beatrix: 23, mard: 20 };
 const teleportDelay = id => { const n = (UMAP[id]?.n || "").toLowerCase(), k = Object.keys(TELEPORT).find(k => n.includes(k)); return k ? TELEPORT[k] : null; };
 // the frames a unit's hits land on when it casts n-th (0 = first)
+// a teleporter with neither the game's file nor a measured delay: the typical move animation of its speed type (the
+// middle of the 157 the game has; 11 frames off on average, against 29 for counting it as arriving at once)
+const TELE_TYPICAL = { 1: 35, 2: 36, 3: 17, 4: 18, 5: 21 };
 function sparkFrames(m, n) {
-  const [type, speed, move] = m.mv, run = type === 1 ? RUNUP[speed][m.slot] : type === 3 ? Math.round(move) : m.tele || 0;
-  return m.sp.flatMap(([delay, , ...hits]) => hits.map(f => f + (type === 2 ? 0 : delay) + run + 2 * n));
+  const [type, speed, move] = m.mv, anim = m.mvf > 0 ? m.mvf : m.tele === null ? TELE_TYPICAL[speed] || 20 : 0, game = type === 2 && anim > 0;
+  const run = type === 1 ? RUNUP[speed][m.slot] : type === 3 ? Math.round(move) : game ? Math.round(anim + move) : m.tele || 0;
+  return m.sp.flatMap(([delay, , ...hits]) => hits.map(f => f + (type === 2 && !game ? 0 : delay) + run + 2 * n));
+}
+// the frames each unit hits on in one casting order, which of them spark, and who with: for the timeline
+function sparkDetail(members, order) {
+  const frames = members.map(m => sparkFrames(m, order.indexOf(m))), who = new Map();
+  frames.forEach((fs, k) => { for (const f of new Set(fs)) (who.get(f) || who.set(f, new Set()).get(f)).add(k); });
+  return order.map(m => { const k = members.indexOf(m), fs = frames[k], with_ = new Map();
+    const sp = fs.map(f => { const w = who.get(f); if (w.size < 2) return false; for (const j of w) if (j !== k) with_.set(j, (with_.get(j) || 0) + 1); return true; });
+    return { m, fs, sp, with: [...with_].sort((a, b) => b[1] - a[1]).map(([j, c]) => [members[j], c]) }; });
 }
 // the share of hits landing on a frame another unit also hits: the team's, and each unit's (same order as members)
 function sparkRate(members, order) {
@@ -3121,9 +3345,9 @@ function sparkRates(members) {
   };
 }
 function sparkCheck(rows, W, D) {
-  const members = rows.map(r => ({ r, id: r.id, slot: r.i, mv: W[r.i]?.mv, sp: (D?.[r.id]?.skills || []).find(x => x.label === r.s?.kind)?.sp }))
+  const members = rows.map(r => ({ r, id: r.id, slot: r.i, mv: W[r.i]?.mv, mvf: D?.[r.id]?.mvf, sp: (D?.[r.id]?.skills || []).find(x => x.label === r.s?.kind)?.sp }))
     .filter(m => m.mv && m.sp?.length && (m.mv[0] !== 1 || RUNUP[m.mv[1]]) && [1, 2, 3].includes(m.mv[0]));
-  members.forEach(m => m.tele = m.mv[0] === 2 ? teleportDelay(m.id) : 0);
+  members.forEach(m => m.tele = m.mv[0] === 2 && !(m.mvf > 0) ? teleportDelay(m.id) : 0);  // the community's number only without the game's file
   if (members.length < 2) return null;
   const slotOrder = [...members].sort((a, b) => a.slot - b.slot), now = sparkRate(members, slotOrder);
   let best = { order: slotOrder, ...now };
@@ -3132,7 +3356,24 @@ function sparkCheck(rows, W, D) {
     for (const o of permsOf(members.length)) { const x = fast(o); if (x > br + 1e-9) { br = x; bo = o; } }
     if (bo) { const o = bo.map(k => members[k]); best = { order: o, ...sparkRate(members, o) }; } }
   else for (const o of orders(members)) { const x = sparkRate(members, o); if (x.rate > best.rate + 1e-9) best = { order: o, ...x }; }
-  return { members, now, best, untimed: rows.filter(r => !members.some(m => m.r === r)), guessed: members.filter(m => m.tele === null) };
+  const shown = best.rate > now.rate + 0.005 ? best.order : slotOrder;
+  return { members, now, best, detail: sparkDetail(members, shown), untimed: rows.filter(r => !members.some(m => m.r === r)), guessed: members.filter(m => m.tele === null) };
+}
+// the hit timeline (the order shown above): a row per unit, a tick on each frame it hits (gold: it sparks), and who
+// it sparks with; a unit whose teleport timing is a guess says so on its row
+function sparkTimeline(S) {
+  const all = S.detail.flatMap(d => d.fs); if (!all.length) return "";
+  const lo = Math.min(...all), hi = Math.max(...all), span = Math.max(1, hi - lo), x = f => ((f - lo) / span * 100).toFixed(2);
+  // a unit's own name: "Tilith" for Opal Goddess Tilith, "Kranus" for Kranus, the Argent
+  const short = m => { const n = UMAP[m.id].n, b = (n.includes(",") ? n.split(",")[0] : n).trim().split(/\s+/); return esc(b[b.length - 1] || n); };
+  // "Sero-Anya", "Sero-Anya and Kranus", "Sero-Anya, then Kranus and Avyn": who it sparks with, the most first
+  const partners = w => { const ns = w.map(([m]) => short(m)); return ns.length < 3 ? ns.join(" and ") : `${ns[0]}, then ${ns.slice(1, -1).join(", ")} and ${ns[ns.length - 1]}`; };
+  return `<div class="stl"><div class="sleg">Each tick is one hit, in time from left to right. <b>Gold</b>: it lands on the same frame as another unit's hit, so it sparks.</div>${S.detail.map(d => { const n = d.fs.length, s = d.sp.filter(Boolean).length;
+    const counts = d.with.map(([m, c]) => `${UMAP[m.id].n}: ${c} hit${c > 1 ? "s" : ""}`).join(", ");
+    return `<div class="r"><span class="n" title="${esc(UMAP[d.m.id].n)}">${esc(UMAP[d.m.id].n)}</span><span class="bar">${d.fs.map((f, i) => `<i class="${d.sp[i] ? "s" : ""}" style="left:${x(f)}%"></i>`).join("")}</span>
+      <span class="w"${s ? ` title="Sparks together with ${esc(counts)}"` : ""}>${s ? `<b>${Math.round(s / n * 100)}%</b> of its hits spark (${s} of ${n}), ${d.with.length > 1 ? "mostly " : ""}with ${partners(d.with)}` : `none of its ${n} hits spark`}${
+        d.m.tele === null ? ` · <b class="sg">timing guessed</b>` : ""}</span></div>`; }).join("")}
+    <div class="sax"><span>frame ${lo}</span><span>${hi}</span></div></div>`;
 }
 function sparkHtml(S) {
   const pct = x => `${Math.round(x * 100)}%`, name = m => esc(UMAP[m.id].n), better = S.best.rate > S.now.rate + 0.005;
@@ -3140,10 +3381,16 @@ function sparkHtml(S) {
     better ? ` In the best order, <b>${pct(S.best.rate)}</b>:` : " No order does better."}</div>
     ${better ? `<ol class="sorder">${S.best.order.map(m => `<li>${name(m)} <span class="dim">${pct(S.best.per[S.members.indexOf(m)])}</span></li>`).join("")}</ol>`
       : `<div class="bcd">${S.members.map((m, k) => `${name(m)} ${pct(S.now.per[k])}`).join(" · ")}</div>`}
-    <p class="small dim" style="margin:6px 0 0">Two units' hits on the same frame spark. Hit frames from the game; run-up from the community's spark simulator.${
-      S.guessed.length ? ` No measured teleport delay for ${S.guessed.map(name).join(", ")} (counted as none).` : ""}${
-      S.untimed.length ? ` Not counted, no timing data: ${S.untimed.map(r => esc(UMAP[r.id].n)).join(", ")}.` : ""}</p></div>`;
+    <div class="sdet"${SPARK_OPEN ? "" : " hidden"}>${sparkTimeline(S)}
+    <p class="small dim" style="margin:6px 0 0">Against one foe (a boss): two units' hits landing on the same frame spark. Hit frames and teleport timing from the game's own files; the run-up of units that run to the foe from the community's spark simulator.${
+      S.guessed.length ? ` No timing data for ${S.guessed.map(name).join(", ")}'s teleport: timed as a typical one of its speed.` : ""}${
+      S.untimed.length ? ` Not counted, no timing data: ${S.untimed.map(r => esc(UMAP[r.id].n)).join(", ")}.` : ""}</p></div>
+    <button class="foldbtn sdbtn" type="button" aria-expanded="${SPARK_OPEN}">${SPARK_OPEN ? "▴ Show less" : "▾ Show all"}</button></div>`;
 }
+// the hit timeline and its note fold under ▾ Show all; once opened they stay open while the team changes (till the app is closed)
+let SPARK_OPEN = false;
+document.addEventListener("click", e => { const b = e.target.closest?.(".sdbtn"); if (!b) return; SPARK_OPEN = !SPARK_OPEN;
+  const d = b.parentElement.querySelector(".sdet"); if (d) d.hidden = !SPARK_OPEN; b.textContent = SPARK_OPEN ? "▴ Show less" : "▾ Show all"; b.setAttribute("aria-expanded", SPARK_OPEN); });
 // Fill: the skill each unit it added casts in the battle check: its SBB, or its BB where that lets more of the team cast
 // every turn (a BB that fills more BC for everyone, or costs less), the swap that helps most first; a UBB (once a
 // battle, on the OD gauge) stays yours to set
@@ -3912,6 +4159,7 @@ async function route() {
   if ((m = h.match(/^#\/gate\/(\d+)/))) return showGate(m[1]);
   if (h === "#/compare") return showCompare();
   if (h === "#/tiers") return showTiers();
+  if ((m = h.match(/^#\/pulls(?:\/(\d+))?/))) return showPulls(m[1]);
   const t = (h.match(/^#\/(\w+)/) || [])[1];
   tab = TABS[t] ? t : "units";
   document.querySelectorAll(".view").forEach(v => v.classList.toggle("on", v.id === "v-" + tab));
@@ -4025,8 +4273,9 @@ window.BFBack = () => {
   const [U, T] = await Promise.all([load("units"), load("tags"), load("banners").then(b => { BAN = b; }), load("events").then(e => { EVT = new Set(e?.rotating || []); }), load("week").then(w => { WK = w || {}; })]);
   TAGS = { labels: {}, units: {}, power: {}, powerUnit: {}, ...T };
   for (const p of Object.values(TAGS.power)) for (const [c, [v]] of Object.entries(p)) POWER_MAX[c] = Math.max(POWER_MAX[c] || 0, c === "heal" ? Math.min(v, 10000) : v);
-  UNITS = Object.entries(U).map(([id, [n, r, e, c, h1, a1, d1, r1, hm, am, dm, rm, no]]) =>
-    ({ id, n, r, e, c, h1, a1, d1, r1, hp: hm || h1, atk: am || a1, def: dm || d1, rec: rm || r1, no: no || 0, f: r <= 5 && FODDER.test(n) }));
+  // no: the wiki's release number (Newest, Fill's newness); ar: the game's own Unit Archive number
+  UNITS = Object.entries(U).map(([id, [n, r, e, c, h1, a1, d1, r1, hm, am, dm, rm, no, ar]]) =>
+    ({ id, n, r, e, c, h1, a1, d1, r1, hp: hm || h1, atk: am || a1, def: dm || d1, rec: rm || r1, no: no || 0, ar: ar || 0, f: r <= 5 && FODDER.test(n) }));
   UMAP = Object.fromEntries(UNITS.map(u => [u.id, u]));
   setupUnitFilters();
   try { await route(); } finally { hideSplash(); }
