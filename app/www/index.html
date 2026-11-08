@@ -328,7 +328,7 @@ details > summary::before { content: "▸ "; } details[open] > summary::before {
 .tierlink, .boxlink { float: right; background: none; border: 0; padding: 0 0 0 10px; font: inherit; text-shadow: inherit; } #uedit.on { color: #9ff09f; text-decoration: none; } .gu, .lu, .tier .eu { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .tier { display: flex; gap: 8px; margin: 10px 12px; border: 1px solid var(--gold3); border-radius: 10px; background: rgba(11,10,20,.6); overflow: hidden; }
 .tier .tl { flex: none; width: 40px; display: grid; place-items: center; font: 24px Rodin, "Arial Black", Arial, sans-serif; color: #fff; text-shadow: var(--ol); }
-.tl.tS { background: linear-gradient(#ff8a5c, #b8321a); } .tl.tA { background: linear-gradient(#ffd36b, #b97d0e); } .tl.tB { background: linear-gradient(#7fd27f, #2b7d35); } .tl.tC { background: linear-gradient(#86a9de, #33558c); } .tl.tD { background: linear-gradient(#a98ad8, #573a8a); }
+.tl.tS { background: linear-gradient(#ff8a5c, #b8321a); } .tl.tA { background: linear-gradient(#ffd36b, #b97d0e); } .tl.tB { background: linear-gradient(#7fd27f, #2b7d35); } .tl.tC { background: linear-gradient(#86a9de, #33558c); } .tl.tD { background: linear-gradient(#a98ad8, #573a8a); } .tl.tTrash { background: linear-gradient(#a3a3a3, #4d4d4d); font-size: 11px !important; }
 .tier .tu { flex: 1; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px 5px; padding: 8px 6px 8px 0; min-width: 0; }
 .tier .tu > .dim { align-self: center; }
 .tier .eu { width: 64px; text-align: center; cursor: pointer; } .tier .eu img { width: 58px; height: 58px; object-fit: contain; }
@@ -824,12 +824,43 @@ function spAdds(id, leaderToo, now) {
 const TIER_ROLES = [["dmg", "SBB damage"], ["atk", "ATK buff"], ["bbatk", "BB ATK"], ["crit", "Critical damage"], ["critrate", "Critical rate"],
   ["spark", "Spark"], ["elem", "Elemental damage"], ["mit", "Mitigation"], ["bbf", "BB fill"], ["heal", "Heal"], ["od", "OD fill"],
   ["conv", "Stat conversion"], ["sparks", "Spark timing"], ["defense", "Defense tools"], ["debuff", "Debuffs"],
-  ["lead", "Leader skill"], ["extra", "Extra skill"], ["sp", "SP options"]];
-const TIER_CUTS = [["S", 10], ["A", 10], ["B", 15], ["C", 20], ["D", Infinity]], TIER_W = [1, .8, .6, .5, .4, .3];
+  ["lead", "Leader skill"], ["extra", "Extra skill"], ["sp", "SP options"], ["lim", "ATK limit"]];
+// tier sizes: shares of the units ranked (S about a fifth of the element)
+const TIER_CUTS = [["S", .20], ["A", .16], ["B", .17], ["C", .14], ["D", .09], ["Trash", Infinity]], TIER_W = [1, .8, .6, .5, .4, .3];
 const TIER_SHORT = { atk: "ATK buff", bbatk: "BB ATK", crit: "Critical", critrate: "Crit rate", spark: "Spark", elem: "Elemental", mit: "Mitigation", bbf: "BB fill", heal: "Heal", od: "OD fill" };
 const DEFENSE = ["Cures ailments", "Negates ailments", "Barrier", "KO resistance", "Revives", "Taunt", "Evasion"];
 const DEBUFFS = ["DEF ignore", "ATK/DEF down", "Spark weakness", "Critical/elemental weakness"];
 const TIER_SHARE = new Set(["defense", "debuff"]);  // already a share: not against the element's best
+// how much each number counts where SP is spent and in the two numbers shown under each unit: full, 60%, 30%
+// a UBB fires only when the OD gauge is full: its buffs count this share of their value
+const TIER_UBB = 0.25;
+// the All-roles score: a formula on 50 facts from the game's data, each standardised and weighted (the weights are
+// fitted offline); a single role keeps its one number
+const TIER_MODEL = {"cols":["cost","st_def","ls_n","st_rec","es_n","ls_1","nroles","o_mit","s_mit","st_hp","ls_62","UBB_dmg","ls_2","o_lim","s_lim","mv","st_atk","ls_50","SBB_dmg","SBB_nbuff","es_66","o_sparks","s_sparks","s_defense","UBB_bc","s_spark","o_lead","s_lead","o_defense","tx_bccut","s_elem","ubb_spark","tx_dmgto1","o_elem","ls_24","s_sp","o_spark","o_sp","es_30","tx_extraact","tx_maxhpdmg","ls_127","ubb_mit","es_74","es_53","ls_33","es_127","sp_n","o_dmg","ls_86"],"mean":[53.6422,3133.52,4.49771,2982.11,3.52523,0.798165,4.97936,0.222084,0.222084,8757.27,0.201835,2791.28,0.215596,0.379587,0.379587,1.64908,3426.8,0.204128,1464.45,1.72706,0.240826,0.657981,0.657981,0.12713,31.4908,0.263131,0.310868,0.310868,0.132372,0.103211,0.233154,123.05,0.172018,0.233995,0.103211,0.251665,0.268195,0.256572,0.0986239,0.0642202,0.0550459,0.0389908,18.1193,0.0527523,0.0665138,0.0642202,0.0642202,4.7844,0.175678,0.043578],"scale":[5.47685,395.57,0.675586,457.38,1.20656,0.40137,2.65562,0.392173,0.392173,1052.46,0.40137,1358.09,0.411235,0.345664,0.345664,0.871714,425.35,0.403063,974.296,1.14591,0.427585,0.173763,0.173763,0.146212,3.01105,0.341664,0.252295,0.252295,0.151392,0.304234,0.345939,193.002,0.377396,0.346515,0.304234,0.238441,0.344262,0.242707,0.298156,0.245145,0.22807,0.193573,36.727,0.223539,0.249178,0.245145,0.245145,1.5203,0.205309,0.204154],"coef":[0.204222,0.148791,0.128001,0.129767,0.126435,-0.103438,0.137114,0.0869856,0.0869856,0.0828438,0.0914921,0.0806866,0.0720086,0.077504,0.077504,0.0697878,0.0857011,0.0789878,0.0597845,0.0751346,0.0592917,0.0526587,0.0526587,0.0594553,0.0406901,0.0484662,0.047554,0.047554,0.0547908,0.0618889,0.0477177,0.0438943,0.0592929,0.0462703,0.0562229,0.0491501,0.0435489,0.0479667,-0.0410863,0.0494274,0.0413357,0.0271268,0.0366424,-0.0529833,0.0360199,-0.0402312,0.0415217,0.03236,0.0484118,0.0534723],"b":2.53058};
+// effects read from the skill, leader skill and extra skill text
+const TIER_TXT = { sparkcrit: /spark critical/i, extraact: /extra action/i, ownbbmax: /fills own bb gauge to max/i, sparkbc: /spark damage (?:[a-z0-9_]+ )?(?:fills|boosts) bb gauge/i,
+  dmgto1: /damage reduction to 1/i, negall: /negates all status ailments/i, lockpurge: /(?:ls|es) (?:and es )?lock/i, defign: /def ignor/i, pierce: /pierce/i,
+  maxhpdmg: /damage of foes' max hp/i, consec: /consecutive uses/i, random: /random/i, twiceall: /activates bb[/]sbb[/]ubb twice/i, bccut: /reduces bb gauge required/i,
+  guard: /when guarding/i, counter: /counter/i, taunt: /taunt/i, angel: /angel idol|ko resistance/i, revive: /raises allies from ko|revive/i };
+const TIER_UBUF = ["atk", "spark", "crit", "critrate", "elem", "bbatk", "mit", "bbf", "heal", "od"];
+function tierFacts(DET, P, u, s, o) {  // s: its numbers among all roles, o: each one alone (both against the element's best)
+  const d = DET[u.id] || {}, sk = Object.fromEntries((d.skills || []).map(x => [x.label, x]));
+  const ls = new Set((d.lsfx || []).map(e => String(e[0]))), es = new Set((d.esfx || []).map(e => String(e[0])));
+  const txt = [...(d.skills || []).map(x => x.desc || ""), d.leader?.desc || "", String(d.extra || "")].join(" ");
+  const opts = P.W[u.id]?.sp?.[0]?.opts || [];
+  const f = { cost: u.c, st_hp: u.hp, st_atk: u.atk, st_def: u.def, st_rec: u.rec, ls_n: ls.size, es_n: es.size,  // distinct effects
+    nroles: Object.values(s).filter(x => x >= .5).length, mv: P.W[u.id]?.mv?.[0] || 0, sp_n: opts.length, sp_cost: opts.reduce((a, x) => a + (+x.sp || 0), 0) };
+  for (const L of ["BB", "SBB", "UBB"]) { const x = sk[L] || {};
+    Object.assign(f, { [L + "_bc"]: +x.bc || 0, [L + "_hits"]: +x.hits || 0, [L + "_dmg"]: +x.dmg || 0, [L + "_aoe"]: x.aoe === "A" ? 1 : 0, [L + "_twice"]: +x.twice || 0,
+      [L + "_nbuff"]: Object.keys(x.buffs || {}).length, [L + "_ntool"]: (x.tools || []).length }); }
+  for (const k of TIER_UBUF) f["ubb_" + k] = Math.min(+sk.UBB?.buffs?.[k] || 0, k === "bbf" ? 30 : Infinity);
+  for (const k in TIER_TXT) f["tx_" + k] = TIER_TXT[k].test(txt) ? 1 : 0;
+  for (const r in s) { f["s_" + r] = s[r]; f["o_" + r] = o[r]; }
+  for (const c of TIER_MODEL.cols) { const m = /^(ls|es)_([0-9]+)$/.exec(c); if (m) f[c] = (m[1] === "ls" ? ls : es).has(m[2]) ? 1 : 0; }
+  return f;
+}
+const tierScore = f => TIER_MODEL.cols.reduce((a, c, i) => a + TIER_MODEL.coef[i] * ((+f[c] || 0) - TIER_MODEL.mean[i]) / TIER_MODEL.scale[i], TIER_MODEL.b);
+const TIER_IMP = Object.fromEntries(TIER_ROLES.map(([r]) => [r, ["dmg", "sp", "lim", "defense", "sparks", "mit"].includes(r) ? 1 : ["spark", "elem", "lead"].includes(r) ? .6 : .3]));
 const FULL_BC = 30, bcF = s => Math.min(1, FULL_BC / Math.max(+(s?.bc) || FULL_BC, 1));
 // own buffs against a full team's: ATK ×4 (300% buff), spark ×4 (1.5 + 250%), critical rate 30% hitting ×3 (1.5 + 150%)
 const ownF = (atk, spark, rate) => (4 + atk / 100) / 4 * (4 + spark / 100) / 4 * (1 + 2 * Math.min(1, .3 + rate / 100)) / 1.6;
@@ -841,7 +872,13 @@ const PASSIVE = [["ATK", /(\d+(?:\.\d+)?)% (?:boost to )?(?:atk\b|all parameters
   ["Elemental", /(\d+(?:\.\d+)?)% (?:boost to )?(?:\w+ |all )?elemental (?:weakness )?damage/g], ["BB ATK", /(\d+(?:\.\d+)?)% (?:boost to )?bb atk/g],
   ["ATK limit", /raises atk (?:parameter )?limits? to (\d+(?:\.\d+)?)\s*(k\b)?/g, m => (+m[1] * (m[2] ? 1000 : 1) - 1e5) / 1000]];  // over the usual 100k, in %
 // each kind against the most the game gives for it, so kinds add up fairly (a 600% BB ATK isn't twice a 300% ATK buff)
-const PASSIVE_TOP = { ATK: 300, Spark: 300, Critical: 300, "Crit rate": 100, Elemental: 300, "BB ATK": 800, "ATK limit": 300 };  // a raised ATK limit only matters past 100k ATK: lightly
+const PASSIVE_TOP = { ATK: 300, Spark: 300, Critical: 300, "Crit rate": 100, Elemental: 300, "BB ATK": 800, "ATK limit": 100 };  // +100k ATK limit = 1
+// a raised ATK limit is its own number (lim), not part of the leader / extra skill / SP sums: in endgame attacks hit the
+// usual 100k limit (the battle check shows it), so raising it is one of the biggest boosts
+const LIM = "ATK limit", noLim = ns => ns.filter(x => x[0] !== LIM);
+const limLab = srcs => { let b = [0, ""];
+  for (const [ns, l] of srcs) for (const x of ns) if (x[0] === LIM && x[1] > b[0]) b = [x[1], `${l}: ATK limit ${Math.round(x[2])}k`];
+  return b; };
 const TIER_COND = /\bwhen\b|\bif\b|first \d+ turns?|\bafter\b|\bwhile\b|same squad|\bhp is\b|remaining hp/;
 const EL_TYPES = /\((fire|water|earth|thunder|light|dark)\)|\b(fire|water|earth|thunder|light|dark)\b(?:,? (?:and |or )?(?:fire|water|earth|thunder|light|dark)\b)* types?\b/g;
 function passiveNums(text, el) {
@@ -930,7 +967,7 @@ async function tierPrep(DET, el) {
 const TIER_NUMS = {};  // unit id -> {role: [value it's ranked on, what the tile shows]}
 function tierNums(DET, P, u) {
   if (TIER_NUMS[u.id]) return TIER_NUMS[u.id];
-  const d = DET[u.id] || {}, sk = (d.skills || []).filter(s => s.label === "BB" || s.label === "SBB"), sbb = sk.find(s => s.label === "SBB");
+  const d = DET[u.id] || {}, sk = (d.skills || []).filter(s => s.label === "BB" || s.label === "SBB"), sbb = sk.find(s => s.label === "SBB"), ubb = (d.skills || []).find(s => s.label === "UBB");
   const skillOf = l => sk.find(s => s.label === (l === "B" ? "BB" : "SBB"));
   const twice = Math.max(0, ...sk.map(s => s.twice || 0)), mx = k => Math.max(0, ...sk.map(s => s.own?.[k] || 0));
   const own = [mx("atk") + Math.max(0, ...sk.map(s => convPct(u, s.own?.conv))), mx("spark"), mx("critrate")];
@@ -963,7 +1000,12 @@ function tierNums(DET, P, u) {
     for (const s of sk) { const x = s.buffs?.[r] || 0; if (x * bcF(s) > v) { v = x * bcF(s); raw = x; } }
     const t = TAGS.power[u.id]?.[r];
     if (t && t[0] * bcF(skillOf(t[1])) > v) { v = t[0] * bcF(skillOf(t[1])); raw = t[0]; }
-    n[r] = base[r] = lab(r, v, raw, "");
+    // a UBB that fills the BB gauge "to max" (999.99 BC) counts as one full gauge (30 BC); a full heal is capped in lab
+    let ub = false; const ux = Math.min(ubb?.buffs?.[r] || 0, r === "bbf" ? FULL_BC : Infinity);
+    if (ux * TIER_UBB > v) { v = ux * TIER_UBB; raw = ux; ub = true; }
+    n[r] = base[r] = lab(r, v, raw, ub ? " (UBB)" : "");
+    if (ub && r === "bbf" && ubb.buffs.bbf >= 100) n[r] = base[r] = [n[r][0], "Fills BB to max (UBB)"];
+    if (ub && r === "heal" && raw >= 10000) n[r] = base[r] = [n[r][0], "Full heal (UBB)"];
     for (const x of S) { const val = (x[3]?.[r] || 0) * spF(x[1]); if (val > 0) { const m = lab(r, val, x[3][r], " (SP)"); moves.push({ r, cost: x[0], lab: m }); if (m[0] > n[r][0]) n[r] = m; } }
   }
   n.conv = [0, ""];
@@ -976,8 +1018,12 @@ function tierNums(DET, P, u) {
   for (const m of [...tmoves].sort((a, b) => b.tools.length / b.cost - a.tools.length / a.cost)) if (m.cost <= left && m.tools.some(x => !all.has(x))) { left -= m.cost; m.tools.forEach(x => all.add(x)); }
   Object.assign(n, toolNums(all));
   // leader / extra skill: the game's own numbers (its passives), the text's for a kind they don't give
-  for (const [r, l, ns] of [["lead", "Leader", gameFirst(passiveFxNums(d.lsfx, u.e), passiveNums(d.leader?.desc, u.e))],
-    ["extra", "Extra", gameFirst(passiveFxNums(d.esfx, u.e, true), passiveNums(d.extra, u.e))], ["sp", "SP", spNums(P.W[u.id], u.e)]]) n[r] = numsLab(ns, l);
+  const lsN = gameFirst(passiveFxNums(d.lsfx, u.e), passiveNums(d.leader?.desc, u.e)), esN = gameFirst(passiveFxNums(d.esfx, u.e, true), passiveNums(d.extra, u.e));
+  for (const [r, l, ns] of [["lead", "Leader", lsN], ["extra", "Extra", esN], ["sp", "SP", spNums(P.W[u.id], u.e)]]) n[r] = numsLab(noLim(ns), l);
+  // raised ATK limit: the biggest from its leader skill, extra skill or an SP option (within 100 SP; among all roles the
+  // SP one is bought from the same 100 SP, tierAll)
+  base.lim = limLab([[lsN, "Leader"], [esN, "Extra"]]);
+  n.lim = limLab([[lsN, "Leader"], [esN, "Extra"], ...spPassive(P.W[u.id], u.e).filter(o => o.sp <= SP_BUDGET).map(o => [o.ns, "SP"])]);
   // for All roles (tierAll): its numbers without SP, and what each SP option would add
   n.base = { ...base, ...toolNums(tools) }; n.tools0 = tools; n.moves = moves; n.tmoves = tmoves;
   n.pas = spPassive(P.W[u.id], u.e);
@@ -997,10 +1043,10 @@ function tierAll(n, best, id) {
   const m = { ...n, ...n.base, sp: [0, ""] }, tools = new Set(n.tools0), pas = [], dp = [];
   const cand = [...n.moves.map(x => ({ ...x, k: "r" })), ...n.tmoves.map(x => ({ ...x, k: "t" })), ...n.pas.map(x => ({ cost: x.sp, ns: x.ns, v: x.v, k: "p" })),
     ...n.dmgOpts.map(x => ({ cost: x.cost, x, k: "d" }))];
-  const gain = x => x.k === "r" ? Math.max(0, x.lab[0] - m[x.r][0]) / best[x.r]
-    : x.k === "d" ? Math.max(0, n.dmgWith([...dp, x.x])[0] - m.dmg[0]) / best.dmg
-    : x.k === "t" ? x.tools.filter(y => !tools.has(y)).reduce((a, y) => a + 1 / (DEFENSE.includes(y) ? DEFENSE.length : DEBUFFS.length), 0)
-    : x.v / best.sp;
+  const gain = x => x.k === "r" ? TIER_IMP[x.r] * Math.max(0, x.lab[0] - m[x.r][0]) / best[x.r]
+    : x.k === "d" ? TIER_IMP.dmg * Math.max(0, n.dmgWith([...dp, x.x])[0] - m.dmg[0]) / best.dmg
+    : x.k === "t" ? x.tools.filter(y => !tools.has(y)).reduce((a, y) => a + (DEFENSE.includes(y) ? TIER_IMP.defense / DEFENSE.length : TIER_IMP.debuff / DEBUFFS.length), 0)
+    : TIER_IMP.sp * noLim(x.ns).reduce((a, y) => a + y[1], 0) / best.sp + TIER_IMP.lim * Math.max(0, limLab([[x.ns, "SP"]])[0] - m.lim[0]) / best.lim;
   let left = SP_BUDGET;
   for (;;) {
     let pick = null, g = 0;
@@ -1008,7 +1054,8 @@ function tierAll(n, best, id) {
     if (!pick) break;
     pick.used = true; left -= pick.cost;
     if (pick.k === "r") m[pick.r] = pick.lab; else if (pick.k === "t") pick.tools.forEach(y => tools.add(y));
-    else if (pick.k === "d") { dp.push(pick.x); m.dmg = n.dmgWith(dp); } else pas.push(...pick.ns);
+    else if (pick.k === "d") { dp.push(pick.x); m.dmg = n.dmgWith(dp); }
+    else { pas.push(...noLim(pick.ns)); const l = limLab([[pick.ns, "SP"]]); if (l[0] > m.lim[0]) m.lim = l; }
   }
   Object.assign(m, toolNums(tools));
   m.sp = numsLab(pas, "SP"); m.spent = SP_BUDGET - left;
@@ -1018,17 +1065,24 @@ let tierEl = store.get("bf.tierel", "Fire"), tierRole = store.get("bf.tierrole",
 function tierRows(DET, P, el, role) {
   const pool = tierPool(el), roles = role === "all" ? TIER_ROLES.map(r => r[0]) : [role];
   const best = Object.fromEntries(roles.map(r => [r, TIER_SHARE.has(r) ? 1 : Math.max(1e-9, ...pool.map(u => tierNums(DET, P, u)[r][0]))]));
-  const scored = [];
-  // how common it is to be near the best at a role (critical rate 60%, mitigation 50%): under a unit, about-equal numbers show the rarer first
-  const common = Object.fromEntries(roles.map(r => [r, pool.filter(u => tierNums(DET, P, u)[r][0] >= .9 * best[r]).length / pool.length]));
-  for (const u of pool) {
-    const n = role === "all" ? tierAll(tierNums(DET, P, u), best, u.id) : tierNums(DET, P, u), ns = roles.map(r => [n[r][0] / best[r], n[r][1], r]).filter(x => x[0] > 0).sort((a, b) => b[0] - a[0]);
-    const why = [...ns].sort((a, b) => (b[0] - common[b[2]] / 2) - (a[0] - common[a[2]] / 2)).slice(0, 2).map(x => x[1]);
-    if (ns.length) scored.push({ u, score: ns.slice(0, TIER_W.length).reduce((s, [x], k) => s + x * TIER_W[k], 0), why });
+  const scored = [], imp = r => role === "all" ? TIER_IMP[r] : 1;
+  const each = pool.map(u => { const n = role === "all" ? tierAll(tierNums(DET, P, u), best, u.id) : tierNums(DET, P, u);
+    let fs = null;  // among all roles: the fitted formula's score
+    if (role === "all") { const o = tierNums(DET, P, u), sh = {}, so = {};
+      for (const r of roles) { sh[r] = n[r][0] / best[r]; so[r] = o[r][0] / best[r]; }
+      fs = tierScore(tierFacts(DET, P, u, sh, so)); }
+    return [u, roles.map(r => [n[r][0] / best[r], n[r][1], r]).filter(x => x[0] > 0).sort((a, b) => b[0] - a[0]), fs]; });
+  // what stands out: a number against the element's typical unit (its median), so one nearly every unit has (spark
+  // timing) only shows where it's exceptional
+  const med = Object.fromEntries(roles.map(r => [r, (v => v[v.length >> 1])(each.map(([, ns]) => ns.find(x => x[2] === r)?.[0] || 0).sort((a, b) => a - b))]));
+  for (const [u, ns, fs] of each) {
+    const why = [...ns].sort((a, b) => (b[0] - med[b[2]]) * imp(b[2]) - (a[0] - med[a[2]]) * imp(a[2])).slice(0, 2).map(x => x[1]);
+    if (ns.length) scored.push({ u, score: fs ?? ns.reduce((s, [x, , r]) => s + x * imp(r), 0), why });
   }
   scored.sort((a, b) => b.score - a.score || b.u.no - a.u.no);
   const rows = TIER_CUTS.map(([t]) => [t, []]);
-  const tierAt = k => { let c = 0; return TIER_CUTS.findIndex(([, n]) => k < (c += n)); };
+  const sizes = TIER_CUTS.map(([, f]) => f === Infinity ? Infinity : Math.round(f * scored.length));
+  const tierAt = k => { let c = 0; return sizes.findIndex(n => k < (c += n)); };
   scored.forEach(s => rows[tierAt(scored.findIndex(x => x.score === s.score))][1].push(s));  // equal scores share the better tier
   return rows;
 }
@@ -1061,15 +1115,16 @@ async function showTiers() {
   };
   $("page").innerHTML = `<div class="bar2"><div class="scroller" id="tel"></div><div class="scroller" id="trole"></div><div class="scroller" id="tget"></div></div>
     <details class="why"><summary>How is this made?</summary>
-      <p class="small" style="margin:6px 0 0">No votes and no opinions: every Omni unit is measured with the same rule, from the game's own numbers.</p>
+      <p class="small" style="margin:6px 0 0">Every Omni unit gets one score, worked out from the game's own data: about 50 facts about the unit, each with its own weight.</p>
       <ul><li><b>Damage:</b> its SBB's attacks (at full HP), more if it can cast twice, with its ATK and the buffs it gives itself (ATK, spark, critical rate, HP or DEF turned into ATK), and the SP options that add an attack to its SBB or buff itself.</li>
-      <li><b>Buffs for the team:</b> ATK, BB ATK, critical damage and rate, spark, elemental damage, mitigation, BB fill, heal, OD fill and stat conversion, read from the skills themselves, so also where the skill's text gives no number, and from the SP options that add one to its BB or SBB or raise it.</li>
+      <li><b>Buffs for the team:</b> ATK, BB ATK, critical damage and rate, spark, elemental damage, mitigation, BB fill, heal, OD fill and stat conversion, read from the skills themselves, so also where the skill's text gives no number, and from the SP options that add one to its BB or SBB or raise it. A UBB's buffs count a quarter, since it fires only when the OD gauge is full.</li>
       <li><b>Spark timing:</b> how many of its hits land together with another unit's, on average with every other unit of its element (the same hit frames as the Team tab's spark check).</li>
       <li><b>Defense tools</b> (cures, ailment negation, barrier, KO resistance, revive, taunt) and <b>debuffs</b> on foes (DEF ignore, ATK/DEF down, spark, critical and elemental weakness), its skills' and the ones SP options add to them.</li>
-      <li><b>Leader skill, extra skill and SP:</b> their ATK, spark, critical, elemental and BB ATK numbers, and raised ATK limits (lightly: they only matter once ATK passes 100k); for SP, its own options.</li></ul>
+      <li><b>Leader skill, extra skill and SP:</b> their ATK, spark, critical, elemental and BB ATK numbers; for SP, its own options.</li>
+      <li><b>Raised ATK limit:</b> the biggest raise from its leader skill, extra skill or SP. In endgame, attacks hit the usual 100k ATK limit (the battle check shows it), so raising it is one of the biggest boosts.</li></ul>
       <p class="small" style="margin:8px 0 0"><b>SP:</b> a unit has 100 SP (Omni). Ranked on one role, it takes the SP options for that one; on all roles, its 100 SP go where they add the most, the way you'd spend them.</p>
       <p class="small" style="margin:8px 0 0"><b>Fair to each unit:</b> a skill that costs more than 30 BC fires less often, so its numbers count for less (30 ÷ its cost). An effect that needs a condition (HP above 50%, the first turns, a partner in the squad), or that works only for other element types, counts half; one that needs a sphere counts fully.</p>
-      <p class="small" style="margin:8px 0 0"><b>Adding it up:</b> each number is compared with the best unit of the element at it (the best is 100%). A unit's 6 strongest numbers count, its best one most, so a unit that's strong at several things ranks higher. <b>S</b> is the element's 10 best, <b>A</b> the next 10, <b>B</b> the next 15, <b>C</b> the next 20, <b>D</b> the rest. Under each unit: its two strongest. Pick a role to rank on that one number.</p>
+      <p class="small" style="margin:8px 0 0"><b>Adding it up:</b> each number is compared with the best unit of the element at it (the best is 100%). The score weighs about 50 facts: the unit's cost and stats (HP, ATK, DEF, REC), how many effects its leader and extra skills have and some of those effects, how many roles it fills well, its mitigation, raised ATK limit, spark timing, defense tools, spark, elemental, leader and SP numbers, its SBB and UBB damage and buffs, and a few skill effects (extra actions, damage reduced to 1, damage from the foe's max HP, cheaper BBs for allies). <b>S</b> is the element's best 20%, <b>A</b> the next 16%, <b>B</b> 17%, <b>C</b> 14%, <b>D</b> 9% and <b>Trash</b> the rest. Under each unit: the two numbers where it stands out most from the element's typical unit. Pick a role to rank on that one number.</p>
       <p class="small dim" style="margin:8px 0 0">What it can't see: how a unit does in a given quest, your spheres and Elgifs, and the team around it.</p></details>
     <div class="count" id="tcount"></div><div id="tiers"></div>`;
   const row = (id, list, cur, pick) => list.forEach(([k, html]) => {
