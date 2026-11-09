@@ -264,6 +264,11 @@ main { padding-bottom: calc(var(--navh) + 20px); }
   border: 2px solid #ffd37a; border-radius: 6px 14px 14px 6px; box-shadow: 0 2px 4px #000; }
 .sec > h3.blue { background: linear-gradient(#5aa8ff, #1e5fe0 55%, #123fa8); border-color: #9ccaff; }
 .sec > h3.green { background: linear-gradient(#7ad67a, #2a8f3a); border-color: #c9f0b0; }
+.rvbtn { margin-left: 8px; vertical-align: top; padding: 3px 11px; font: inherit; font-size: 12px; color: #fff; text-shadow: var(--ol); cursor: pointer;
+  background: linear-gradient(#7ad67a, #2a8f3a); border: 2px solid #c9f0b0; border-radius: 14px; box-shadow: 0 2px 4px #000; }
+.rvbtn.on { background: linear-gradient(#5aa8ff, #1e5fe0 55%, #123fa8); border-color: #9ccaff; }
+.rvnums .pill.up { color: #b9f5b9; border-color: rgba(122, 214, 122, .6); } .rvnums .pill.down { color: #ffb4a8; border-color: rgba(255, 120, 100, .6); }
+.rvnew { background: rgba(122, 214, 122, .2); box-shadow: 0 0 0 1px rgba(122, 214, 122, .5); border-radius: 4px; padding: 0 2px; } .rvnote { margin: 0 0 8px; }
 .sec > h3.purple { background: linear-gradient(#d7a6ff, #7a3fc4); border-color: #eed8ff; }
 .tbl { width: 100%; border-collapse: collapse; font-size: 12.5px; text-shadow: var(--ol); }
 .tbl th { color: var(--orange); font-size: 10.5px; text-align: right; padding: 3px 4px; font-weight: normal; }
@@ -1642,11 +1647,111 @@ function statTable(u, w) {
     ${typeStats(u, w.stats).derived ? `<p class="dim small" style="margin:4px 0 0">The wiki lists only Lord for this unit: the other types are Lord with the changes every ${u.r === 8 ? "Omni" : u.r + "★"} unit has.</p>` : ""}
     ${rows.some(r => r[0] === "Rex") ? `<p class="dim small" style="margin:4px 0 0">Rex (from a Rex frog): every level up adds HP 10–15 and ATK, DEF, REC 1–2 each, so a max-level Rex has about this much; each unit rolls its own.</p>` : ""}`;
 }
+// ---------------- what Revived changed in a unit's skills ----------------
+// The skill text shown is the wiki's (the global game's, its numbers in full). Revived changed some units in its own data:
+// each skill's kinds of effect (leader, extra, BB, SBB, UBB) are compared with Revived's own text; for a BB/SBB/UBB a new
+// kind only counts when the game's numbers show it. A unit with one gets a button by Skills for Revived's version.
+// No lookbehind in these patterns: older iPhone Safari can't read it, and it would stop the whole page.
+const RV_EL = "(?:fire|water|earth|thunder|light|dark)";
+const RV_EM = new RegExp(`elemental damage reduction|reduction of elemental damage|damage reduction from ${RV_EL}|reduces damage from ${RV_EL}|reduction to ${RV_EL}[a-z, ]* elemental damage|reduces ${RV_EL}[a-z, ]* elemental damage`, "g");
+const RV_KINDS = {
+  "mitigation": /damage reduction(?! when guarding)(?! to 1)|reduction of damage taken|reduces damage taken/, "damage reduced to 1": /damage (?:reduction )?to 1\b/,
+  "DEF ignore": /def ignor(?!ing effects)/, "pierce": /pierce/, "ailments on foes": /poison|injury|sick\b|\bweak\b|curse|paralysis/,
+  "damage over time": /venom|\bdot\b|damage over time|additional damage at turn/, "vulnerability on foes": /vulnerability/,
+  "ATK/DEF down on foes": /(?:atk|def)(?:, def)?(?:, rec)? reduction infliction/, "cast twice": /twice/, "extra action": /extra action/,
+  "critical damage": /critical (?:hit )?damage(?! reduction)|damage on critical/, "critical rate": /critical (?:hit )?rate/,
+  "spark": /spark damage(?! reduction)(?! restores)(?! fills)(?! boosts bb)(?! considerably boosts bb)/, "spark critical": /spark critical/,
+  "elemental": /elemental damage(?! reduction)/, "all elements": /all elements/,
+  "ATK boost": /boosts? (?:own )?atk|\d+% (?:boost to )?(?:[a-z ,]+ and )?atk\b|% all parameters|boost to all parameters/, "BB ATK": /bb atk/,
+  "BB fill": /(?:fills|boosts|fill) (?:own )?bb gauge|bc efficacy|bb gauge fill rate(?! reduction)/, "spark fills BB": /spark damage (?:\w+ )?(?:fills|boosts) bb/,
+  "OD fill": /od gauge/, "heal": /restores? hp|heals? |hp restor|recovers? hp|restore hp/, "KO resistance": /ko resistance|ko attack|angel idol/,
+  "revive": /raises (?:allies )?from ko|revive/, "barrier": /barrier|shield/, "taunt": /taunt/, "evasion": /evasion/,
+  "negate ailments": /negates (?:all )?(?:status )?ailments|negates all status/, "cure ailments": /removes all status ailments|cures?/,
+  "raised ATK limit": /atk (?:parameter )?limit/, "stat conversion": /relative to (?:def|rec|max hp|hp)/, "normal attack boosts": /normal hit amount|normal attacks/,
+  "LS/ES lock purge": /(?:ls|es) (?:and es )?lock/, "cheaper BB": /reduction to bb activation cost|reduces bb gauge required/ };
+function rvKinds(t) {  // the kinds of effect a skill's text names
+  const lo = String(t || "").toLowerCase(), rest = lo.replace(RV_EM, " "), out = new Set(rest !== lo ? ["elemental mitigation"] : []);
+  for (const [k, re] of Object.entries(RV_KINDS)) if (re.test(rest)) out.add(k);
+  return out;
+}
+// a buff's value in the wiki's effect lines (the global game's numbers)
+const RV_NUM = {
+  atk: [/boosts atk[a-z, ]* by (\d+(?:\.\d+)?)%/g, /(\d+(?:\.\d+)?)% boost to atk\b/g, /(\d+(?:\.\d+)?)% boost to all parameters/g],
+  critrate: [/critical (?:hit )?rate by (\d+(?:\.\d+)?)%/g, /(\d+(?:\.\d+)?)% boost to critical (?:hit )?rate/g],
+  crit: [/(\d+(?:\.\d+)?)% boost to critical damage/g, /critical damage by (\d+(?:\.\d+)?)%/g],
+  spark: [/(\d+(?:\.\d+)?)% boost to spark damage/g, /spark damage by (\d+(?:\.\d+)?)%/g],
+  elem: [/(\d+(?:\.\d+)?)% boost to (?:[a-z, ]+ )?elemental damage/g, /elemental damage by (\d+(?:\.\d+)?)%/g],
+  bbatk: [/(\d+(?:\.\d+)?)% boost to bb atk/g, /bb atk by (\d+(?:\.\d+)?)%/g],
+  mit: [/reduces damage taken by (\d+(?:\.\d+)?)%/g, /(\d+(?:\.\d+)?)% (?:damage reduction|reduction of damage taken)(?! when)(?! from)/g],
+  bbf: [/boosts bb gauge by (\d+(?:\.\d+)?) bc(?! each)(?! per)(?! when)/g] };
+const RV_NUM_LABEL = { atk: "ATK", critrate: "Crit rate", crit: "Critical damage", spark: "Spark", elem: "Elemental", bbatk: "BB ATK", mit: "Mitigation", bbf: "BB fill" };
+const RV_FX_KEY = { ATK: "atk", "Crit rate": "critrate", Critical: "crit", Spark: "spark", Elemental: "elem", "BB ATK": "bbatk" };
+function rvWikiNums(s, teamOnly) {  // {kind: biggest value}; conditional and scaling lines aren't like for like
+  const out = {}, lines = (s.fx || []).length ? s.fx.map(e => [e.p || "", (e.t || "").toLowerCase()]) : [[s.note || "", ""]];
+  for (const [p, t] of lines) {
+    if (teamOnly && t && t !== "all allies") continue;
+    const lo = p.toLowerCase();
+    if (/requires|\bwhen\b|\bif\b|first \d+ turn|\bper\b|for each|every|relative to|stack|consecutive/.test(lo)) continue;
+    for (const [k, res] of Object.entries(RV_NUM)) for (const re of res) for (const m of lo.matchAll(re)) out[k] = Math.max(out[k] || 0, +m[1]);
+  }
+  return out;
+}
+function rvGameNums(k, g, d, el) {  // Revived's: the skill's buffs, or the leader / extra skill's passives
+  if (g) return Object.fromEntries(Object.entries(g.buffs || {}).filter(([x]) => RV_NUM[x]).map(([x, v]) => [x, +v]));
+  const out = {};
+  for (const [l, , raw] of passiveFxNums(k === "LS" ? d.lsfx : d.esfx, el, k === "ES")) { const x = RV_FX_KEY[l]; if (x) out[x] = Math.max(out[x] || 0, Math.round(raw * 100) / 100); }
+  return out;
+}
+const RV_KEY = { "Leader Skill": "LS", "Extra Skill": "ES", BB: "BB", SBB: "SBB", UBB: "UBB" };
+const rvBetter = ([l, g, r]) => l === "BC cost" ? r < g : r > g;  // a cheaper skill is a buff, a bigger number too
+function rvChanges(w, d, el) {  // {add: {LS|ES|BB|SBB|UBB: [kinds Revived added]}, num: {...: [[label, global, Revived, unit]]}}
+  const gk = Object.fromEntries((d.skills || []).map(s => [s.label, s])), out = {}, num = {};
+  const gtxt = { LS: d.leader?.desc, ES: d.extra, BB: gk.BB?.desc, SBB: gk.SBB?.desc, UBB: gk.UBB?.desc };
+  for (const s of w.skills || []) {
+    const k = RV_KEY[s.kind];
+    if (!k) continue;
+    const both = !!(s.desc && gtxt[k]);  // the kinds of effect compare only when both texts are there; the numbers always
+    const a = both ? rvKinds(s.desc) : new Set(); let b = both ? rvKinds(gtxt[k]) : new Set();
+    if (gk[k]) {  // BB, SBB, UBB: a new kind the game's numbers can show must be there
+      const g = gk[k], bf = new Set(Object.keys(g.buffs || {})), tl = new Set(g.tools || []), own = Object.keys(g.own || {}).length > 0;
+      const NUM = { "mitigation": bf.has("mit"), "ATK boost": bf.has("atk") || own, "BB ATK": bf.has("bbatk"), "critical damage": bf.has("crit"),
+        "critical rate": bf.has("critrate"), "spark": bf.has("spark"), "elemental": bf.has("elem"), "heal": bf.has("heal"), "OD fill": bf.has("od"),
+        "cast twice": !!g.twice, "DEF ignore": tl.has("DEF ignore"), "vulnerability on foes": tl.has("Spark weakness") || tl.has("Critical/elemental weakness"),
+        "ATK/DEF down on foes": tl.has("ATK/DEF down"), "cure ailments": tl.has("Cures ailments"), "negate ailments": tl.has("Negates ailments"),
+        "barrier": tl.has("Barrier"), "KO resistance": tl.has("KO resistance"), "revive": tl.has("Revives"), "taunt": tl.has("Taunt"), "evasion": tl.has("Evasion"),
+        "stat conversion": (Array.isArray(g.conv) && g.conv.length > 0) || !!(g.own && g.own.conv) };
+      b = new Set([...b].filter(x => a.has(x) || NUM[x] !== false));
+    }
+    const added = [...b].filter(x => !a.has(x));
+    if (added.length) out[k] = added;
+    if (k === "LS" || k === "ES" || gk[k]) {  // the numbers, kinds both have
+      const gn = rvWikiNums(s, !!gk[k]), rn = rvGameNums(k, gk[k], d, el);
+      const diff = Object.keys(RV_NUM).filter(x => x in gn && x in rn && Math.abs(gn[x] - rn[x]) >= 1).map(x => [RV_NUM_LABEL[x], gn[x], rn[x], x === "bbf" ? " BC" : "%"]);
+      if (gk[k] && +s.bc > 0 && +gk[k].bc > 0 && +s.bc !== +gk[k].bc) diff.push(["BC cost", +s.bc, +gk[k].bc, ""]);  // its cost
+      if (diff.length) num[k] = diff;
+    }
+  }
+  return { add: out, num };
+}
+function rvSkills(w, d, ch) {  // the skills as Revived has them, in the wiki's order: its text, BC cost and hits; rv = the kinds it added, rvn = its numbers that changed
+  const gk = Object.fromEntries((d.skills || []).map(s => [s.label, s]));
+  return (w.skills || []).map(s => {
+    const k = RV_KEY[s.kind], g = gk[k], rv = ch.add[k] || [], rvn = ch.num[k] || [];
+    if (k === "LS" && d.leader?.desc) return { kind: s.kind, name: d.leader.name || s.name, desc: d.leader.desc, rv, rvn };
+    if (k === "ES" && d.extra) return { kind: s.kind, name: s.name, desc: d.extra, item: s.item, rv, rvn };
+    if (g?.desc) return { kind: s.kind, name: g.name || s.name, desc: g.desc, bc: g.bc, hits: g.hits, type: s.type, rv, rvn };
+    return rvn.length ? { ...s, rvn } : s;  // no Revived text (Dual BB, a leader skill the game has no text for): the wiki's, with Revived's numbers
+  });
+}
+// a skill's text with the parts naming a kind Revived added marked
+const rvMark = (desc, add) => String(desc || "").split(/(,\s+(?![^()]*\))|\s+&\s+)/)
+  .map((p, i) => i % 2 ? esc(p) : [...rvKinds(p)].some(k => add.includes(k)) ? `<span class="rvnew">${hl(p)}</span>` : hl(p)).join("");
 function skillBlock(s) {
   const cls = { "Leader Skill": "ls", "Extra Skill": "es", "Dual BB": "dbb", "UBB": "ubb", "SBB": "sbb", "BB": "" }[s.kind] ?? "";
   const pills = [s.bc && s.kind !== "Dual BB" ? `${s.bc} BC` : "", s.hits ? `${s.hits} hits` : "", s.type, s.partner ? `with ${s.partner}` : ""].filter(Boolean);
   return `<div class="sk"><div class="kn"><span class="tag ${cls}">${s.kind}</span><span class="nm">${esc(s.name)}</span></div>
-    <p>${hl(s.desc)}</p>${pills.length ? `<div class="pills">${pills.map(p => `<span class="pill">${esc(p)}</span>`).join("")}</div>` : ""}
+    <p>${s.rv?.length ? rvMark(s.desc, s.rv) : hl(s.desc)}</p>${pills.length ? `<div class="pills">${pills.map(p => `<span class="pill">${esc(p)}</span>`).join("")}</div>` : ""}
+    ${s.rvn?.length ? `<div class="pills rvnums">${s.rvn.map(([l, g, r, u]) => `<span class="pill ${rvBetter([l, g, r]) ? "up" : "down"}">${esc(l)} ${g}${u} → ${r}${u}</span>`).join("")}</div>` : ""}
     ${s.item ? `<div class="note" style="border-color:#b382ff">Needs: ${esc(s.item)}</div>` : ""}
     ${s.fx?.length ? `<details><summary>Numbers</summary><ul class="fx">${s.fx.map(e => `<li>${esc(e.p)}${e.d || e.t ? `<span class="fxm">${e.d ? `<span class="fxd">${esc(/^9{3,}\s*turns?$/i.test(e.d.trim()) ? (/\bko\b/i.test(e.p) ? "until used" : "whole battle") : e.d)}</span>` : ""}${e.t ? `<span class="fxt">${esc(e.t)}</span>` : ""}</span>` : ""}</li>`).join("")}</ul></details>`
       : s.note ? `<details><summary>Numbers</summary><div class="note">${esc(s.note)}</div></details>` : ""}</div>`;
@@ -2050,6 +2155,10 @@ async function showUnit(id) {
     w.hits ? `<span class="badge">${w.hits} hits</span>` : ""].join("");
   // skills: the wiki's version has the numbers in full; fall back to the game's text, BC cost and hits
   let skills = w.skills || [];
+  // what Revived changed in them (its own data against the wiki's): a button by Skills shows Revived's version
+  const rvc = w.skills?.length ? rvChanges(w, d, u.e) : { add: {}, num: {} };
+  const rvUp = Object.keys(rvc.add).length > 0 || Object.values(rvc.num).some(v => v.some(rvBetter)), rvOn = rvUp || Object.keys(rvc.num).length > 0;
+  const rvLabel = rvUp ? "▲ Buffed in Revived" : "Changed in Revived";
   if (!skills.length) skills = [
     d.leader?.desc ? { kind: "Leader Skill", name: d.leader.name, desc: d.leader.desc } : null,
     ...(d.skills || []).map(s => ({ ...s, kind: s.label })),
@@ -2112,7 +2221,7 @@ async function showUnit(id) {
     ${spr ? `<div class="sec"><h3 class="green">In battle</h3><div class="stage"><img class="spr" id="spr" src="${sImg(id)}" alt=""></div>
       <div class="gifs"><button class="gbtn small" data-gif="1">Save GIF</button><button class="gbtn small dark" data-gif="0">GIF, see-through</button></div></div>` : ""}
     <div class="sec"><h3>Stats</h3>${statTable(u, w)}</div>
-    ${skills.length || roles ? `<div class="sec"><h3 class="blue">Skills</h3>${roles ? `<div class="roles">${roles}</div>` : ""}${skills.map(skillBlock).join("")}</div>` : ""}
+    ${skills.length || roles ? `<div class="sec"><h3 class="blue">Skills</h3>${rvOn ? `<button class="rvbtn" id="rvbtn">${rvLabel}</button>` : ""}${roles ? `<div class="roles">${roles}</div>` : ""}<div id="sklist">${skills.map(skillBlock).join("")}</div></div>` : ""}
     ${spheres ? `<div class="sec"><h3 class="purple">Suggested spheres</h3>${spheres}</div>` : ""}
     ${sp ? `<div class="sec"><h3>SP Enhancements</h3>${sp}</div>` : ""}
     ${chain.length > 1 || mats ? `<div class="sec"><h3 class="green">Evolution</h3><div class="evo">${chain.map((c, i) => (i ? `<span class="ar">›</span>` : "") + unitMini(c, c === id)).join("")}</div>
@@ -2131,6 +2240,13 @@ async function showUnit(id) {
     ${w.notes ? `<div class="sec"><h3>Notes</h3><div class="lore">${esc(w.notes)}</div></div>` : ""}
     <p class="dim small" style="text-align:center;margin:14px">Game data + Brave Frontier Wiki${w.page ? ` (${esc(w.page)})` : ""}${src || foe ? " + bfrevive.net" : ""}</p>`;
   $("ubody").querySelectorAll("[data-gate]").forEach(b => b.onclick = () => go(`#/gate/${b.dataset.gate}`));
+  if (rvOn) {  // Buffed in Revived: Revived's own skill text with what it added marked, or back to the global version
+    let on = false; const btn = $("rvbtn"), rs = rvSkills(w, d, rvc);
+    const what = Object.entries(rvc.add).map(([k, v]) => `<b>${k}</b>: ${v.map(esc).join(", ")}`).join(" · ");
+    const nums = Object.values(rvc.num).length ? "Numbers Revived changed are under each skill (global → Revived)." : "";
+    btn.onclick = () => { on = !on; btn.classList.toggle("on", on); btn.textContent = on ? "Show global" : rvLabel;
+      $("sklist").innerHTML = on ? `<p class="dim small rvnote">Revived's own skill text.${what ? ` New in Revived, marked green: ${what}.` : ""} ${nums}</p>${rs.map(skillBlock).join("")}` : skills.map(skillBlock).join(""); };
+  }
   $("ubody").querySelectorAll("[data-unit]").forEach(b => b.onclick = () => go(`#/unit/${b.dataset.unit}`));
   // a sticky row of the page's sections to jump to (the unit pages are long)
   jumpBar($("ubody"), [...$("ubody").querySelectorAll(":scope > .sec")].filter(s => s.querySelector(":scope > h3")));
