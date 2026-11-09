@@ -1733,13 +1733,15 @@ function rvChanges(w, d, el) {  // {add: {LS|ES|BB|SBB|UBB: [kinds Revived added
   }
   return { add: out, num };
 }
+// the chance to cast twice, from the game's numbers, after the words that say it may ("may activate BB/SBB/UBB twice (25% chance)")
+const rvTwice = (desc, p) => p > 0 && p < 100 ? desc.replace(/\btwice\b(?![^()]*\))/i, m => `${m} (${p}% chance)`) : desc;
 function rvSkills(w, d, ch) {  // the skills as Revived has them, in the wiki's order: its text, BC cost and hits; rv = the kinds it added, rvn = its numbers that changed
   const gk = Object.fromEntries((d.skills || []).map(s => [s.label, s]));
   return (w.skills || []).map(s => {
     const k = RV_KEY[s.kind], g = gk[k], rv = ch.add[k] || [], rvn = ch.num[k] || [];
     if (k === "LS" && d.leader?.desc) return { kind: s.kind, name: d.leader.name || s.name, desc: d.leader.desc, rv, rvn };
     if (k === "ES" && d.extra) return { kind: s.kind, name: s.name, desc: d.extra, item: s.item, rv, rvn };
-    if (g?.desc) return { kind: s.kind, name: g.name || s.name, desc: g.desc, bc: g.bc, hits: g.hits, type: s.type, rv, rvn };
+    if (g?.desc) return { kind: s.kind, name: g.name || s.name, desc: rvTwice(g.desc, g.twice), bc: g.bc, hits: g.hits, type: s.type, rv, rvn };
     return rvn.length ? { ...s, rvn } : s;  // no Revived text (Dual BB, a leader skill the game has no text for): the wiki's, with Revived's numbers
   });
 }
@@ -4722,10 +4724,11 @@ window.BFBack = () => {
   UMAP = Object.fromEntries(UNITS.map(u => [u.id, u]));
   setupUnitFilters();
   try { await route(); } finally { hideSplash(); }
-  load("version").then(V => {
+  Promise.all([load("version"), load("changelog").catch(() => [])]).then(([V, C]) => {
     const seen = store.get("bf.seenv", null), used = ["bf.recent", "bf.favs", "bf.ifavs", "bf.teams"].some(k => store.get(k, null) !== null);
     if (!V.version || seen === V.version) return;
     store.set("bf.seenv", V.version);
+    if (seen && Array.isArray(C) && C[0]?.version === seen) return;  // a silent update: nothing new in What's new since the version they saw
     if (seen || used) setTimeout(showAbout, 600);
   });
   // the update switch: ask GitHub on start, at most every 6 hours (after What's new, which then shows the answer)
