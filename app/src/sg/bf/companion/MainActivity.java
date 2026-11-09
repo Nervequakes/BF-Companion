@@ -102,7 +102,13 @@ public class MainActivity extends Activity {
 
             @Override
             public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest req) {
-                return !HOST.equals(req.getUrl().getHost());
+                Uri u = req.getUrl();
+                if (HOST.equals(u.getHost())) return false;
+                // a link to another site you tapped (a credit's channel): the phone's browser opens it, not the app
+                if (req.isForMainFrame() && req.hasGesture() && ("https".equals(u.getScheme()) || "http".equals(u.getScheme()))) {
+                    try { startActivity(new Intent(Intent.ACTION_VIEW, u)); } catch (Exception e) { /* no browser */ }
+                }
+                return true;
             }
         });
         setContentView(web);

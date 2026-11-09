@@ -2473,14 +2473,29 @@ const elgifWhy = () => `<details class="why"><summary>What are Elgifs?</summary>
   <li>It works on any unit except fusion, evolution and sellable units. On a 7★ unit it's a second extra skill, in pink.</li>
   <li>Evolving the unit keeps the Elgif; fusing the unit into another loses it. A new Elgif replaces the old one.</li>
   <li>A ${unitLink(EMGIF)} takes it out again: it comes back as an Elgif in your Gift Box.</li>
-  <li>Revived gives the tablets as captures, quest rewards, achievements and shop items: open the tablet unit to see where. When the game's data says which Elgif a reward gives, that Elgif shows it (<b>in Revived</b>): a quest's first clear, a Grand Quest episode, a Frontier Hunter rank, a Frontier Gate, Frontier Rift or Frontier Spire milestone, or an achievement.</li>
+  <li>Revived gives the tablets as captures, quest rewards, achievements and shop items: open the tablet unit to see where. When the game's data says which Elgif a reward gives, that Elgif shows it (<b>in Revived</b>): a quest's first clear, a Grand Quest episode, a Frontier Hunter rank, a Frontier Gate, Frontier Rift or Frontier Spire milestone, or an achievement. So do the other ways players get it in Revived: summon promotions, the Elgif dungeons (Guardians of Lore, Forbidden Tablets, Omni Arcanum), the Colosseum, event bazaars, the Exchange Hall, Arena ranks, guild events and bundles.</li>
   <li>Frontier Hunter, Frontier Gate (with Eternal Crusade), Frontier Rift and Frontier Spire are in Imperial Capital Randall › Akras Summoners' Hall Survey Office. A program's View Rewards lists its milestones (floors cleared, or Esteem points); Frontier Hunter gives a reward at each Hunter Rank. The Grand Quest is in the Vortex (Grand).</li></ul></details>`;
 let eType = store.get("bf.etype", "All");  // "All", "Get" (only the Elgifs Revived gives), or one way to get them (ESRC)
-const elgifGets = e => !!(e.g?.length || e.p?.length || e.a?.length);  // a quest's first clear, a Frontier mode or Grand Quest reward, or an achievement
+// more ways (data/elgifx.json: summon promotions, the Elgif dungeons, shops, the Colosseum, events): {id: {w: [[kind,
+// text]], n: note, l: limited}}; a Frontier, quest-clear or achievement way the game's data already gives isn't repeated,
+// a Frontier one goes under its mode's own chip
+let ELGX = {};
+// the one credit for the ways to get Elgifs (the user, 2026-11-09): KayzX, a link to their YouTube channel
+const ELGX_CREDIT = `<p class="ecredit" style="margin:8px 0 2px;font-size:15px">Thanks to <a class="ulink" href="https://www.youtube.com/@KayzX" target="_blank" rel="noopener">KayzX</a> for the ways to get Elgifs!</p>`;
+const loadElgx = async () => { const x = await load("elgifx"); ELGX = x?.e || {}; return ELGX; };
+const FRONTIERS = ["Frontier Hunter", "Frontier Gate", "Frontier Rift", "Frontier Spire"];
+const xWays = e => (ELGX[e.id]?.w || []).filter(([k]) => !(k === "Frontier" && e.p?.length) && !(k === "Quest" && e.g?.length) && !(k === "Achievement" && e.a?.length))
+  .map(([k, t]) => [k === "Frontier" ? FRONTIERS.find(f => t.includes(f)) || "Frontier Gate" : k === "Quest" ? "Clear reward" : k, t]);
+const elgifGets = e => !!(e.g?.length || e.p?.length || e.a?.length || xWays(e).length);
+// a way's text without the name its tag already shows ("Event Bazaar: House of Valen" → "House of Valen", "Rare Summon Promotions: …")
+const xText = (k, t) => { for (const h of [k, "Rare Summon Promotions", "Event Bazaar"]) if (t.startsWith(h + ": ")) return t.slice(h.length + 2); return t; };  // a quest's first clear, a Frontier mode or Grand Quest reward, an achievement, or a way in elgifx.json
 // the ways to get an Elgif as [kind, text] lines: a filter chip per kind, and the search reads them too
-const ESRC = ["Frontier Hunter", "Frontier Gate", "Frontier Rift", "Frontier Spire", "Grand Quest", "Clear reward", "Achievement"];
+const ESRC = ["Summon promotion", "Guardians of Lore", "Forbidden Tablets", "Omni Arcanum", "Colosseum", "Event Bazaar", "Exchange Hall", "Arena", "Guild event", "Bundle", "Login campaign",
+  "Frontier Hunter", "Frontier Gate", "Frontier Rift", "Frontier Spire", "Grand Quest", "Clear reward", "Achievement", "Other"];
+const XTAG = { "Summon promotion": "summon", "Guardians of Lore": "capture", "Forbidden Tablets": "capture", "Omni Arcanum": "capture", Colosseum: "raid", "Event Bazaar": "eventshop",
+  "Exchange Hall": "exchange", Arena: "achievement", "Clear reward": "clearreward", "Frontier Hunter": "frontier", "Frontier Gate": "frontier", "Frontier Rift": "frontier", "Frontier Spire": "frontier" };
 const elgifWays = (e, S) => [...(e.g || []).map(([m]) => ["Clear reward", srcQuest(S, m)]), ...(e.p || []).map(([mode, at, how]) => [mode, `${at} ${how}`.trim()]),
-  ...(e.a || []).map(([t]) => ["Achievement", t])];
+  ...(e.a || []).map(([t]) => ["Achievement", t]), ...xWays(e)];
 const cmpNum = (a, b) => a.localeCompare(b, undefined, { numeric: true });  // "Hunter Rank 46" before "Hunter Rank 110"
 // Revived since 1 Nov 2026: an Elgif caught in these dungeons carries one of that dungeon's own extra skills, rarer ones
 // on higher levels. The server picks it, so which skills isn't in the game's data: list where, with the capture chance
@@ -2492,12 +2507,12 @@ const elgifCatchHtml = S => {
     if (d) by.get(d).push([name.slice(d.length).trim() || name, cap]);
   }
   const rows = [...by].filter(([, v]) => v.length);
-  return rows.length ? `<div class="ecatch"><b>Catch one with a set skill:</b> since 1 Nov 2026 an ${unitLink(ELGIF)} caught in these dungeons carries one of that dungeon's own extra skills, rarer ones on higher levels. The game doesn't say which skills each dungeon has.<ul>${
+  return rows.length ? `<div class="ecatch"><b>Catch one with a set skill:</b> since 1 Nov 2026 an ${unitLink(ELGIF)} caught in these dungeons carries one of that dungeon's own extra skills, rarer ones on higher levels. Each Elgif below says which of these dungeons (and levels) give it.<ul>${
     rows.map(([d, v]) => `<li><b>${esc(d)}</b> ${v.sort((a, b) => cmpNum(a[0], b[0])).map(([lv, c]) => `${esc(lv)} <span class="chance">${c}%</span>`).join(" · ")}</li>`).join("")
     }</ul><span class="dim small">Capture chance, from Revived's live game data.</span></div>` : "";
 };
 async function renderElgifs() {
-  const [E, S] = await Promise.all([load("elgifs"), load("usrc")]), all = Array.isArray(E) ? E : [], q = $("eq").value.trim().toLowerCase();
+  const [E, S] = await Promise.all([load("elgifs"), load("usrc"), loadElgx()]), all = Array.isArray(E) ? E : [], q = $("eq").value.trim().toLowerCase();
   USRC = S;
   const ways = new Map(all.map(e => [e, elgifWays(e, S)])), has = (e, k) => ways.get(e).some(([w]) => w === k);
   if (!$("echips").children.length) {
@@ -2517,14 +2532,16 @@ async function renderElgifs() {
     const key = e => ways.get(e).filter(([w]) => w === eType).map(([, t]) => t).sort(cmpNum)[0] || "";
     list.sort((a, b) => cmpNum(key(a), key(b)));
   }
-  $("ecount").innerHTML = `${list.length} Elgif${list.length === 1 ? "" : "s"}${q ? ` matching “${esc($("eq").value.trim())}”` : one ? ` from ${esc(eType)}, in order` : ", the rarest first"}${elgifWhy()}${
+  $("ecount").innerHTML = `${list.length} Elgif${list.length === 1 ? "" : "s"}${q ? ` matching “${esc($("eq").value.trim())}”` : one ? ` from ${esc(eType)}, in order` : ", the rarest first"}${elgifWhy()}${ELGX_CREDIT}${
     q || one ? "" : elgifCatchHtml(S)}`;
   $("ecount").querySelectorAll("[data-unit]").forEach(b => b.onclick = () => go(`#/unit/${b.dataset.unit}`));
   paged($("elist"), list, e => { const d = document.createElement("div"); d.className = "item"; d.style.cursor = "default";
     d.innerHTML = `<div class="er">${elgifRarity(e.r)}</div><div style="min-width:0;flex:1"><div class="t">${esc(e.name)}${elgifGets(e) ? `<span class="craft got">in Revived</span>` : ""}</div><div class="eff">${hl(e.desc)}</div>${
       elgifGets(e) ? `<div class="eget">${(e.g || []).map(([m, first]) => `<div><span class="gtag clearreward">Clear reward</span> ${first ? "first clear of" : "every clear of"} <b>${qpath(srcQuest(S, m))}</b></div>`).join("")}${
         (e.p || []).map(([mode, at, how]) => `<div><span class="gtag ${mode === "Grand Quest" ? "grandquestreward" : "frontier"}">${esc(mode)}</span> <b>${esc(at)}</b>${how ? `: ${esc(how)}` : ""}</div>`).join("")}${
-        (e.a || []).map(([t, goal]) => `<div><span class="gtag achievement">Achievement</span> <b>${esc(t)}</b>${goal && goal !== t ? `: ${esc(goal)}` : ""}</div>`).join("")}</div>` : ""}</div>`;
+        (e.a || []).map(([t, goal]) => `<div><span class="gtag achievement">Achievement</span> <b>${esc(t)}</b>${goal && goal !== t ? `: ${esc(goal)}` : ""}</div>`).join("")}${
+        xWays(e).map(([k, t]) => `<div><span class="gtag ${XTAG[k] || ""}">${esc(k)}</span> ${esc(xText(k, t))}</div>`).join("")}${
+        ELGX[e.id] && xWays(e).length && (ELGX[e.id].n || ELGX[e.id].l) ? `<div class="dim small">${ELGX[e.id].l ? "Limited time" : ""}${ELGX[e.id].l && ELGX[e.id].n ? " · " : ""}${esc(ELGX[e.id].n || "")}</div>` : ""}</div>` : ""}</div>`;
     return d; }, "");
 }
 // ---------------- crafting planner (the game's Synthesis recipes: item -> [karma, [[material, count], ...]]) ----------------
@@ -3623,7 +3640,7 @@ function paradigm(team) {
 TEAMS.forEach((_, t) => { TTYPE[t] ??= Array(6).fill("lord"); TSPH[t] ??= Array.from({ length: 6 }, () => [null, null]); TELG[t] ??= Array(6).fill(null); TSPE[t] ??= Array(6).fill(null); TOMNI[t] ??= Array(6).fill(0); TCAST[t] ??= Array(6).fill(null); });  // teams added later
 // the Elgifs by id, once elgifs.json has loaded (the squad numbers count the stat boosts of the one a unit carries)
 let ELGMAP = null;
-const elgifMap = async () => { if (!ELGMAP) { const E = await load("elgifs"); ELGMAP = Object.fromEntries((Array.isArray(E) ? E : []).map(e => [e.id, e])); } return ELGMAP; };
+const elgifMap = async () => { if (!ELGMAP) { const [E] = await Promise.all([load("elgifs"), loadElgx()]); ELGMAP = Object.fromEntries((Array.isArray(E) ? E : []).map(e => [e.id, e])); } return ELGMAP; };
 // what counts in the numbers; like the game's squad screen by default: leader skill and extra skills, no friend
 let SQ = { imps: true, lead: true, friend: false, es: true, maxcost: "", ...store.get("bf.sq", {}) };
 const saveSquad = () => { store.set("bf.ttype", TTYPE); store.set("bf.tsph", TSPH); store.set("bf.telg", TELG); store.set("bf.tspe", TSPE); store.set("bf.tomni", TOMNI); store.set("bf.tcast", TCAST); store.set("bf.sq", SQ); };
