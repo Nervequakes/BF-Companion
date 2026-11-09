@@ -2167,6 +2167,12 @@ async function showUnit(id) {
     w.hits ? `<span class="badge">${w.hits} hits</span>` : ""].join("");
   // skills: the wiki's version has the numbers in full; fall back to the game's text, BC cost and hits
   let skills = w.skills || [];
+  // a wiki text cut off mid-sentence ("30% boost to Atk, max HP &"): the game's own text finishes it when it starts the same
+  {
+    const gameText = { "Leader Skill": d.leader?.desc, "Extra Skill": d.extra, ...Object.fromEntries((d.skills || []).map(g => [g.label, g.desc])) };
+    skills = skills.map(s => { const t = (s.desc || "").trim(), g = (gameText[s.kind] || "").trim();
+      return /(?:&|,|\band)$/.test(t) && g.length > t.length && g.toLowerCase().startsWith(t.toLowerCase()) ? { ...s, desc: g } : s; });
+  }
   // what Revived changed in them (its own data against the wiki's): a button by Skills shows Revived's version
   const rvc = w.skills?.length ? rvChanges(w, d, u.e) : { add: {}, num: {} };
   const rvUp = Object.keys(rvc.add).length > 0 || Object.values(rvc.num).some(v => v.some(rvBetter)), rvOn = rvUp || Object.keys(rvc.num).length > 0;
