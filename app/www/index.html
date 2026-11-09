@@ -1663,25 +1663,46 @@ function statTable(u, w) {
 // kind only counts when the game's numbers show it. A unit with one gets a button by Skills for Revived's version.
 // No lookbehind in these patterns: older iPhone Safari can't read it, and it would stop the whole page.
 const RV_EL = "(?:fire|water|earth|thunder|light|dark)";
-const RV_EM = new RegExp(`elemental damage reduction|reduction of elemental damage|damage reduction from ${RV_EL}|reduces damage from ${RV_EL}|reduction to ${RV_EL}[a-z, ]* elemental damage|reduces ${RV_EL}[a-z, ]* elemental damage`, "g");
+const RV_EM = new RegExp(`elemental damage reduction|reduction of elemental damage|damage reduction from ${RV_EL}|reduces damage (?:taken )?from ${RV_EL}|reduction in damage (?:taken )?from ${RV_EL}|reductions? to ${RV_EL}[a-z, ]* element(?:al)? damage|reduces? ${RV_EL}[a-z, ]* element(?:al)? damage|damage taken from ${RV_EL}`, "g");
+const RV_WEAK = /(?:elemental|critical|spark)(?:(?:,| and|\/) ?(?:elemental|critical|spark))* weakness/g;  // a vulnerability, not the Weak ailment
 const RV_KINDS = {
-  "mitigation": /damage reduction(?! when guarding)(?! to 1)|reduction of damage taken|reduces damage taken/, "damage reduced to 1": /damage (?:reduction )?to 1\b/,
-  "DEF ignore": /def ignor(?!ing effects)/, "pierce": /pierce/, "ailments on foes": /poison|injury|sick\b|\bweak\b|curse|paralysis/,
-  "damage over time": /venom|\bdot\b|damage over time|additional damage at turn/, "vulnerability on foes": /vulnerability/,
-  "ATK/DEF down on foes": /(?:atk|def)(?:, def)?(?:, rec)? reduction infliction/, "cast twice": /twice/, "extra action": /extra action/,
-  "critical damage": /critical (?:hit )?damage(?! reduction)|damage on critical/, "critical rate": /critical (?:hit )?rate/,
-  "spark": /spark damage(?! reduction)(?! restores)(?! fills)(?! boosts bb)(?! considerably boosts bb)/, "spark critical": /spark critical/,
-  "elemental": /elemental damage(?! reduction)/, "all elements": /all elements/,
-  "ATK boost": /boosts? (?:own )?atk|\d+% (?:boost to )?(?:[a-z ,]+ and )?atk\b|% all parameters|boost to all parameters/, "BB ATK": /bb atk/,
-  "BB fill": /(?:fills|boosts|fill) (?:own )?bb gauge|bc efficacy|bb gauge fill rate(?! reduction)/, "spark fills BB": /spark damage (?:\w+ )?(?:fills|boosts) bb/,
-  "OD fill": /od gauge/, "heal": /restores? hp|heals? |hp restor|recovers? hp|restore hp/, "KO resistance": /ko resistance|ko attack|angel idol/,
-  "revive": /raises (?:allies )?from ko|revive/, "barrier": /barrier|shield/, "taunt": /taunt/, "evasion": /evasion/,
-  "negate ailments": /negates (?:all )?(?:status )?ailments|negates all status/, "cure ailments": /removes all status ailments|cures?/,
-  "raised ATK limit": /atk (?:parameter )?limit/, "stat conversion": /relative to (?:def|rec|max hp|hp)/, "normal attack boosts": /normal hit amount|normal attacks/,
-  "LS/ES lock purge": /(?:ls|es) (?:and es )?lock/, "cheaper BB": /reduction to bb activation cost|reduces bb gauge required/ };
-function rvKinds(t) {  // the kinds of effect a skill's text names
+  "mitigation": /damage reduction(?! when guarding)(?! to 1)|reduction of damage taken|reduces? damage taken(?! to 1)|damage mitigation/,
+  "damage reduced to 1": /damage (?:reduction )?to 1\b|damage taken to 1\b|reduced to 1\b/,
+  "DEF ignore": /def ignor(?!ing effects)/,
+  "pierce": /pierce/,
+  "ailments on foes": /poison|injury|\bsick(?:ness)?\b|\bweak(?:ness)?\b(?! damage)(?! dmg)|curse|paralysis/,
+  "damage over time": /venom|\bdot\b|damage over time|additional (?:[a-z]+ )?(?:damage|attack) (?:at )?turn/,
+  "vulnerability on foes": /vulnerability/,
+  "ATK/DEF down on foes": /(?:atk|def)(?:, def)?(?:, rec)? reduction infliction/,
+  "cast twice": /twice/,
+  "extra action": /extra action/,
+  "critical damage": /critical (?:hit )?damage(?! reduction)|damage on critical|critical (?:hit )?rate (?:and|&) damage/,
+  "critical rate": /critical (?:hit )?rate/,
+  "spark": /spark damage(?! reduction)(?! restores)(?! fills)(?! boosts? bb)(?! considerably boosts? bb)|damage (?:dealt )?during spark/,
+  "spark critical": /spark critical/,
+  "elemental": /elemental damage(?! reduction)|weak(?:er)? elements?/,
+  "all elements": /all elements/,
+  "ATK boost": /boosts? (?:own )?atk|\d+% (?:boost to )?(?:[a-z ,]+ and )?atk\b|% all parameters|boost to all parameters|boost to atk\b/,
+  "BB ATK": /bb atk/,
+  "BB fill": /(?:fills|boosts|fill) (?:own )?bb gauge|bc efficacy|bb gauge fill rate(?! reduction)|increases? (?:all )?(?:allies' )?bb gauge|recovers? bb gauge|boost to bb gauge/,
+  "spark fills BB": /spark damage (?:\w+ )?(?:fills|boosts?) bb/,
+  "OD fill": /od (?:gauge|fill)/,
+  "heal": /restores? hp|heals? |hp restor|recovers? hp|restore hp/,
+  "KO resistance": /ko resistance|ko attack|angel idol/,
+  "revive": /raises (?:allies )?from ko|revive/,
+  "barrier": /barrier|shield/,
+  "taunt": /taunt/,
+  "evasion": /evasion/,
+  "negate ailments": /negates (?:all )?(?:status )?ailments|negates all status|nullif\w* (?:all )?(?:status )?ailments/,
+  "cure ailments": /removes (?:all )?status ailments|cures?/,
+  "raised ATK limit": /atk (?:parameter )?limit/,
+  "stat conversion": /relative to (?:their )?(?:def|rec|max hp|hp)/,
+  "normal attack boosts": /normal hit (?:amount|count)|normal attacks/,
+  "LS/ES lock purge": /(?:ls|es) (?:and es )?lock/,
+  "cheaper BB": /reduction (?:to bb activation cost|in bb gauge required)|reduces bb gauge required/ };
+function rvKinds(t) {  // the kinds of effect a skill's text names (the wiki's and Revived's words for one effect count as one)
   const lo = String(t || "").toLowerCase(), rest = lo.replace(RV_EM, " "), out = new Set(rest !== lo ? ["elemental mitigation"] : []);
-  for (const [k, re] of Object.entries(RV_KINDS)) if (re.test(rest)) out.add(k);
+  for (const [k, re] of Object.entries(RV_KINDS)) if (re.test(k === "ailments on foes" ? rest.replace(RV_WEAK, " ") : rest)) out.add(k);
   return out;
 }
 // a buff's value in the wiki's effect lines (the global game's numbers)
@@ -2174,7 +2195,7 @@ async function showUnit(id) {
       return /(?:&|,|\band)$/.test(t) && g.length > t.length && g.toLowerCase().startsWith(t.toLowerCase()) ? { ...s, desc: g } : s; });
   }
   // what Revived changed in them (its own data against the wiki's): a button by Skills shows Revived's version
-  const rvc = w.skills?.length ? rvChanges(w, d, u.e) : { add: {}, num: {} };
+  const rvc = w.skills?.length ? rvChanges({ ...w, skills }, d, u.e) : { add: {}, num: {} };  // with a cut-off wiki text finished
   const rvUp = Object.keys(rvc.add).length > 0 || Object.values(rvc.num).some(v => v.some(rvBetter)), rvOn = rvUp || Object.keys(rvc.num).length > 0;
   const rvLabel = rvUp ? "▲ Buffed in Revived" : "Changed in Revived";
   if (!skills.length) skills = [
