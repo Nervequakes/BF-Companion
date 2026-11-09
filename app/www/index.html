@@ -614,7 +614,7 @@ body.boxedit .totop { bottom: calc(var(--navh) + 78px); } body.boxedit .toast { 
     <div class="count" id="ecount"></div><div id="elist" style="padding-top:10px"></div>
   </section>
   <section class="view" id="v-spheres">
-    <div class="bar2"><div class="searchrow"><input id="sq" type="search" placeholder="Search spheres and items…" autocomplete="off"></div><div class="scroller sug" id="ssug"></div><div class="scroller" id="stype"></div><div class="scroller" id="sel"></div></div>
+    <div class="bar2"><div class="searchrow"><input id="sq" type="search" placeholder="Search spheres and items…" autocomplete="off"></div><div class="scroller sug" id="ssug"></div><div class="scroller" id="stype"></div><div class="scroller" id="sel"></div><div class="scroller" id="sget"></div></div>
     <div class="count" id="scount"></div><div id="slist" style="padding-top:10px"></div>
   </section>
   <section class="view" id="v-drops">
@@ -795,7 +795,7 @@ const roleOf = (id, code, leaderToo) => { const s = TAGS.units[id]?.[code] || ""
 const SKILL_NAMES = { L: "LS", E: "ES", B: "BB", S: "SBB", U: "UBB" };
 // how strong a role is on the unit's BB/SBB: [value, skill letter], e.g. mitigation [50, "B"]
 const powerOf = (id, c) => TAGS.power[id]?.[c];
-const fmtPower = (c, p) => !p ? "" : c === "heal" && p[0] >= 10000 ? "full heal" : `${p[0].toLocaleString("en")}${TAGS.powerUnit[c] || (c === "critrate" ? "%" : "")}`;
+const fmtPower = (c, p) => !p ? "" : c === "heal" && p[0] >= 10000 ? "full heal" : `${p[0].toLocaleString("en")}${TAGS.powerUnit[c] || (c === "critrate" || c === "twice" ? "%" : "")}`;
 const fmtShort = (c, p) => c === "heal" ? p[0] >= 10000 ? "full" : `${+(p[0] / 1000).toFixed(1)}k HP` : fmtPower(c, p);  // under a unit's icon
 // SP options that add to or improve a skill (tags.json's "sp", from unit_tags.py): {"category:option": [SP with the option
 // it needs first, the skills it changes (L B S U), "role codes", {tier role: value}, [defense tools and debuffs]]}
@@ -1165,7 +1165,8 @@ async function skillText() {
 let UNITS = [], UMAP = {};
 const FODDER = /^((fire|water|earth|thunder|light|dark) (crystal|god|idol|nymph|spirit|totem|jewel|sprite|elemental)|metal (king|ghost|mimic|totem|god)|(dragon |king )?mimic|gs-220|.*burny|.*bulb|sphere frog|.*imp)$/i;
 const RARITY = [["omni", `${OMNI}Omni`, u => u.r === 8], ["7", `7${STAR}`, u => u.r === 7], ["6", `6${STAR}`, u => u.r === 6], ["5", `5${STAR}`, u => u.r === 5], ["low", `4${STAR} and below`, u => u.r < 5]];
-let uState = { els: new Set(ELS), rar: new Set(["omni", "7", "6"]), q: "", sort: "rarity", roles: [], get: [], showRoles: false, mine: false, ...store.get("bf.units", {}) };
+let uState = { els: new Set(ELS), rar: new Set(["omni", "7", "6"]), q: "", sort: "rarity", roles: [], get: [], showRoles: false, mine: false, rv: "", ...store.get("bf.units", {}) };
+// uState.rv: "b" the units Revived buffed, "n" the ones it nerfed (tags.json "rv"), "" all
 uState.els = new Set(uState.els); uState.rar = new Set(uState.rar); uState.roles = new Set(uState.roles); uState.get = new Set(uState.get);
 delete uState.mine; if (uState.sort === "lv") uState.sort = "rarity";  // box filter and sort from 4.0–4.3
 let viewMode = store.get("bf.view", "grid"), favs = new Set(store.get("bf.favs", []));
@@ -1356,7 +1357,7 @@ function filteredUnits(anyRarity) {
   const q = uState.q.trim().toLowerCase(), rars = RARITY.filter(r => uState.rar.has(r[0]));
   // fodder (Imps, Crystals, Metal units…) show with their rarity like any unit: the archive has them too
   const list = UNITS.filter(u => (!u.e || uState.els.has(u.e)) && (anyRarity || q || uState.mine || !rars.length || rars.some(r => r[2](u)))
-    && (!uState.mine || mine.has(u.id)) && (!uState.miss || !mine.has(u.id)) && [...uState.roles].every(c => roleOf(u.id, c, true)) && (!uState.get.size || hasSrc(u.id)) && searchHit(u, q));
+    && (!uState.mine || mine.has(u.id)) && (!uState.miss || !mine.has(u.id)) && [...uState.roles].every(c => roleOf(u.id, c, true)) && (!uState.get.size || hasSrc(u.id)) && (!uState.rv || (TAGS.rv?.[u.id] || "").includes(uState.rv)) && searchHit(u, q));
   const role = activeRole();
   if (uState.sort === "power" && role) return list.sort(byPower(role));  // strongest first
   list.sort(SORTS[uState.sort] || SORTS.rarity);
@@ -1458,10 +1459,11 @@ function filterSummary() {
   if (uState.miss) parts.push("not in my box");
   if (uState.roles.size) parts.push([...uState.roles].map(c => TAGS.labels[c]).join(" + "));
   if (uState.get.size) parts.push(GETS.filter(g => uState.get.has(g[0])).map(g => g[1]).join(" / "));
+  if (uState.rv) parts.push(uState.rv === "b" ? "buffed in Revived" : "nerfed in Revived");
   return parts.join(" · ");
 }
 function updateFilterUI() {
-  const n = (uState.els.size < ELS.length ? 1 : 0) + uState.roles.size + uState.get.size + (uState.mine ? 1 : 0) + (uState.miss ? 1 : 0);
+  const n = (uState.els.size < ELS.length ? 1 : 0) + uState.roles.size + uState.get.size + (uState.mine ? 1 : 0) + (uState.miss ? 1 : 0) + (uState.rv ? 1 : 0);
   $("ufn").textContent = n || ""; $("ufbtn").classList.toggle("on", !!uState.showFilters);
   $("ufilters").hidden = !uState.showFilters; $("usum").hidden = !!uState.showFilters;
   $("usum").innerHTML = `${esc(filterSummary())} <b>▾</b>`;
@@ -1596,6 +1598,14 @@ function setupUnitFilters() {
   for (const [k, label] of GETS) {
     const b = chip(label, uState.get.has(k));
     b.onclick = () => { uState.get.has(k) ? uState.get.delete(k) : uState.get.add(k); b.classList.toggle("on"); renderUnits(); };
+    $("uget").append(b);
+  }
+  // the units Revived changed (the unit page's Buffed in Revived button), one way at a time; tap again for all
+  const rl = document.createElement("span"); rl.className = "rowlbl"; rl.textContent = "Revived:"; rl.style.marginLeft = "8px"; $("uget").append(rl);
+  const rvN = k => Object.values(TAGS.rv || {}).filter(v => v.includes(k)).length;
+  for (const [k, label] of [["b", "▲ Buffed"], ["n", "▼ Nerfed"]]) {
+    const b = chip(`${label} <small>${rvN(k)}</small>`, uState.rv === k); b.dataset.rv = k;
+    b.onclick = () => { uState.rv = uState.rv === k ? "" : k; $("uget").querySelectorAll("[data-rv]").forEach(c => c.classList.toggle("on", c.dataset.rv === uState.rv)); saveU(); renderUnits(); };
     $("uget").append(b);
   }
   $("usort").value = uState.sort; $("uq").value = uState.q;
@@ -2267,6 +2277,11 @@ async function showUnit(id) {
 let sType = store.get("bf.stype", "All"), sRev = store.get("bf.srev", false);
 if (sType === "Materials") sType = "Items";  // the chip's old name
 let sEl = store.get("bf.sel", "");  // only spheres whose effect names this element ("boost to Atk of Fire types"), "" any
+// only what Revived gives one way (items.json "get" kinds: a quest drop, a shop, a raid…), "" any way
+const SGET = [["Craft", "Craft"], ["Shop", "Shop"], ["Raid", "Raid"], ["Frontier", "Frontier"], ["Arena", "Arena"], ["Achievement", "Achievement"],
+  ["Grand Quest", "Grand Quest"], ["Clear reward", "Quest reward"], ["Drops", "Quest drop"]];
+let sSrc = store.get("bf.ssrc", "");
+const fromSrc = (s, k) => !k || (s.get || []).some(g => g.kind === k);
 let sFav = false;  // only your favorite spheres and items (not remembered: the list never looks empty by surprise next time)
 const IFSTAR = `<img class="sti ifav" src="/static/star_fav.png" alt="★"> `;
 // back on the Items tab after a ★ was tapped on an item page: the stars in the list follow (the ★ filter redraws it)
@@ -2421,16 +2436,23 @@ async function renderSpheres() {
   const label = { All: "spheres and items", Spheres: "spheres", Items: "items", Craftable: "craftable items" }[sType] || `${sType} spheres`;
   const elRe = sEl && new RegExp(`\\b${sEl}\\b`, "i");
   const fx = sphMode(), named = s => !q || s.name.toLowerCase().includes(q);
-  const match = s => (fx ? itemHit(s, q) : named(s)) && (!sRev || s.ok === 1) && (!elRe || elRe.test(s.desc || "")) && (!sFav || ifavs.has(s.id));
+  const match0 = s => (fx ? itemHit(s, q) : named(s)) && (!sRev || s.ok === 1) && (!elRe || elRe.test(s.desc || "")) && (!sFav || ifavs.has(s.id));
+  const match = s => match0(s) && fromSrc(s, sSrc);
+  // the Get it row: each way with how many of this list it gives (a way none of them comes from is left out)
+  const base = all.filter(x => match0(x) && pick(x)), ways = SGET.map(([k, l]) => [k, l, base.filter(x => fromSrc(x, k)).length]).filter(([k, , n]) => n || k === sSrc);
+  $("sget").innerHTML = ways.length ? `<span class="rowlbl">Get it:</span>${ways.map(([k, l, n]) => `<button class="chip${k === sSrc ? " on" : ""}" data-src="${esc(k)}">${esc(l)} <small>${n}</small></button>`).join("")}` : "";
+  $("sget").querySelectorAll("[data-src]").forEach(b => b.onclick = () => { sSrc = sSrc === b.dataset.src ? "" : b.dataset.src; store.set("bf.ssrc", sSrc); renderSpheres(); });
   // a search looks through the chip's own list; when that has none, through everything (said so)
   let list = all.filter(s => match(s) && pick(s)), wider = false;
   if (q && !list.length && sType !== "All") { list = all.filter(match); wider = list.length > 0; }
   list.sort((a, b) => (b.rarity || 0) - (a.rarity || 0) || a.name.localeCompare(b.name) || (b.ok || 0) - (a.ok || 0));  // two of a name: Revived's first
   if (q && (!fx || canonItemQ(q) === q)) list.sort((a, b) => !a.name.toLowerCase().includes(q) - !b.name.toLowerCase().includes(q));  // name matches first (stable)
   const guess = !!q && !list.length;  // nothing anywhere: the closest names
-  if (guess) list.push(...closeNames(q, all.filter(s => (!sRev || s.ok === 1) && (!sFav || ifavs.has(s.id))), s => s.name, s => s.rarity || 0).slice(0, 12));
+  if (guess) list.push(...closeNames(q, all.filter(s => (!sRev || s.ok === 1) && (!sFav || ifavs.has(s.id)) && fromSrc(s, sSrc)), s => s.name, s => s.rarity || 0).slice(0, 12));
   const n = list.length, typed = $("sq").value.trim(), asRead = fx && q && canonItemQ(q) !== q ? ` (read as “${canonItemQ(q)}”)` : "", res = `${n} result${n === 1 ? "" : "s"}${asRead}`;
-  const only = `${sFav ? " in your favorites" : ""}${sRev && sType !== "Craftable" ? " you can get in Revived" : ""}${sEl ? ` that name ${sEl}` : ""}`;
+  const srcL = { Craft: "you can craft", Shop: "from a shop", Raid: "from a raid", Frontier: "from Frontier", Arena: "from the Arena", Achievement: "from an achievement",
+    "Grand Quest": "from a Grand Quest", "Clear reward": "as a quest reward", Drops: "dropped in quests" }[sSrc];
+  const only = `${sFav ? " in your favorites" : ""}${sRev && sType !== "Craftable" && !srcL ? " you can get in Revived" : ""}${srcL ? ` ${srcL}` : ""}${sEl ? ` that name ${sEl}` : ""}`;
   $("scount").textContent = guess && n ? `No exact match for “${typed}”${only}. Did you mean:`
     : wider ? `No ${label} with “${typed}”${only}: ${res} in all spheres and items`
     : q ? `${res}${sType === "All" ? "" : ` in ${label}`}${only}`
@@ -3110,6 +3132,8 @@ if (!TEAMS[TCUR]) TCUR = 0;
 const teamName = i => TNAMES[i] || `Team ${i + 1}`;
 const saveTeams = () => { store.set("bf.teams", TEAMS); store.set("bf.tcur", TCUR); store.set("bf.tnames", TNAMES); };
 const COVER = ["mit", "heal", "bbf", "atk", "bbatk", "spark", "crit", "critrate", "elem", "snull", "ko", "defign", "debuff"];
+// shown in What the team covers too, not counted by Fill (sarc on Discord: Phaedra's recast, Legato's extra action)
+const COVER_SHOW = [...COVER, "twice", "xact"];
 // what a squad unit uses all the time: its extra skill, its leader skill as the leader or the friend, and the one skill
 // it casts in the battle check (its SBB unless set there, else its BB). A buff only on its other skills (a BB's, while it
 // casts its SBB every turn; a UBB's) isn't counted for the team.
@@ -3414,7 +3438,19 @@ function teamDamage(t, half, fresh) {
   }, 0);
 }
 // how much a newer unit counts (0 to 1 by release, times this): new units are usually stronger (power creep), not always
-const FILL_W = { newness: 8, old: 15 };
+// 2026-11-09: the tier list's place replaces newness (A/B on empty teams and simulated boxes: more S picks, more damage,
+// the same roles); newness and old stay for a later look
+const FILL_W = { newness: 0, old: 0, tier: 40, tierEnd: 40 };
+// each unit's place on the tier list (All roles) of its element, 0 for the last to 1 for the best: what players count
+// as strong (the tier score is fitted to the community's view), for Fill to weigh (FILL_W.tier, tierEnd)
+const FILL_TIER = new Map();
+async function fillTierPrep(els) {
+  const DET = await load("details");
+  for (const el of els) { if (FILL_TIER.has("el:" + el)) continue;
+    const ids = tierRows(DET, await tierPrep(DET, el), el, "all").flatMap(([, us]) => us.map(x => x.u.id));
+    ids.forEach((id, k) => FILL_TIER.set(id, 1 - k / Math.max(1, ids.length - 1))); FILL_TIER.set("el:" + el, 1); }
+}
+const tierP = id => FILL_TIER.get(id) || 0;
 // the swap check after Fill picks a team: how many rounds, and how many swaps (the best by the quick damage estimate) a round judges
 const FILL_SWAP = { rounds: 2, keep: 8, screen: 300 };  // screen: a pool bigger than this is screened first  // old: what a unit from before release number 8000 counts less
 // keep: how many teams to give back (the best first, the team itself not changed); 1 fills the team with the best
@@ -3456,7 +3492,7 @@ function* autoFillSteps(team, el, S, keep = 1) {
     const ls = lead ? ["atk", "mit", "bbf", "crit", "critrate", "elem", "spark", "heal"].filter(c => teamLetters(u.id, c).includes("L")).length : 0;
     if (live) return { score: (covers + sp.length * .8) * 10 + ls * 3 + newness.get(u.id) * 15 + u.r + u.atk / 1e5, sp };  // the 5.6.30 Fill
     const raise = NUM_ROLES.reduce((a, c) => a + Math.min(1, Math.max(0, teamVal(u.id, s, c, true) - tops[c]) / (POWER_MAX[c] || 1)), 0);
-    return { score: (covers + sp.length * .8) * 10 + ls * 3 + raise * 6 + newness.get(u.id) * FILL_W.newness - ((u.no || 0) < 8000 ? FILL_W.old : 0) + u.r / 10, sp };
+    return { score: (covers + sp.length * .8) * 10 + ls * 3 + raise * 6 + newness.get(u.id) * FILL_W.newness - ((u.no || 0) < 8000 ? FILL_W.old : 0) + tierP(u.id) * FILL_W.tier + u.r / 10, sp };
   }
   const missingIn = (t, spNeed) => COVER.filter(c => !providers(t, c).length && !Object.values(spNeed).some(r => r.includes(c)));
   // the rest of the empty slots, one at a time, the best unit for each
@@ -3470,7 +3506,7 @@ function* autoFillSteps(team, el, S, keep = 1) {
   }
   // a whole team: the roles it covers, its top numbers, its units' newness (its damage: teamDamage, below)
   const worth = (t, spNeed) => (COVER.length - missingIn(t, spNeed).length) * 10 + NUM_ROLES.reduce((a, c) => a + Math.min(1, top(t, c) / (POWER_MAX[c] || 1)), 0) * 6
-    + empty.reduce((a, s) => a + (t[s] ? (newness.get(t[s]) || 0) * FILL_W.newness - ((UMAP[t[s]]?.no || 0) < 8000 ? FILL_W.old : 0) : 0), 0);
+    + empty.reduce((a, s) => a + (t[s] ? (newness.get(t[s]) || 0) * FILL_W.newness - ((UMAP[t[s]]?.no || 0) < 8000 ? FILL_W.old : 0) + tierP(t[s]) * FILL_W.tier : 0), 0);
   // several first picks (the best few for the first empty slot), each team filled the same way, the best one kept
   const cands = [];
   // built twice: with the game's formula (teamDamage) and with the rough estimate (roughDamage), each its own first picks
@@ -4040,7 +4076,11 @@ async function renderTeam() {
   // a redraw (a skill picked in the battle check, a sphere, Omni+) keeps you where you were (the user: "when changing the
   // skill the page goes all the way up, i want to stay at the section"): the new right pane on a PC would start at its
   // top, and on a phone the page, shorter for a moment while its pictures come back, would pull you up
-  const keep = v.offsetParent && v.firstElementChild ? { y: scrollY, pane: v.querySelector(".tpane.tr")?.scrollTop || 0 } : null;
+  // on a PC also the right pane's section at its top and where it sat: a section above it that grows or shrinks (the
+  // cover table after a skill is picked) then doesn't push what you were looking at
+  const anchorOf = p => { if (!p) return null; const pt = p.getBoundingClientRect().top, i = [...p.children].findIndex(c => c.getBoundingClientRect().bottom > pt + 1);
+    return i < 0 ? null : [i, p.children[i].getBoundingClientRect().top - pt]; };
+  const keep = v.offsetParent && v.firstElementChild ? { y: scrollY, pane: v.querySelector(".tpane.tr")?.scrollTop || 0, anc: anchorOf(v.querySelector(".tpane.tr")) } : null;
   if (keep) v.style.minHeight = `${v.offsetHeight}px`;
   // two panes (side by side on a PC): what you edit, then what it does (on a PC the cover table first)
   v.innerHTML = `<div class="tpanes"><div class="tpane tl"><div class="sec" style="padding:8px" data-jump="Field">
@@ -4067,13 +4107,13 @@ async function renderTeam() {
     <div class="sec tcov"><h3 class="green">What the team covers</h3><p class="covkey">Under each unit: where it gets it (LS, ES, BB, SBB, UBB, SP, or a small sphere icon, faded if only for that unit) and how much. Next to the role: the highest number in the team. <b style="color:#8fd0ff">Blue, self only</b>: it buffs only that unit. <b style="color:#e6c877">Dashed, if BB / SBB / UBB</b>: it's on that skill, and the unit casts another one in the battle check; tap it to cast that one. ◐: only self buffs. <b>Grey</b>: not active.</p>${(() => {
       const seen = new Set(), pairs = team.flatMap(id => { const d = id && dbbWith(team, id), p = d && d.p.find(x => team.includes(x)), k = p && [id, p].sort().join();
         if (!k || seen.has(k)) return []; seen.add(k); return [`<b class="dbbok">${esc(UMAP[id]?.n || "")}</b> + <b class="dbbok">${esc(UMAP[p]?.n || "")}</b>${d.n ? ` (${esc(d.n)})` : ""}`]; });
-      return pairs.length ? `<p class="covkey dbbkey">Dual BB ready: ${pairs.join(", ")}. Its buffs show as <b>DBB</b>: the battle check has each unit cast its own skill, so they don't count.</p>` : ""; })()}<div class="cov"><div class="covh"><span></span>${team.map((id, i) => `<span>${id ? (i === 0 ? "Leader" : i === 5 ? "Friend" : `Unit ${i + 1}`) : ""}</span>`).join("")}</div>${COVER.map(c => {
+      return pairs.length ? `<p class="covkey dbbkey">Dual BB ready: ${pairs.join(", ")}. Its buffs show as <b>DBB</b>: the battle check has each unit cast its own skill, so they don't count.</p>` : ""; })()}<div class="cov"><div class="covh"><span></span>${team.map((id, i) => `<span>${id ? (i === 0 ? "Leader" : i === 5 ? "Friend" : `Unit ${i + 1}`) : ""}</span>`).join("")}</div>${COVER_SHOW.map(c => {
         const src = team.map((id, i) => id ? { i, id, ...roleSrc(team, i, c) } : null).filter(r => r && (r.on.length || r.off.length || r.self.length)), on = src.filter(r => r.on.length), off = src.filter(r => !r.on.length);
         // each unit's number from what it uses (a BB/SBB value only from the skill it casts, SP only for those skills);
         // for each skill it uses: the game's number for the team, else the skill text's (ES and LS too), else the game's
         // number for the unit itself ("self"); and the SP picked for those skills
         const valOf = r => {
-          const vals = r.on.filter(l => l !== "P").map(l => { if (l === "H") { const v = Math.max(0, ...r.sph.filter(x => sphTeamOf(x, r.i)).map(x => x[1])); return v ? [v, "H"] : null; } const g = (TEAM_D?.[r.id]?.skills || []).find(s => CAST_L[s.label] === l), team = g?.buffs?.[c], txt = TAGS.powerAll?.[r.id]?.[c]?.[l], own = g?.own?.[c];
+          const vals = r.on.filter(l => l !== "P").map(l => { if (l === "H") { const v = Math.max(0, ...r.sph.filter(x => sphTeamOf(x, r.i)).map(x => x[1])); return v ? [v, "H"] : null; } const g = (TEAM_D?.[r.id]?.skills || []).find(s => CAST_L[s.label] === l), team = c === "twice" ? g?.twice : g?.buffs?.[c], txt = TAGS.powerAll?.[r.id]?.[c]?.[l], own = g?.own?.[c];
             return team ? [team, l] : txt ? [txt, l, 0, TAGS.powerAll[r.id][c]["~" + l] || 0] : own ? [own, l, 1] : null; });
           const sp = (TSPE[TCUR][r.i]?.k || []).map(k => spRoleOpts(r.id)[k]).filter(x => spFor(x, r.i === 0 || r.i === 5) && onSkill(x, r.now) && x[3]?.[c]);
           return [...vals, ...sp.map(x => [x[3][c], "SP"])].filter(Boolean).sort((a, b) => b[0] - a[0] || (a[2] || 0) - (b[2] || 0))[0] || null; };
@@ -4153,6 +4193,7 @@ async function renderTeam() {
     const snap = teamSnap(), at = TCUR, before = [...team], S = await load("usrc"), D = await load("details");
     // the best few teams by roles and buffs, each through the battle check (with BB where that helps): the one where
     // the most units can cast every turn and that hits hardest is kept
+    await fillTierPrep(fillEl ? [fillEl] : ELS);
     const I = await load("items"), cands = await autoFillAsync(team, fillEl, S, 5), news = [0, 1, 2, 3, 4, 5].filter(i => !before[i]);
     const cast0 = [...TCAST[TCUR]], spe0 = JSON.stringify(TSPE[TCUR]);
     const judge = async c => {  // a team with its SP and skills set the way Fill sets them, then the battle check you see
@@ -4169,7 +4210,9 @@ async function renderTeam() {
     };
     for (const c of cands) await judge(c);
     // the score: roles covered, units that cast every turn, sparks, damage (against the hardest-hitting team judged)
-    const all = [...cands], score = c => c.roles * 10 + c.can * 8 + c.rate * 8 + c.dmg / Math.max(1, ...all.map(x => x.dmg)) * 15;
+    const all = [...cands], tierAvg = c => news.reduce((a, i) => a + tierP(c.t[i]), 0) / Math.max(1, news.length);
+    // roles first (a team covering one more role always wins: the tier list's weight mustn't cost one), then the rest
+    const score = c => c.roles * 100 + c.can * 8 + c.rate * 8 + c.dmg / Math.max(1, ...all.map(x => x.dmg)) * 15 + tierAvg(c) * FILL_W.tierEnd;
     const top = () => all.reduce((a, c) => score(c) > score(a) ? c : a, all[0]);
     // the swap check: each team is built one slot at a time, so one a single swap away that scores higher was never
     // tried. Each unit Fill can use, in each slot it filled: the quick damage estimate keeps the best few that lose no
@@ -4223,6 +4266,7 @@ async function renderTeam() {
     TEAMS[TCUR] = Array(6).fill(null); for (let i = 0; i < 6; i++) resetSlot(i); saveTeams(); renderTeam(); undoToast(`${teamName(t)} cleared`, () => teamRestore(t, s)); };
   if (keep) {
     const p = v.querySelector(".tpane.tr"); if (p && keep.pane) p.scrollTop = keep.pane;
+    const a = p && keep.pane && keep.anc && p.children[keep.anc[0]]; if (a) p.scrollTop += a.getBoundingClientRect().top - p.getBoundingClientRect().top - keep.anc[1];
     if (Math.abs(scrollY - keep.y) > 1) scrollTo(0, keep.y);
     // the height it had, till its pictures are in (at most 1.5 s)
     const imgs = [...v.querySelectorAll("img")].filter(i => !i.complete), free = () => { v.style.minHeight = ""; };
