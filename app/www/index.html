@@ -2480,8 +2480,8 @@ let eType = store.get("bf.etype", "All");  // "All", "Get" (only the Elgifs Revi
 // text]], n: note, l: limited}}; a Frontier, quest-clear or achievement way the game's data already gives isn't repeated,
 // a Frontier one goes under its mode's own chip
 let ELGX = {};
-// the one credit for the ways to get Elgifs (the user, 2026-11-09): KayzX, a link to their YouTube channel
-const ELGX_CREDIT = `<p class="ecredit" style="margin:8px 0 2px;font-size:15px">Thanks to <a class="ulink" href="https://www.youtube.com/@KayzX" target="_blank" rel="noopener">KayzX</a> for the ways to get Elgifs!</p>`;
+// the one credit for the ways to get Elgifs (the user, 2026-11-09): KayzX, a link to their YouTube channel (the handle with its dot: @KayzX without it is someone else)
+const ELGX_CREDIT = `<p class="ecredit" style="margin:8px 0 2px;font-size:15px">Thanks to <a class="ulink" href="https://www.youtube.com/@KayzX." target="_blank" rel="noopener">KayzX</a> for the ways to get Elgifs!</p>`;
 const loadElgx = async () => { const x = await load("elgifx"); ELGX = x?.e || {}; return ELGX; };
 const FRONTIERS = ["Frontier Hunter", "Frontier Gate", "Frontier Rift", "Frontier Spire"];
 const xWays = e => (ELGX[e.id]?.w || []).filter(([k]) => !(k === "Frontier" && e.p?.length) && !(k === "Quest" && e.g?.length) && !(k === "Achievement" && e.a?.length))
