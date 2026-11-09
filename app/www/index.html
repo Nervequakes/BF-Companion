@@ -4171,7 +4171,7 @@ async function renderTeam() {
   v.querySelectorAll("[data-sph]").forEach(b => b.onclick = () => go(`#/sphere/${b.dataset.sph}`));
   v.querySelectorAll("[data-elg]").forEach(b => b.onclick = () => go(`#/elgif/${b.dataset.elg}`));
   v.querySelectorAll("[data-spe]").forEach(b => b.onclick = () => go(`#/spe/${b.dataset.spe}`));
-  v.querySelectorAll("[data-om]").forEach(s => s.onchange = () => { TOMNI[TCUR][+s.dataset.om] = +s.value; saveSquad(); renderTeam(); });
+  v.querySelectorAll("[data-om]").forEach(s => s.onchange = async () => { const i = +s.dataset.om; TOMNI[TCUR][i] = +s.value; saveSquad(); await spAuto(i); renderTeam(); });
   // the battle check's skill for a unit: a chooser of the ones it has
   v.querySelectorAll("[data-cast]").forEach(b => b.onclick = () => { const i = +b.dataset.cast, cur = b.textContent;
     modal(`<div class="about"><div class="big">${esc(UMAP[team[i]]?.n || "")} casts…</div><div class="tlist">${JSON.parse(b.dataset.info).map(([k, c, f]) =>
@@ -4518,10 +4518,31 @@ async function showSpPick(slot) {
     $("sppage").querySelectorAll("[data-build]").forEach(b => b.onclick = () => { const x = builds[+b.dataset.build]; use(at(x).keys, x.name); });
     $("spapp").onclick = () => use(spPicks(id, w.sp, cap(), new Set(), lead).keys, "app");
     $("spclear").onclick = () => { cur.clear(); from = null; save(); draw(); };
-    $("spomni").onchange = e => { TOMNI[TCUR][slot] = +e.target.value; saveSquad(); draw(); };
+    $("spomni").onchange = async e => { TOMNI[TCUR][slot] = +e.target.value; saveSquad();
+      await spAuto(slot); cur = new Set((TSPE[TCUR][slot]?.k || []).filter(k => byKey[k])); from = TSPE[TCUR][slot]?.b ?? null; draw(); };
   };
   window.scrollTo(0, 0);
   draw();
+}
+// a squad Omni unit's SP after its Omni+ level changed: the build it uses applied again at the new level (with what
+// its notes add there), or, when that no longer fits, the app's pick or no SP yet, the best build for it (bestSpFor,
+// else the app's pick); options chosen by hand (no build name) stay as they are
+async function spAuto(slot) {
+  const id = TEAMS[TCUR][slot], cur = TSPE[TCUR][slot];
+  if (!id || UMAP[id]?.r !== 8 || (cur?.k?.length && !cur.b)) return;
+  const w = await wiki(id);
+  if (!w?.sp?.length) return;
+  const lead = slot === 0 || slot === 5, lv = TOMNI[TCUR][slot] || 0, cap = omniOf(slot)[1];
+  const { opts } = spOptions(id, w.sp, lead), by = Object.fromEntries(opts.map(o => [o.key, o])), cost = keys => [...keys].reduce((a, k) => a + (by[k]?.cost || 0), 0);
+  let r = null;
+  if (cur?.b === "app") { const p = spPicks(id, w.sp, cap, new Set(), lead); r = p.keys.size ? { k: [...p.keys], b: "app" } : null; }
+  else if (cur?.b) {
+    const n = (w.builds || []).findIndex((b, i) => (b.name || `Build ${i + 1}`) === cur.b), b = w.builds?.[n];
+    const k = b ? buildKeys(b, w.sp) : null;
+    if (k?.size && cost(k) <= cap) r = { k: [...buildAt(b, w.sp, k, lv, cap, by).keys], b: cur.b };
+  }
+  if (!r) r = await bestSpFor(id, cap, [], lead, lv, castNow(slot, id));
+  TSPE[TCUR][slot] = r; saveSquad();
 }
 // Fill's SP for a unit it adds: the players' build that suits what it does best (its options' worth, as the app's pick
 // weighs them; a leader skill option counts only for the Leader and the Friend) within its SP, with what its notes add
