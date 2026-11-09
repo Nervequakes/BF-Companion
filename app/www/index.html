@@ -1848,7 +1848,7 @@ const dropsHtml = g => `<div class="src">✓ Revived's own drop table (bfrevive.
 const mostOf = (s, depth = 0) => {
   let n = 0;
   for (const g of revGet(s)) {
-    const m = g.kind === "Clear reward" && /×(\d+)\s*$/.exec(g.text);
+    const m = g.kind === "Clear reward" && /^First clear/.test(g.text) && /×(\d+)\s*$/.exec(g.text);  // an "Every clear" one repeats
     if (m) n += +m[1];
     else if (g.kind === "Craft" && g.mats && depth < 4) n += Math.min(...g.mats.map(x => Math.floor(mostOf(x, depth + 1) / x.count)));
     else return Infinity;
