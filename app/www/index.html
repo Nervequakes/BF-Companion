@@ -3281,6 +3281,8 @@ function addToTeam(id) {
 let fillEl = store.get("bf.fillel", "");
 // what Fill puts first (ven on Discord: "a kind of priority for auto filling"): FILL_PRIO's role weights for FILL_ROLE_W
 let fillPrio = store.get("bf.fillprio", "dmg");
+// Fill takes a mitigator: a unit whose BB/SBB/UBB reduces damage (a leader skill's 5% doesn't count then)
+let fillMit = store.get("bf.fillmit", false);
 // while Fill works out a team (in short turns, so the page stays alive): taps on the team and the tabs do nothing
 let FILLING = false;
 document.addEventListener("click", e => { if (FILLING && e.target.closest?.("#v-team, .nav, #favtab")) { e.stopPropagation(); e.preventDefault(); } }, true);
@@ -3538,7 +3540,9 @@ const FILL_PRIO = { dmg: { ...FILL_ROLE_W },
   bal: { ...FILL_ROLE_W, mit: 30, heal: 25, bbf: 20, ko: 12, snull: 12, debuff: 6, defign: 6, xact: 6, pick: 1 },
   roles: Object.fromEntries([...Object.keys(FILL_ROLE_W).map(k => [k, 100]), ["pick", 1]]) };
 const FILL_PRIO_NAME = { dmg: "Most damage", bal: "Balanced", roles: "All roles" };
-const roleWorth = t => COVER.reduce((a, c) => a + (providers(t, c).length ? FILL_ROLE_W[c] ?? 10 : 0), 0) * FILL_W.role;
+// a role Fill counts the team has; with the Mitigator chip, mitigation only from a unit's BB, SBB, UBB or Dual BB
+const fillHas = (t, c) => c === "mit" && fillMit ? t.some((id, i) => id && roleSrc(t, i, c).on.some(l => "BSUD".includes(l))) : providers(t, c).length > 0;
+const roleWorth = t => COVER.reduce((a, c) => a + (fillHas(t, c) ? FILL_ROLE_W[c] ?? 10 : 0), 0) * FILL_W.role;
 // a team's survival for Fill: effective HP (max HP with the leader skills' HP boosts, through the best mitigation up,
 // at most 75%), ×1.15 with KO resistance or revive. The leader and friend skills count as the squad's chips say
 function teamSurvival(t) {
@@ -3568,7 +3572,8 @@ async function fillTierPrep(els) {
 const FILL_SP = new Map();
 const tierP = id => FILL_TIER.get(id) || 0;
 // the swap check after Fill picks a team: how many rounds, and how many swaps (the best by the quick damage estimate) a round judges
-const FILL_SWAP = { rounds: 6, keep: 5, screen: 60, screenKeep: 40, starts: 4, startsDmg: 2, perSlot: 6, perTier: 2, loss: 10, freshAll: true, final: 10, startsAny: 2 };  // loss: the role worth a swap may lose  // screen: a pool bigger than this is screened first  // old: what a unit from before release number 8000 counts less
+// (2026-11-10, faster: keep 5 -> 3, final 10 -> 6, screen 60/40 -> 40/25: the same teams, Water +8.6%, Thunder -0.2%, a fifth less time)
+const FILL_SWAP = { rounds: 6, keep: 3, screen: 40, screenKeep: 25, starts: 4, startsDmg: 2, perSlot: 6, perTier: 2, loss: 10, freshAll: true, final: 6, startsAny: 2 };  // loss: the role worth a swap may lose  // screen: a pool bigger than this is screened first  // old: what a unit from before release number 8000 counts less
 // keep: how many teams to give back (the best first, the team itself not changed); 1 fills the team with the best
 // All at once (autoFill), or in short turns so the page keeps drawing while it works (autoFillAsync, the Fill button):
 // the work is the same steps either way (autoFillSteps stops after each slot it fills and each first pick it tries)
@@ -3619,7 +3624,7 @@ function* autoFillSteps(team, el, S, keep = 1) {
     const raise = NUM_ROLES.reduce((a, c) => a + Math.min(1, Math.max(0, teamVal(u.id, s, c, true) - tops[c]) / (POWER_MAX[c] || 1)), 0);
     return { score: (covers + sp.length * .8) * 10 + ls * 3 + raise * 6 + newness.get(u.id) * FILL_W.newness - ((u.no || 0) < 8000 ? FILL_W.old : 0) + tierP(u.id) * FILL_W.tier + (dbbR ? 10 : 0) + u.r / 10, sp };
   }
-  const missingIn = (t, spNeed) => COVER.filter(c => !providers(t, c).length && !Object.values(spNeed).some(r => r.includes(c)));
+  const missingIn = (t, spNeed) => COVER.filter(c => !fillHas(t, c) && !Object.values(spNeed).some(r => r.includes(c)));
   // the rest of the empty slots, one at a time, the best unit for each
   function* finish(t, spNeed, from, est) {
     for (const s of empty.slice(from)) {
@@ -3954,7 +3959,7 @@ function sparkRates(members) {
     return all ? hits / all : 0;
   };
 }
-const SPARK_BO = new Map();
+const SPARK_BO = new Map(), SPARK_NUM = new Map();
 function sparkCheck(rows, W, D) {
   // a unit with no wiki page (Revived's own, like Ultimate Behemoth) has no move data: timed as a teleporter from the game's
   // own move animation (mvf) when it has one, and said so under the sparks
@@ -3962,11 +3967,14 @@ function sparkCheck(rows, W, D) {
     .filter(m => m.mv && m.sp?.length && (m.mv[0] !== 1 || RUNUP[m.mv[1]]) && [1, 2, 3].includes(m.mv[0]));
   members.forEach(m => m.tele = m.mv[0] === 2 && !(m.mvf > 0) ? teleportDelay(m.id) : 0);  // the community's number only without the game's file
   if (members.length < 2) return null;
-  const slotOrder = [...members].sort((a, b) => a.slot - b.slot), now = sparkRate(members, slotOrder);
-  let best = { order: slotOrder, ...now };
+  const slotOrder = [...members].sort((a, b) => a.slot - b.slot);
   // the best casting order, worked out once per squad (slots, units and the skills they cast: the timing is theirs alone;
-  // Fill checks the same squad again with other SP or skills, and the 720 orders were 30% of its time)
-  const key = members.map(m => m.slot + ":" + m.id + ":" + (m.r.s?.kind || "")).join("|");
+  // Fill checks the same squad again with other SP or skills, and the 720 orders were 30% of its time); and its numbers
+  // and the slot order's (2026-11-10: working them out again was 15% of Fill's time)
+  const key = members.map(m => m.slot + ":" + m.id + ":" + (m.r.s?.kind || "")).join("|"), kept = SPARK_NUM.get(key);
+  let now, best;
+  if (kept) { now = kept.now; best = { order: kept.bo ? kept.bo.map(k => members[k]) : slotOrder, rate: kept.rate, per: kept.per }; }
+  else { now = sparkRate(members, slotOrder); best = { order: slotOrder, ...now };
   if (SPARK_BO.has(key)) { const bo = SPARK_BO.get(key); if (bo) { const o = bo.map(k => members[k]); best = { order: o, ...sparkRate(members, o) }; } }
   else {
     const fast = sparkRates(members);
@@ -3977,6 +3985,8 @@ function sparkCheck(rows, W, D) {
     if (SPARK_BO.size > 20000) SPARK_BO.clear();
     SPARK_BO.set(key, best.order === slotOrder ? null : best.order.map(m => members.indexOf(m)));
   }
+  if (SPARK_NUM.size > 20000) SPARK_NUM.clear();
+  SPARK_NUM.set(key, { now, bo: best.order === slotOrder ? null : best.order.map(m => members.indexOf(m)), rate: best.rate, per: best.per }); }
   const shown = best.rate > now.rate + 0.005 ? best.order : slotOrder;
   let det = null;  // the hit timeline: only when it's shown
   return { members, now, best, get detail() { return det || (det = sparkDetail(members, shown)); }, untimed: rows.filter(r => !members.some(m => m.r === r)), guessed: members.filter(m => m.tele === null), noMv: members.filter(m => m.noMv) };
@@ -4282,11 +4292,12 @@ async function renderTeam() {
       <div class="btngrid"><button class="gbtn" id="tfill">Fill empty slots</button>
         <select id="tfillel" class="gsel" aria-label="Element for Fill"><option value="">Any element</option>${ELS.map(e => `<option ${e === fillEl ? "selected" : ""}>${e}</option>`).join("")}</select>
         <button class="gbtn blue" id="tshare" ${team.some(Boolean) ? "" : "disabled"}>Share picture</button><button class="gbtn dark" id="tclear">Clear team</button></div>
-      <div class="chipwrap" style="margin:-2px 0 8px"><button class="chip ${SQ.mineOnly ? "on" : ""}" data-opt="mineOnly">✓ Fill from my box only</button></div>
+      <div class="chipwrap" style="margin:-2px 0 8px"><button class="chip ${SQ.mineOnly ? "on" : ""}" data-opt="mineOnly">✓ Fill from my box only</button><button class="chip ${fillMit ? "on" : ""}" data-fmit>✓ Mitigator</button></div>
       <div class="chipwrap prio" style="margin:-4px 0 8px"><span class="small dim">Priority</span>${
         Object.entries(FILL_PRIO_NAME).map(([k, n]) => `<button class="chip ${fillPrio === k ? "on" : ""}" data-prio="${k}">${n}</button>`).join("")}</div>
       <p class="small dim" style="margin:0">Tap a spot to choose a unit. <b>Fill</b> picks ${SQ.mineOnly ? `from the ${mine.size} units in your box` : "7★ and Omni units you can get in Revived"} (a unit twice or more when that's better) for the team that hits hardest in the battle check, with every unit casting every turn. ${
-        fillPrio === "roles" ? "<b>All roles</b>: every role it can cover first, then damage." : fillPrio === "bal" ? "<b>Balanced</b>: mitigation, heal, BB fill, KO resistance and status cure count more." : "<b>Most damage</b>: mitigation, heal and BB fill count a little, other roles only break ties."} Omni units it adds come at ${OMNI_PLUS[FILL_OMNI][0]} (${OMNI_PLUS[FILL_OMNI][1]} SP), with their SP for it. Units you put in stay.</p></div>
+        fillPrio === "roles" ? "<b>All roles</b>: every role it can cover first, then damage." : fillPrio === "bal" ? "<b>Balanced</b>: mitigation, heal, BB fill, KO resistance and status cure count more." : "<b>Most damage</b>: mitigation, heal and BB fill count a little, other roles only break ties."}${
+        fillMit ? " <b>Mitigator</b>: the team gets a unit whose BB or SBB reduces damage (a leader skill's few % doesn't count)." : ""} Omni units it adds come at ${OMNI_PLUS[FILL_OMNI][0]} (${OMNI_PLUS[FILL_OMNI][1]} SP), with their SP for it. Units you put in stay.</p></div>
     <div class="sec"><h3>Squad</h3>
       <div class="sqbar"><span class="costplate ${SQ.maxcost && cost > +SQ.maxcost ? "over" : ""}">COST <b>${cost}</b>/<input id="maxcost" inputmode="numeric" value="${esc(SQ.maxcost)}" placeholder="max" aria-label="Your max cost"></span>
         <button class="chip ${SQ.imps ? "on" : ""}" data-opt="imps">Imps max</button><button class="chip ${SQ.lead ? "on" : ""}" data-opt="lead">Leader skill</button><button class="chip ${SQ.friend ? "on" : ""}" data-opt="friend">Friend skill</button><button class="chip ${SQ.es ? "on" : ""}" data-opt="es">Extra skills</button></div>
@@ -4376,6 +4387,7 @@ async function renderTeam() {
   $("maxcost").onchange = e => { SQ.maxcost = e.target.value.replace(/\D/g, ""); saveSquad(); renderTeam(); };
   $("tfillel").onchange = e => { fillEl = e.target.value; store.set("bf.fillel", fillEl); };
   v.querySelectorAll("[data-prio]").forEach(b => b.onclick = () => { fillPrio = b.dataset.prio; store.set("bf.fillprio", fillPrio); renderTeam(); });
+  v.querySelectorAll("[data-fmit]").forEach(b => b.onclick = () => { fillMit = !fillMit; store.set("bf.fillmit", fillMit); renderTeam(); });
   $("tfill").onclick = async () => {
     if (FILLING) return;
     if (!team.includes(null)) return toast("No empty slots");
@@ -4390,6 +4402,7 @@ async function renderTeam() {
     // the best few teams by roles and buffs, each through the battle check (with BB where that helps): the one where
     // the most units can cast every turn and that hits hardest is kept
     Object.assign(FILL_ROLE_W, FILL_PRIO[fillPrio] || FILL_PRIO.dmg);  // the priority chosen
+    if (fillMit) FILL_ROLE_W.mit = Math.max(FILL_ROLE_W.mit, 100);  // a mitigator whenever there is one
     await fillTierPrep(fillEl ? [fillEl] : ELS);
     const I = await load("items"), cands = await autoFillAsync(team, fillEl, S, 5), news = [0, 1, 2, 3, 4, 5].filter(i => !before[i]);
     const cast0 = [...TCAST[TCUR]], spe0 = JSON.stringify(TSPE[TCUR]);
@@ -4400,7 +4413,9 @@ async function renderTeam() {
     // per try) to be worth it: with everyone casting its skill every turn it couldn't beat it, so the check is skipped
     let bar = null;
     // an Omni's SP for the leader / friend slot with its "Add to LS" options first (spPicks puts forced options first), once per unit
-    const lsWL = new Map(), xaWL = new Map(), limWL = new Map();  // per unit and slot: how often its "Add to LS" build (and BB + SBB on its extra action) won and lost
+    const lsWL = new Map(), xaWL = new Map(), limWL = new Map(), limLast = new Map();
+    // the most a team's tries have added (its damage x, roles' worth +) in the search, from how many teams
+    const gain = { x: 1, r: 0, n: 0 };  // per unit and slot: how often its "Add to LS" build (and BB + SBB on its extra action) won and lost
     const lsMemo = new Map(), spLsFor = async (id, i) => { const k = id + "|" + i + "|" + omniOf(i)[1]; if (lsMemo.has(k)) return lsMemo.get(k);
       const w = await wiki(id), lsKeys = Object.entries(spRoleOpts(id)).filter(([key, x]) => { const [c, o] = key.split(":").map(Number);
         return x[1].includes("L") && Object.keys(x[3] || {}).length && LS_OPT.test(w?.sp?.[c]?.opts?.[o]?.desc || ""); }).map(([key]) => key);  // an option for its leader skill (its words)
@@ -4434,7 +4449,7 @@ async function renderTeam() {
           for (const first of [null, ...all.filter(x => !need.has(x) && !all.some(y => by[y]?.parent?.key === x))]) {
             if (first === null && cost(all) > budget) continue;
             const keys = fit(first === null ? all : all.filter(x => x !== first)); if (!keys || seen.has(keys.join())) continue;
-            seen.add(keys.join()); r.push({ k: keys, b: "app" });
+            seen.add(keys.join()); r.push({ k: keys, b: "app", drop: first });
           }
         }
       }
@@ -4448,7 +4463,16 @@ async function renderTeam() {
       let Nm = nums(), B = battleCheck(c.t, W, Nm, D);
       // the leader's / friend's SP with its "Add to LS" options too (the players' builds are made for a unit slot; ven on
       // Discord: Phaedra's "Add to LS (300% Light elemental damage)"): kept when the battle check hits harder with it
+      // a try's record [won, lost]: taken without a check / not tried (in the search 4 to 1 is enough; at the end only all one way)
+      const sure = wl => wl[0] >= 3 && (deep ? !wl[1] : wl[0] >= 4 * wl[1]), hopeless = wl => wl[1] >= 3 && (deep ? !wl[0] : wl[1] >= 4 * wl[0]);
       const hit = B => B.rows.reduce((a, r) => a + (r.sFull || r.sDmg || 0) * (B.ok(r) ? 1 : .5) * (1 + (dmgInfo(r.id, r.i).hp || 0) / 10), 0);
+      // in the search: a team that can't beat the team to beat even with the most the tries have added isn't given them
+      const base0 = !deep && bar !== null ? hit(B) : 0, roleW0 = base0 ? roleWorth(c.t) : 0;
+      if (base0 && gain.n >= 30 && score({ ...c, roleW: roleW0 + gain.r, can: c.t.filter(Boolean).length, rate: 1, surv: 0, dmg: base0 * gain.x * 1.1 }) < bar) {
+        c.can = B.can; c.rate = B.spark?.best?.rate || 0; c.roles = COVER.filter(x => fillHas(c.t, x)).length; c.roleW = roleW0;
+        c.surv = FILL_W.surv ? teamSurvival(c.t) : 0; c.dmg = base0; c.casts = [...TCAST[TCUR]]; c.spe = JSON.stringify(TSPE[TCUR]); c.cut = true;
+        return;
+      }
       // and an Omni whose SP was picked to add a role: its plain best build too (a build made to add a role can hit far
       // less: Light's Avyn -7%), kept when the battle check hits harder
       for (const i of news) {
@@ -4462,8 +4486,8 @@ async function renderTeam() {
         const alt = await spLsFor(id, i); if (!alt || alt.k.join() === (TSPE[TCUR][i]?.k || []).join()) continue;
         // once its "Add to LS" build has won (or lost) three times with no other outcome, it's taken (or left) without a check
         const wl = lsWL.get(id + "|" + i) || [0, 0];
-        if (wl[0] >= 3 && !wl[1]) { TSPE[TCUR][i] = alt; Nm = nums(); B = battleCheck(c.t, W, Nm, D); continue; }
-        if (wl[1] >= 3 && !wl[0]) continue;
+        if (sure(wl)) { TSPE[TCUR][i] = alt; Nm = nums(); B = battleCheck(c.t, W, Nm, D); continue; }
+        if (hopeless(wl)) continue;
         await breathe(); const was = TSPE[TCUR][i]; TSPE[TCUR][i] = alt; const N2 = nums(), B2 = battleCheck(c.t, W, N2, D);
         if (hit(B2) > hit(B) * 1.001) { Nm = N2; B = B2; wl[0]++; } else { TSPE[TCUR][i] = was; wl[1]++; }
         lsWL.set(id + "|" + i, wl);
@@ -4475,12 +4499,22 @@ async function renderTeam() {
       // (per unit: once it has won three times and never lost, every copy casts BB at once, one check for all of them; once
       // it has lost three times and never won, it isn't tried; else each is tried on its own)
       let settled = false;
-      for (const i of news) { const id = c.t[i], wl = xaWL.get(id); if (!TCAST[TCUR][i] && xaBB(id) && wl && wl[0] >= 3 && !wl[1]) { TCAST[TCUR][i] = "BB"; settled = true; } }
+      for (const i of news) { const id = c.t[i], wl = xaWL.get(id); if (!TCAST[TCUR][i] && xaBB(id) && wl && sure(wl)) { TCAST[TCUR][i] = "BB"; settled = true; } }
+      // (in the search: the rest all at once, one check; each on its own only when that loses. The best few teams at the
+      // end (deep) try each on its own)
+      const xaAll = deep ? [] : news.filter(i => !TCAST[TCUR][i] && xaBB(c.t[i]) && !(w => w && hopeless(w))(xaWL.get(c.t[i])));
+      if (xaAll.length > 1) {
+        for (const i of xaAll) TCAST[TCUR][i] = "BB";
+        const N2 = nums(), B2 = battleCheck(c.t, W, N2, D);
+        if (hit(B2) > hit(B) * 1.001) { Nm = N2; B = B2; settled = false; for (const i of xaAll) { const wl = xaWL.get(c.t[i]) || [0, 0]; wl[0]++; xaWL.set(c.t[i], wl); } }
+        else for (const i of xaAll) TCAST[TCUR][i] = null;
+        await breathe();
+      }
       if (settled) { Nm = nums(); B = battleCheck(c.t, W, Nm, D); }
       for (const i of news) {
         const id = c.t[i]; if (TCAST[TCUR][i] || !xaBB(id)) continue;
         const wl = xaWL.get(id) || [0, 0];
-        if (wl[1] >= 3 && !wl[0]) continue;
+        if (hopeless(wl)) continue;
         TCAST[TCUR][i] = "BB"; const N2 = nums(), B2 = battleCheck(c.t, W, N2, D);
         if (hit(B2) > hit(B) * 1.001) { Nm = N2; B = B2; wl[0]++; } else { TCAST[TCUR][i] = null; wl[1]++; }
         xaWL.set(id, wl); await breathe();
@@ -4490,23 +4524,26 @@ async function renderTeam() {
         const i = r.i, id = c.t[i]; if (!news.includes(i) || UMAP[id]?.r !== 8 || !r.limit || !(r.atkS || []).concat(r.xa?.atkS || []).some(x => x >= r.limit - 1)) continue;
         const cur = TSPE[TCUR][i]?.k, alts = await spLimFor(id, i, cur); if (!alts.length) continue;
         // (each build the first time; then the one that hit hardest; one that has lost three times and never won: not tried)
-        const lk = id + "|" + i + "|" + (cur || []).join(), wl = limWL.get(lk) || [0, 0, -1];
-        if (wl[1] >= 3 && !wl[0]) continue;
+        const lk = id + "|" + i + "|" + (cur || []).join(), wl = limWL.get(lk) || [0, 0, -1], ag = limWL.get(id + "|" + i) || [0, 0];
+        if (wl[1] >= 3 && !wl[0] || !deep && hopeless(ag)) continue;  // (in the search: also when this unit's ATK-limit builds mostly lose)
+        // (in the search, a build not tried yet: the option this unit dropped when it last won, if this build has it)
+        const last = deep || wl[2] >= 0 ? -1 : alts.findIndex(a => a.drop === limLast.get(id + "|" + i));
         const was = TSPE[TCUR][i], hb = hit(B); let won = -1;
-        for (const [n, alt] of alts.entries()) { if (wl[2] >= 0 && n !== wl[2]) continue;
+        for (const [n, alt] of alts.entries()) { if (wl[2] >= 0 && n !== wl[2] || last >= 0 && n !== last) continue;
           await breathe(); TSPE[TCUR][i] = alt; const N2 = nums(), B2 = battleCheck(c.t, W, N2, D);
           if (hit(B2) > Math.max(hb * 1.001, won >= 0 ? hit(B) : 0)) { Nm = N2; B = B2; won = n; } }
-        TSPE[TCUR][i] = won >= 0 ? alts[won] : was; if (won >= 0) { wl[0]++; wl[2] = won; } else wl[1]++;
-        limWL.set(lk, wl);
+        TSPE[TCUR][i] = won >= 0 ? alts[won] : was; if (won >= 0) { wl[0]++; wl[2] = won; limLast.set(id + "|" + i, alts[won].drop); } else if (last < 0) wl[1]++;
+        limWL.set(lk, wl); ag[won >= 0 ? 0 : 1]++; limWL.set(id + "|" + i, ag);
       }
       if (B.can < units && hope()) { const was = TCAST[TCUR].join(); await bestCasts(c.t, news.filter(i => c.t[i])); if (TCAST[TCUR].join() !== was) { Nm = nums(); B = battleCheck(c.t, W, Nm, D); } }
       // damage per turn: each SBB as the battle check works it out (sparks, crit, spheres; half if it can't cast every
       // turn, more with foes' max HP damage)
       const rate = B.spark?.best?.rate || 0, mult = 1;  // the battle check's damage has sparks, crit and elemental in it
-      c.can = B.can; c.rate = rate; c.roles = COVER.filter(x => providers(c.t, x).length).length; c.roleW = roleWorth(c.t);
+      c.can = B.can; c.rate = rate; c.roles = COVER.filter(x => fillHas(c.t, x)).length; c.roleW = roleWorth(c.t);
       c.surv = FILL_W.surv ? teamSurvival(c.t) : 0;
       c.dmg = B.rows.reduce((a, r) => a + (r.sFull || r.sDmg || 0) * (B.ok(r) ? 1 : .5) * (1 + (dmgInfo(r.id, r.i).hp || 0) / 10), 0) * mult;
       c.casts = [...TCAST[TCUR]]; c.spe = JSON.stringify(TSPE[TCUR]);
+      if (base0) { gain.x = Math.max(gain.x, c.dmg / base0); gain.r = Math.max(gain.r, c.roleW - roleW0); gain.n++; }
     };
     // the page draws again every 40 ms or so (an await on loaded data doesn't let it: a long run of judging froze it 2 s)
     let tb = performance.now(); const breathe = async () => { if (performance.now() - tb > 40) { await new Promise(r => setTimeout(r, 0)); tb = performance.now(); } };
