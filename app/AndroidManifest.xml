@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="sg.bf.companion" android:versionCode="85" android:versionName="5.6.63">
+    package="sg.bf.companion" android:versionCode="86" android:versionName="5.6.64">
     <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="34" />
     <!-- The app shows data bundled inside it. These two are only for "Check for updates" (off unless you turn it on):
          asking GitHub for the newest release, and handing its APK to Android's installer. -->

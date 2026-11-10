@@ -1665,7 +1665,7 @@ function statTable(u, w) {
 // kind only counts when the game's numbers show it. A unit with one gets a button by Skills for Revived's version.
 // No lookbehind in these patterns: older iPhone Safari can't read it, and it would stop the whole page.
 const RV_EL = "(?:fire|water|earth|thunder|light|dark)";
-const RV_EM = new RegExp(`elemental damage reduction|reduction of elemental damage|damage reduction from ${RV_EL}|reduces damage (?:taken )?from ${RV_EL}|reduction in damage (?:taken )?from ${RV_EL}|reductions? to ${RV_EL}[a-z, ]* element(?:al)? damage|reduces? ${RV_EL}[a-z, ]* element(?:al)? damage|damage taken from ${RV_EL}`, "g");
+const RV_EM = new RegExp(`negates [a-z' ,]*element(?:al| based) damage|damage reduction from all (?:elements?|elemental|types)|elemental damage reduction|reduction of elemental damage|damage reduction from ${RV_EL}|reduces damage (?:taken )?from ${RV_EL}|reduction in damage (?:taken )?from ${RV_EL}|reductions? to ${RV_EL}[a-z, ]* element(?:al)? damage|reduces? ${RV_EL}[a-z, ]* element(?:al)? damage|damage taken from ${RV_EL}`, "g");
 const RV_WEAK = /(?:elemental|critical|spark)(?:(?:,| and|\/) ?(?:elemental|critical|spark))* weakness/g;  // a vulnerability, not the Weak ailment
 const RV_KINDS = {
   "mitigation": /damage reduction(?! when guarding)(?! to 1)|reduction of damage taken|reduces? damage taken(?! to 1)|damage mitigation/,
@@ -1673,20 +1673,20 @@ const RV_KINDS = {
   "DEF ignore": /def ignor(?!ing effects)/,
   "pierce": /pierce/,
   "ailments on foes": /poison|injury|\bsick(?:ness)?\b|\bweak(?:ness)?\b(?! damage)(?! dmg)|curse|paralysis/,
-  "damage over time": /venom|\bdot\b|damage over time|additional (?:[a-z]+ )?(?:damage|attack) (?:at )?turn/,
-  "vulnerability on foes": /vulnerability/,
-  "ATK/DEF down on foes": /(?:atk|def)(?:, def)?(?:, rec)? reduction infliction/,
+  "damage over time": /venom|\bdot\b|damage over time|additional (?:[a-z]+ )?(?:damage|attack) (?:at )?turn|additional damage for \d+ turns?/,
+  "vulnerability on foes": /vulnerability|reduction to critical and elemental damage/,
+  "ATK/DEF down on foes": /(?:atk|def)(?:, def)?(?:, rec)? reduction(?: infliction)?|reduces (?:enemies' |foes' )?atk(?:,| and) def/,
   "cast twice": /twice/,
   "extra action": /extra action/,
   "critical damage": /critical (?:hit )?damage(?! reduction)|damage on critical|critical (?:hit )?rate (?:and|&) damage/,
-  "critical rate": /critical (?:hit )?rate/,
+  "critical rate": /critical (?:hit )?(?:rate|chance)/,
   "spark": /spark damage(?! reduction)(?! restores)(?! fills)(?! boosts? bb)(?! considerably boosts? bb)|damage (?:dealt )?during spark/,
   "spark critical": /spark critical/,
   "elemental": /elemental damage(?! reduction)|weak(?:er)? elements?/,
   "all elements": /all elements/,
-  "ATK boost": /boosts? (?:own )?atk|\d+% (?:boost to )?(?:[a-z ,]+ and )?atk\b|% all parameters|boost to all parameters|boost to atk\b/,
+  "ATK boost": /boosts? (?:own )?atk|boosts? [a-z, ]*types' atk|boosts? all parameters|increase in atk\b|\d+% (?:boost to )?(?:[a-z ,]+ and )?atk\b|% all parameters|boost to all parameters|boost to atk\b/,
   "BB ATK": /bb atk/,
-  "BB fill": /(?:fills|boosts|fill) (?:own )?bb gauge|bc efficacy|bb gauge fill rate(?! reduction)|increases? (?:all )?(?:allies' )?bb gauge|recovers? bb gauge|boost to bb gauge/,
+  "BB fill": /(?:fills?|boosts?) (?:own |all )?(?:allies' )?bb gauge|damage taken (?:[a-z]+ )?boosts? bb\b(?! atk)|bb gauge fills?|bc efficacy|bb gauge fill rate(?! reduction)|increases? (?:all )?(?:allies' )?bb gauge|recovers? bb gauge|boost to bb gauge/,
   "spark fills BB": /spark damage (?:\w+ )?(?:fills|boosts?) bb/,
   "OD fill": /od (?:gauge|fill)/,
   "heal": /restores? hp|heals? |hp restor|recovers? hp|restore hp/,
@@ -1698,7 +1698,7 @@ const RV_KINDS = {
   "negate ailments": /negates (?:all )?(?:status )?ailments|negates all status|nullif\w* (?:all )?(?:status )?ailments/,
   "cure ailments": /removes (?:all )?status ailments|cures?/,
   "raised ATK limit": /atk (?:parameter )?limit/,
-  "stat conversion": /relative to (?:their )?(?:def|rec|max hp|hp)/,
+  "stat conversion": /relative to (?:their )?(?:def|rec|max hp|hp(?! remaining))/,
   "normal attack boosts": /normal hit (?:amount|count)|normal attacks/,
   "LS/ES lock purge": /(?:ls|es) (?:and es )?lock/,
   "cheaper BB": /reduction (?:to bb activation cost|in bb gauge required)|reduces bb gauge required/ };
