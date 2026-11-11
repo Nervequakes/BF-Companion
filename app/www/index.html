@@ -250,6 +250,8 @@ main { padding-bottom: calc(var(--navh) + 20px); }
 .elgc .epill { display: inline-block; margin: 3px 0 4px; padding: 1px 8px; border-radius: 999px; background: rgba(90,200,120,.18); border: 1px solid #5ac878; color: #8ef0a8; font-weight: 700; font-size: 12.5px; }
 .elgc .eff { font-size: 12.5px; color: #cfd3dc; }
 .elgc { cursor: pointer; } .elgc .egw { margin-top: 4px; }
+.tSc { color: #ff8a5c; } .tAc { color: #ffd36b; } .tBc { color: #8fd37f; } .tCc { color: #7fb8ff; } .tDc { color: #c79bff; } .tTrashc { color: #aaa; }
+.tfound { margin-top: 4px; } .tfound .chip { margin: 2px 2px 0 0; }
 .elgh { margin: 10px 12px 6px; font-weight: 700; font-size: 13px; color: var(--accent); }
 .item .er { flex: none; width: 46px; text-align: center; font-family: Rodin, Arial, sans-serif; font-size: 12px; color: var(--accent); text-shadow: var(--ol); }
 .item .er .sti { width: 15px; height: 15px; vertical-align: -2px; } .item .er .omi { width: 30px; height: 30px; display: block; margin: 0 auto; }
@@ -1099,6 +1101,7 @@ function tierRows(DET, P, el, role) {
   scored.forEach(s => rows[tierAt(scored.findIndex(x => x.score === s.score))][1].push(s));  // equal scores share the better tier
   return rows;
 }
+let tierQ = "";  // the tier list's search: a unit's name (zelner on Discord, 2026-11-11: "see where that specific unit ranks")
 async function showTiers() {
   setTitle("Tier list", true);
   if (!ELS.includes(tierEl)) tierEl = "Fire";
@@ -1115,8 +1118,15 @@ async function showTiers() {
     if (!TIER_PREP[el]) $("tiers").innerHTML = `<div class="empty">Working out the ${el} tiers…</div>`;
     const P = await tierPrep(DET, el);
     if (me !== drawing || nav !== NAV) return;  // another chip was tapped, or the page left
-    const rows = tierRows(DET, P, el, tierRole).map(([t, us]) => [t, us.filter(s => shown(s.u))]), n = rows.reduce((k, [, us]) => k + us.length, 0);
-    $("tcount").textContent = `${n} ${el} Omni units${tierGet === "rv" ? " you can get in Revived" : tierGet === "box" ? " in your box" : ""}${tierRole === "all" ? "" : ` · ranked on ${label[tierRole]}`}`;
+    const rows0 = tierRows(DET, P, el, tierRole).map(([t, us]) => [t, us.filter(s => shown(s.u))]), n = rows0.reduce((k, [, us]) => k + us.length, 0);
+    // searching: only the units whose name matches, each with its tier and place; one of another element: a button to it
+    const q = tierQ.trim().toLowerCase(), hit = u => !q || u.n.toLowerCase().includes(q), order = rows0.flatMap(([t, us]) => us.map(s => [t, s.u]));
+    const rows = rows0.map(([t, us]) => [t, us.filter(s => hit(s.u))]);
+    const found = q ? order.filter(([, u]) => hit(u)) : [], elsewhere = q ? UNITS.filter(u => u.r === 8 && u.e !== el && !u.f && u.n.toLowerCase().includes(q)).slice(0, 6) : [];
+    $("tcount").innerHTML = `${n} ${el} Omni units${tierGet === "rv" ? " you can get in Revived" : tierGet === "box" ? " in your box" : ""}${tierRole === "all" ? "" : ` · ranked on ${esc(label[tierRole])}`}${
+      found.length && found.length <= 5 ? `<div class="tfound">${found.map(([t, u]) => `<div><b>${esc(u.n)}</b>: <b class="t${t}c">${t}</b> tier, <b>#${order.findIndex(([, x]) => x === u) + 1}</b> of ${n}</div>`).join("")}</div>` : ""}${
+      elsewhere.length ? `<div class="tfound">${q && !found.length ? "Not here. " : ""}Other elements: ${elsewhere.map(u => `<button class="chip small" data-tel="${u.e}">${orb(u.e)}${esc(u.n)}</button>`).join(" ")}</div>` : ""}`;
+    $("tcount").querySelectorAll("[data-tel]").forEach(b => b.onclick = () => { tierEl = b.dataset.tel; store.set("bf.tierel", tierEl); $("tel").querySelectorAll(".chip").forEach(c => c.classList.toggle("on", c.dataset.k === tierEl)); draw(); });
     // a tier with none of the units shown isn't drawn (the user: "hide empty tiers"): a role few units have, or your box
     const full = rows.filter(([, us]) => us.length);
     $("tiers").innerHTML = tierGet === "box" && !mine.size ? `<div class="empty"><b>Your box is empty</b>Mark the units you own (Units tab: ✎ Edit box, hold a unit in any list, or ＋ My box on a unit) to see where yours stand.</div>`
@@ -1126,7 +1136,7 @@ async function showTiers() {
         : `<span class="dim small">none</span>`}</div></div>`).join("");
     $("tiers").dataset.ready = `${el}/${tierRole}/${tierGet}`;
   };
-  $("page").innerHTML = `<div class="bar2"><div class="scroller" id="tel"></div><div class="scroller" id="trole"></div><div class="scroller" id="tget"></div></div>
+  $("page").innerHTML = `<div class="bar2"><div class="searchrow"><input id="tq" type="search" placeholder="Find a unit in the tier list…" value="${esc(tierQ)}" autocomplete="off"></div><div class="scroller" id="tel"></div><div class="scroller" id="trole"></div><div class="scroller" id="tget"></div></div>
     <details class="why"><summary>How is this made?</summary>
       <p class="small" style="margin:6px 0 0">Every Omni unit gets one score, worked out from the game's own data: about 50 facts about the unit, each with its own weight.</p>
       <ul><li><b>Damage:</b> its SBB's attacks (at full HP), more if it can cast twice, with its ATK and the buffs it gives itself (ATK, spark, critical rate, HP or DEF turned into ATK), and the SP options that add an attack to its SBB or buff itself.</li>
@@ -1148,6 +1158,7 @@ async function showTiers() {
   row("tel", ELS.map(e => [e, `${orb(e)}${e}`]), () => tierEl, e => { tierEl = e; store.set("bf.tierel", e); });
   row("trole", [["all", "All roles"], ...TIER_ROLES.map(([r, l]) => [r, esc(l)])], () => tierRole, r => { tierRole = r; store.set("bf.tierrole", r); });
   row("tget", [["all", "All units"], ["rv", "Can get in Revived"], ["box", "My box"]], () => tierGet, g => { tierGet = g; store.set("bf.tierget", g); });
+  $("tq").oninput = e => { clearTimeout(showTiers.t); showTiers.t = setTimeout(() => { tierQ = e.target.value; draw(); }, 200); };
   scrollHints();
   window.scrollTo(0, 0);
   await draw();
