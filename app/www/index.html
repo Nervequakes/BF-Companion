@@ -245,6 +245,11 @@ main { padding-bottom: calc(var(--navh) + 20px); }
 .item .sb { font-size: 11px; color: #9ff09f; margin: 1px 0 2px; }
 .item .t .sti { width: 14px; height: 14px; flex: none; }  /* not the 46px item icon size */
 /* Elgifs: rarity on the left, the whole effect (sphere text is cut at two lines) */
+.elgc { align-items: flex-start; } .elgc .eic { flex: none; width: 52px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.elgc .eic img { width: 48px; height: 48px; object-fit: contain; } .elgc .eic .er { width: auto; font-size: 11px; }
+.elgc .epill { display: inline-block; margin: 3px 0 4px; padding: 1px 8px; border-radius: 999px; background: rgba(90,200,120,.18); border: 1px solid #5ac878; color: #8ef0a8; font-weight: 700; font-size: 12.5px; }
+.elgc .eff { font-size: 12.5px; color: #cfd3dc; }
+.elgh { margin: 10px 12px 6px; font-weight: 700; font-size: 13px; color: var(--accent); }
 .item .er { flex: none; width: 46px; text-align: center; font-family: Rodin, Arial, sans-serif; font-size: 12px; color: var(--accent); text-shadow: var(--ol); }
 .item .er .sti { width: 15px; height: 15px; vertical-align: -2px; } .item .er .omi { width: 30px; height: 30px; display: block; margin: 0 auto; }
 .item .eff { color: #ece6d6; font-size: 12px; margin-top: 2px; }
@@ -2257,13 +2262,50 @@ async function showUnit(id) {
   const clearNote = cl => `<div class="note" style="border-color:var(--gold2);margin:0 0 8px">In Revived, first clear reward of:<ul class="qlist" style="margin-top:4px">${cl.map(p => `<li><b>${esc(p)}</b></li>`).join("")}</ul></div>`;
   const modeNote = ms => `<div class="note" style="border-color:var(--gold2);margin:0 0 8px">In Revived, a reward in:<ul class="qlist" style="margin-top:4px">${ms.map(p => `<li><b>${esc(p)}</b></li>`).join("")}</ul></div>`;
   const gives = c => `${clearOf(c) ? clearNote(clearOf(c)) : ""}${modesOf(c) ? modeNote(modesOf(c)) : ""}`;
+  // Suggested Elgifs: on its own as the leader (its SBB, Omni at Omni+3 · 2 Emperors), with each Elgif that can add damage
+  const elgRun = async () => { if (!$("belglist") || $("belglist").dataset.run) return; $("belglist").dataset.run = 1;
+    const nav = NAV, EG = await elgifMap(), list = Object.values(EG).filter(elgCanDmg), at = TEAMS.length;
+    TEAMS[at] = [id, null, null, null, null, null]; TTYPE[at] = Array(6).fill("lord"); TSPH[at] = Array.from({ length: 6 }, () => [null, null]); TELG[at] = Array(6).fill(null);
+    TSPE[at] = Array(6).fill(null); TOMNI[at] = [UMAP[id]?.r === 8 ? FILL_OMNI : 0, 0, 0, 0, 0, 0]; TCAST[at] = Array(6).fill(null);
+    let r = null; try { r = await elgifDamage(at, 0, list, f => { if (nav === NAV) $("belglist").textContent = `Working it out… ${Math.round(f * 100)}%`; }, () => nav === NAV); }
+    finally { for (const T of [TEAMS, TTYPE, TSPH, TELG, TSPE, TOMNI, TCAST]) T.length = at; }
+    if (!r || nav !== NAV) return;
+    const pc = e => (r.dmg.get(e.id) - r.base) / Math.max(1, r.base) * 100, top = l => l.filter(e => pc(e) > .05).sort((a, b) => pc(b) - pc(a));
+    const get = top(list.filter(elgifGets)).slice(0, 3), any = top(list).filter(e => !get.includes(e)).slice(0, 2);
+    // support: the strongest of each kind (its own: an Elgif works on its holder), the ones you can get in Revived first
+    const SUP = [["mit", "Mitigation", v => `${v}% less damage taken`], ["bbf", "BB gauge each turn", v => `+${v} BC each turn`], ["bbcut", "BB cost", v => `${v}% less BB gauge needed`],
+      ["heal", "Healing", v => `heals ${v.toLocaleString("en")} HP each turn`], ["hp", "Max HP", v => `+${v}% max HP`]];
+    const supOf = e => { const o = {}; for (const [pid, , raw] of e.fx || []) { const p = String(raw).split(",").map(Number), g = k => p[k] || 0;
+      if (pid === "8" || pid === "10008") o.mit = Math.max(o.mit || 0, g(0)); else if (pid === "9") o.bbf = Math.max(o.bbf || 0, g(0) / 100);
+      else if (pid === "48") o.bbcut = Math.max(o.bbcut || 0, g(0)); else if (pid === "33") o.heal = Math.max(o.heal || 0, g(1)); else if (pid === "1") o.hp = Math.max(o.hp || 0, g(4)); }
+      return o; };
+    const sup = SUP.map(([k, label, say]) => [label, Object.values(EG).map(e => [e, supOf(e)[k] || 0]).filter(x => x[1] > 0)
+      .sort((a, b) => elgifGets(b[0]) - elgifGets(a[0]) || b[1] - a[1]).slice(0, 2).map(([e, v]) => [e, say(+v.toFixed(1))])]).filter(x => x[1].length);
+    const card = (e, pill) => `<div class="item elgc"><div class="eic"><img src="${uImg("50792")}" alt="" onerror="this.style.visibility='hidden'"><span class="er">${elgifRarity(e.r)}</span></div>
+      <div style="min-width:0;flex:1"><div class="t">${esc(e.name)}${elgifGets(e) ? `<span class="craft got">in Revived</span>` : ""}</div><div class="epill">${pill}</div><div class="eff">${hl(e.desc)}</div></div></div>`;
+    const head = t => `<div class="elgh">${t}</div>`;
+    const dmgHtml = `${get.length ? head("You can get in Revived") + get.map(e => card(e, `+${pc(e).toFixed(1)}% damage`)).join("") : ""}${
+      any.length ? head("Others") + any.map(e => card(e, `+${pc(e).toFixed(1)}% damage`)).join("") : ""}
+      <p class="small dim" style="margin:6px 10px 0">Its own damage per turn in the battle check, as the leader casting its SBB${UMAP[id]?.r === 8 ? " (Omni+3)" : ""}, alone. In a team, the Elgif picker's <b>Most damage</b> counts the whole team.</p>`;
+    const supHtml = `${sup.map(([label, xs]) => head(label) + xs.map(([e, say]) => card(e, say)).join("")).join("")}
+      <p class="small dim" style="margin:6px 10px 0">The strongest of each kind from the game's own numbers, the ones you can get in Revived first. An Elgif works on the unit that holds it.</p>`;
+    const show = t => { $("belglist").className = ""; $("belglist").innerHTML = t === "sup" ? supHtml : dmgHtml;
+      document.querySelectorAll("#belgtab [data-bt]").forEach(b => b.classList.toggle("on", b.dataset.bt === t)); };
+    document.querySelectorAll("#belgtab [data-bt]").forEach(b => b.onclick = () => show(b.dataset.bt));
+    show("dmg"); };
+  document.querySelectorAll("#sugsw [data-sw]").forEach(b => b.onclick = () => { const e = b.dataset.sw === "elg";
+    document.querySelectorAll("#sugsw [data-sw]").forEach(x => x.classList.toggle("on", x === b));
+    if ($("sugsph")) $("sugsph").hidden = e; if ($("sugelg")) $("sugelg").hidden = !e; if (e) elgRun(); });
+  if (!$("sugsph")) setTimeout(elgRun, 0);
   if (wk) { $("hmeta").insertAdjacentHTML("afterbegin", `<span class="badge wk" data-gate="${wk[0]}">This week: ${esc(USRC.g[wk[0]][0])} ›</span>`); $("hmeta").querySelector(".wk").onclick = () => go(`#/gate/${wk[0]}`); }
+  const elgOk = (D[id]?.skills || []).some(x => x.mods?.length || x.dmg);  // Suggested: Elgifs for a unit that attacks
   $("ubody").innerHTML = `
     ${spr ? `<div class="sec"><h3 class="green">In battle</h3><div class="stage"><img class="spr" id="spr" src="${sImg(id)}" alt=""></div>
       <div class="gifs"><button class="gbtn small" data-gif="1">Save GIF</button><button class="gbtn small dark" data-gif="0">GIF, see-through</button></div></div>` : ""}
     <div class="sec"><h3>Stats</h3>${statTable(u, w)}</div>
     ${skills.length || roles ? `<div class="sec"><h3 class="blue">Skills</h3>${rvOn ? `<button class="rvbtn" id="rvbtn">${rvLabel}</button>` : ""}${roles ? `<div class="roles">${roles}</div>` : ""}<div id="sklist">${skills.map(skillBlock).join("")}</div></div>` : ""}
-    ${spheres ? `<div class="sec"><h3 class="purple">Suggested spheres</h3>${spheres}</div>` : ""}
+    ${spheres || elgOk ? `<div class="sec"><h3 class="purple">Suggested</h3><div class="chipwrap" id="sugsw">${spheres ? `<button class="chip on" data-sw="sph">Spheres</button>` : ""}${elgOk ? `<button class="chip${spheres ? "" : " on"}" data-sw="elg">Elgifs</button>` : ""}</div>
+      ${spheres ? `<div id="sugsph">${spheres}</div>` : ""}${elgOk ? `<div id="sugelg"${spheres ? " hidden" : ""}><div class="chipwrap" id="belgtab"><button class="chip on" data-bt="dmg">Damage</button><button class="chip" data-bt="sup">Support</button></div><div id="belglist" class="small dim">Working it out…</div></div>` : ""}</div>` : ""}
     ${sp ? `<div class="sec"><h3>SP Enhancements</h3>${sp}</div>` : ""}
     ${chain.length > 1 || mats ? `<div class="sec"><h3 class="green">Evolution</h3><div class="evo">${chain.map((c, i) => (i ? `<span class="ar">›</span>` : "") + unitMini(c, c === id)).join("")}</div>
       ${mats ? `<p class="dim small" style="margin:10px 0 0">Materials to evolve this unit${w.evo.zel ? ` · ${esc(w.evo.zel)} Zel` : ""}${w.evo.karma ? ` · ${esc(w.evo.karma)} Karma` : ""}</p><div class="mats">${mats}</div>` : ""}</div>` : ""}
@@ -3379,6 +3421,15 @@ function esLists(ef, team, j) {
   return r;
 }
 // an extra skill effect's condition (the game's isEnableExtraPassive): [any one (1) or all (0), [[type, values], ...]]
+// a unit's Elgif: its effects as the game has them (an extra skill of its own), the ones whose condition holds; one list
+// per Elgif and outcome (fxRole remembers per list)
+const ELG_FX = new Map();
+function elgFxOf(slot, team) {
+  const eid = SQ.es ? TELG[TCUR]?.[slot] : null, fx = eid && ELGMAP?.[eid]?.fx; if (!fx?.length || !team[slot]) return FX_NONE;
+  const ok = fx.map(e => esCond(e[3], team, slot) ? 1 : 0).join(""), k = eid + "|" + ok;
+  if (!ELG_FX.has(k)) ELG_FX.set(k, fx.filter((e, n) => ok[n] === "1").map(e => [e[0], e[2]]));
+  return ELG_FX.get(k);
+}
 function esCond(cond, team, j) {
   if (!cond || !cond[1]?.length) return true;
   const sph = (TSPH[TCUR]?.[j] || []).filter(Boolean), types = sph.map(s => TEAM_I?.[s]?.type), cats = team.filter(Boolean).map(x => String(Math.floor(+x / 10) * 10));
@@ -3479,13 +3530,14 @@ function teamBuffs(team, kindOf, W = [], D = TEAM_D || {}, spOpts = () => [], or
     const pd = par && u < 5 && parX[c] ? PARADIGM[par.lv][parX[c]] : 0;
     // spheres: the holder's own only (the game gives a sphere's effects to its holder), plus the leader's and the
     // friend's spheres' "adds to LS" effects, for everyone
-    const own = (TSPH[TCUR]?.[u] || []).reduce((a, sid) => a + (!sid ? 0 : TEAM_I?.[sid]?.fx ? fxRole(sphFxOwn(sid), el, k)[c] || 0 : sphTag(sid, c, id)?.[2] || 0), 0);
+    const own = (TSPH[TCUR]?.[u] || []).reduce((a, sid) => a + (!sid ? 0 : TEAM_I?.[sid]?.fx ? fxRole(sphFxOwn(sid), el, k)[c] || 0 : sphTag(sid, c, id)?.[2] || 0), 0)
+      + (fxRole(elgFxOf(u, team), el, k)[c] || 0);  // (and its Elgif's)
     const lsAdd = leads.reduce((a, j) => a + (TSPH[TCUR]?.[j] || []).reduce((s, sid) => s + (sid ? fxRole(lsAddOf(sid), el, k)[c] || 0 : 0), 0), 0);
     const r = ls + es + pd + own + lsAdd; pvc.set(pk, r); return r; };
   // its ATK limit from those records: leader skills, its extra skill (or one for the party), its spheres, "adds to LS"
   const fxLimit = u => { const id = team[u], el = (UMAP[id]?.e || "").toLowerCase(), L = l => fxRole(l, el).limit || 0;
     return Math.max(0, ...leads.map(j => L(D?.[team[j]]?.lsfx || [])), ...(SQ.es ? team.map((x, j) => !x ? 0 : Math.max(0, ...(D?.[x]?.esfx || []).filter(e => (j === u || e[1] === 2) && esCond(e[3], team, j)).map(e => L([[e[0], e[2]]])))) : []),
-      ...(TSPH[TCUR]?.[u] || []).map(sid => sid ? L(sphFxOwn(sid)) : 0), ...leads.flatMap(j => (TSPH[TCUR]?.[j] || []).map(sid => sid ? L(lsAddOf(sid)) : 0))); };
+      ...(TSPH[TCUR]?.[u] || []).map(sid => sid ? L(sphFxOwn(sid)) : 0), ...leads.flatMap(j => (TSPH[TCUR]?.[j] || []).map(sid => sid ? L(lsAddOf(sid)) : 0)), L(elgFxOf(u, team))); };
   return { castG, party, partyAll, ownOf, passive, fxLimit, cands };
 }
 // a team's damage per turn for Fill's shortlist: the battle check's second number (the game's formula, teamBuffs) with
@@ -4900,7 +4952,21 @@ async function showSpherePick(slot, n) {
 }
 
 // choosing a squad unit's Elgif (one per unit, as in the game): the Elgifs tab's list, the ones that suit what it does first
-let elgQ = "", elgRev = false;
+let elgQ = "", elgRev = false, elgDmg = store.get("bf.elgdmg", false);
+// an Elgif that can add damage: crit, elemental, spark, BB ATK, ATK, crit rate or a raised ATK limit (the game's effects)
+const elgCanDmg = e => (e.fx || []).some(f => { const r = fxRole([[f[0], f[2]]], ""); return ["atk", "bbatk", "crit", "critrate", "spark", "sparkcrit", "elem", "limit"].some(c => r[c] > 0) || ["1", "2"].includes(f[0]); });
+// {base, dmg: Map(Elgif -> the team's damage)} with each Elgif in team slot `slot` of team `at` (put back after)
+async function elgifDamage(at, slot, list, progress, alive = () => true) {
+  const t = TEAMS[at], keep = TELG[at][slot], [D, I, W] = await Promise.all([load("details"), load("items"), Promise.all(t.map(x => x ? wiki(x) : {}))]);
+  await elgifMap(); TEAM_D = D; TEAM_I = I;
+  const was = TCUR, measure = eid => { TELG[at][slot] = eid; const N = t.map((x, i) => x && UMAP[x] ? unitNumbers(i, t, W, D, I) : null); return battleHit(battleCheck(t, W, N, D)); };
+  const out = new Map(); let base = 0;
+  try { TCUR = at; base = measure(null); let tb = performance.now(), k = 0;
+    for (const e of list) { out.set(e.id, measure(e.id)); k++;
+      if (performance.now() - tb > 40) { TELG[at][slot] = keep; TCUR = was; progress?.(k / list.length); await new Promise(r => setTimeout(r, 0)); if (!alive()) return null; TCUR = at; tb = performance.now(); } }
+  } finally { TELG[at][slot] = keep; TCUR = was; }
+  return { base, dmg: out };
+}
 async function showElgifPick(slot) {
   const nav = NAV, id = TEAMS[TCUR][slot], u = UMAP[id], EG = await elgifMap();
   if (nav !== NAV) return;  // left the page while it loaded
@@ -4909,11 +4975,14 @@ async function showElgifPick(slot) {
   // how well each one suits this unit, weighed as for spheres (what it does, its stat boosts, rarity)
   const focus = unitFocus(id), fit = new Map(), all = Object.values(EG), cur = EG[TELG[TCUR][slot]];
   const gain = e => { if (!fit.has(e.id)) fit.set(e.id, sphereFit({ desc: e.desc, rarity: e.r }, id, focus, [])); return fit.get(e.id); };
+  let dm = null, dmRun = false;  // the team's damage with each one (Most damage)
+  const dmgTag = e => { if (!elgDmg || !dm) return ""; const v = dm.dmg.get(e.id); if (v === undefined) return ""; const p = dm.base ? (v - dm.base) / dm.base * 100 : 0;
+    return Math.abs(p) < .05 ? `<div class="sdmg zero">No change to the team's damage</div>` : `<div class="sdmg">${p > 0 ? "+" : ""}${p.toFixed(1)}% team damage</div>`; };
   const row = e => { const b = boostText(statBoosts(e.desc));
     return `<div class="item" data-pick="${e.id}"><div class="er">${elgifRarity(e.r)}</div><div style="min-width:0;flex:1">
-      <div class="t">${esc(e.name)}${elgifGets(e) ? `<span class="craft got">in Revived</span>` : ""}</div>${b ? `<div class="sb">${esc(b)}</div>` : ""}<div class="eff">${hl(e.desc)}</div></div></div>`; };
+      <div class="t">${esc(e.name)}${elgifGets(e) ? `<span class="craft got">in Revived</span>` : ""}</div>${dmgTag(e)}${b ? `<div class="sb">${esc(b)}</div>` : ""}<div class="eff">${hl(e.desc)}</div></div></div>`; };
   $("page").innerHTML = `<div id="elgpage"><div class="bar2"><div class="searchrow"><input id="elq" type="search" placeholder="Search Elgifs: name or effect…" value="${esc(elgQ)}" autocomplete="off"></div>
-      <div class="scroller"><button class="chip on" id="elnone">No Elgif</button><button class="chip rev ${elgRev ? "on" : ""}" id="elrev">Can get in Revived (${all.filter(elgifGets).length})</button></div></div>
+      <div class="scroller"><button class="chip on" id="elnone">No Elgif</button><button class="chip${elgDmg ? " on" : ""}" id="eldmg">Most damage</button><button class="chip rev ${elgRev ? "on" : ""}" id="elrev">Can get in Revived (${all.filter(elgifGets).length})</button></div></div>
     ${cur ? `<div class="count">${esc(u.n)} has <b>${esc(cur.name)}</b>. A unit holds one Elgif: the one you pick replaces it.</div>` : ""}
     <div class="count" id="elcount"></div><div id="ellist" style="padding-top:8px"></div></div>`;
   let picked = false;
@@ -4922,13 +4991,20 @@ async function showElgifPick(slot) {
   $("elnone").onclick = () => pick(null);
   const draw = () => {
     const q = elgQ.trim().toLowerCase();
+    if (elgDmg && !dm) { $("elcount").textContent = "Working out each Elgif's damage…"; $("ellist").innerHTML = "";
+      if (!dmRun) { dmRun = true; elgifDamage(TCUR, slot, all.filter(elgCanDmg), f => { if (nav === NAV) $("elcount").textContent = `Working out each Elgif's damage… ${Math.round(f * 100)}%`; }, () => nav === NAV)
+        .then(r => { if (r && nav === NAV) { dm = r; draw(); } }); }
+      return; }
+    const dv = e => elgDmg && dm ? dm.dmg.get(e.id) ?? dm.base : 0;
     const list = all.filter(e => (!elgRev || elgifGets(e)) && (!q || `${e.name} ${e.desc}`.toLowerCase().includes(q)))
-      .map(e => [e, gain(e)]).sort((a, b) => b[1] - a[1] || b[0].r - a[0].r || a[0].name.localeCompare(b[0].name)).map(x => x[0]);
-    $("elcount").textContent = `${list.length} Elgif${list.length === 1 ? "" : "s"}, the ones suggested for what it does (${focus.label}) first`;
+      .map(e => [e, gain(e)]).sort((a, b) => dv(b[0]) - dv(a[0]) || b[1] - a[1] || b[0].r - a[0].r || a[0].name.localeCompare(b[0].name)).map(x => x[0]);
+    $("elcount").textContent = elgDmg ? `${list.length} Elgif${list.length === 1 ? "" : "s"}, the most team damage first: the battle check's damage with each one on ${u.n}`
+      : `${list.length} Elgif${list.length === 1 ? "" : "s"}, the ones suggested for what it does (${focus.label}) first`;
     paged($("ellist"), list, e => { const d = document.createElement("div"); d.innerHTML = row(e); return d.firstElementChild; }, "");
   };
   $("elq").oninput = e => { clearTimeout(showElgifPick.t); showElgifPick.t = setTimeout(() => { elgQ = e.target.value; draw(); }, 200); };
   $("elrev").onclick = () => { elgRev = !elgRev; $("elrev").classList.toggle("on", elgRev); draw(); };
+  $("eldmg").onclick = () => { elgDmg = !elgDmg; store.set("bf.elgdmg", elgDmg); $("eldmg").classList.toggle("on", elgDmg); draw(); };
   window.scrollTo(0, 0);
   draw();
 }
