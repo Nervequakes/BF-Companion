@@ -2293,10 +2293,13 @@ async function showUnit(id) {
       document.querySelectorAll("#belgtab [data-bt]").forEach(b => b.classList.toggle("on", b.dataset.bt === t)); };
     document.querySelectorAll("#belgtab [data-bt]").forEach(b => b.onclick = () => show(b.dataset.bt));
     show("dmg"); };
+  // (after the page below is drawn: the switch's buttons are in it)
+  setTimeout(() => {
   document.querySelectorAll("#sugsw [data-sw]").forEach(b => b.onclick = () => { const e = b.dataset.sw === "elg";
     document.querySelectorAll("#sugsw [data-sw]").forEach(x => x.classList.toggle("on", x === b));
     if ($("sugsph")) $("sugsph").hidden = e; if ($("sugelg")) $("sugelg").hidden = !e; if (e) elgRun(); });
-  if (!$("sugsph")) setTimeout(elgRun, 0);
+  if (!$("sugsph")) elgRun();
+  }, 0);
   if (wk) { $("hmeta").insertAdjacentHTML("afterbegin", `<span class="badge wk" data-gate="${wk[0]}">This week: ${esc(USRC.g[wk[0]][0])} ›</span>`); $("hmeta").querySelector(".wk").onclick = () => go(`#/gate/${wk[0]}`); }
   const elgOk = (D[id]?.skills || []).some(x => x.mods?.length || x.dmg);  // Suggested: Elgifs for a unit that attacks
   $("ubody").innerHTML = `
