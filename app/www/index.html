@@ -850,7 +850,7 @@ const TIER_SHARE = new Set(["defense", "debuff"]);  // already a share: not agai
 const TIER_UBB = 0.25;
 // the All-roles score: a formula on 50 facts from the game's data, each standardised and weighted (the weights are
 // fitted offline); a single role keeps its one number
-const TIER_MODEL = {"cols":["cost","st_def","ls_n","st_rec","es_n","ls_1","nroles","o_mit","s_mit","st_hp","ls_62","UBB_dmg","ls_2","o_lim","s_lim","mv","st_atk","ls_50","SBB_dmg","SBB_nbuff","es_66","o_sparks","s_sparks","s_defense","UBB_bc","s_spark","o_lead","s_lead","o_defense","tx_bccut","s_elem","ubb_spark","tx_dmgto1","o_elem","ls_24","s_sp","o_spark","o_sp","es_30","tx_extraact","tx_maxhpdmg","ls_127","ubb_mit","es_74","es_53","ls_33","es_127","sp_n","o_dmg","ls_86"],"mean":[53.6422,3133.52,4.49771,2982.11,3.52523,0.798165,4.97936,0.222084,0.222084,8757.27,0.201835,2791.28,0.215596,0.379587,0.379587,1.64908,3426.8,0.204128,1464.45,1.72706,0.240826,0.657981,0.657981,0.12713,31.4908,0.263131,0.310868,0.310868,0.132372,0.103211,0.233154,123.05,0.172018,0.233995,0.103211,0.251665,0.268195,0.256572,0.0986239,0.0642202,0.0550459,0.0389908,18.1193,0.0527523,0.0665138,0.0642202,0.0642202,4.7844,0.175678,0.043578],"scale":[5.47685,395.57,0.675586,457.38,1.20656,0.40137,2.65562,0.392173,0.392173,1052.46,0.40137,1358.09,0.411235,0.345664,0.345664,0.871714,425.35,0.403063,974.296,1.14591,0.427585,0.173763,0.173763,0.146212,3.01105,0.341664,0.252295,0.252295,0.151392,0.304234,0.345939,193.002,0.377396,0.346515,0.304234,0.238441,0.344262,0.242707,0.298156,0.245145,0.22807,0.193573,36.727,0.223539,0.249178,0.245145,0.245145,1.5203,0.205309,0.204154],"coef":[0.204222,0.148791,0.128001,0.129767,0.126435,-0.103438,0.137114,0.0869856,0.0869856,0.0828438,0.0914921,0.0806866,0.0720086,0.077504,0.077504,0.0697878,0.0857011,0.0789878,0.0597845,0.0751346,0.0592917,0.0526587,0.0526587,0.0594553,0.0406901,0.0484662,0.047554,0.047554,0.0547908,0.0618889,0.0477177,0.0438943,0.0592929,0.0462703,0.0562229,0.0491501,0.0435489,0.0479667,-0.0410863,0.0494274,0.0413357,0.0271268,0.0366424,-0.0529833,0.0360199,-0.0402312,0.0415217,0.03236,0.0484118,0.0534723],"b":2.53058};
+const TIER_MODEL = {"cols":["cost","st_def","ls_n","st_rec","es_n","ls_1","nroles","o_mit","s_mit","st_hp","ls_62","UBB_dmg","ls_2","o_lim","s_lim","mv","st_atk","ls_50","SBB_dmg","SBB_nbuff","es_66","o_sparks","s_sparks","s_defense","UBB_bc","s_spark","o_lead","s_lead","o_defense","tx_bccut","s_elem","ubb_spark","tx_dmgto1","o_elem","ls_24","s_sp","o_spark","o_sp","es_30","tx_extraact","tx_maxhpdmg","ls_127","ubb_mit","es_74","es_53","ls_33","es_127","sp_n","o_dmg","ls_86","ls_sup","es_sup"],"mean":[53.642201834862384,3133.5229357798166,4.497706422018348,2982.1146788990827,3.5252293577981653,0.7981651376146789,4.979357798165138,0.22208436126744277,0.22208436126744277,8757.272935779816,0.2018348623853211,2791.2844036697247,0.21559633027522937,0.37958715596330267,0.37958715596330267,1.6490825688073394,3426.798165137615,0.20412844036697247,1464.4495412844037,1.7270642201834863,0.2408256880733945,0.6579813998352205,0.6579813998352205,0.12712975098296225,31.490825688073393,0.2631313231088934,0.3108680465164402,0.3108680465164402,0.13237221494102255,0.10321100917431193,0.23315408567446447,123.05045871559633,0.1720183486238532,0.2339950642677366,0.10321100917431193,0.2516647574398095,0.2681953648546241,0.25657240021156924,0.09862385321100918,0.06422018348623854,0.05504587155963303,0.0389908256880734,18.119266055045873,0.052752293577981654,0.06651376146788991,0.06422018348623854,0.06422018348623854,4.784403669724771,0.175677710022585,0.04357798165137615,1.620573394495413,0.9383027522935776],"scale":[5.476845230973157,395.570140066818,0.6755862327258199,457.3798640733534,1.2065593635846172,0.40136959365554736,2.6556216208416044,0.39217283229722577,0.39217283229722577,1052.4582326483855,0.4013695936555473,1358.0898288900962,0.41123539809588766,0.3456644723125717,0.3456644723125717,0.871713530594154,425.3498836050998,0.40306329552604936,974.2962267001624,1.1459148044226668,0.4275847004248063,0.1737632495896472,0.1737632495896472,0.14621153501634082,3.011051243912755,0.34166377897016353,0.2522945352639725,0.2522945352639725,0.15139174855628706,0.30423427939588216,0.3459394511809003,193.00165713214224,0.37739639155744076,0.3465148277520681,0.3042342793958822,0.23844141976423688,0.3442617879287178,0.24270658213854582,0.2981563160304048,0.24514475625481325,0.22806977788359672,0.1935730900725496,36.726980500839375,0.2235385628929459,0.24917801067365863,0.2451447562548139,0.24514475625481316,1.5203014133748203,0.20530865007941146,0.20415420927957562,0.9881550279648154,0.8166983543016544],"coef":[0.20307411826601277,0.14573185907463457,0.12264950143905023,0.1246475733882144,0.11917672369493368,-0.10946931100483687,0.13304431660679333,0.08322569364871821,0.08322569364871821,0.07864990341952031,0.08689835501554531,0.07859003148964842,0.07820513516028123,0.07513940671275711,0.07513940671275715,0.06703216619444934,0.08901893403991254,0.0798021851438057,0.060945353494589266,0.07386574028316611,0.0621507448085917,0.050536400484487674,0.05053640048448768,0.052390272010550784,0.03998688289970649,0.04774122561345815,0.0510038800889911,0.05100388008899107,0.048120894044584486,0.060467054363222035,0.04717600073038882,0.04547789836383331,0.051589101713014646,0.04571125240700633,0.04725987894992788,0.044966118914543066,0.04264289319330909,0.04326955627838176,-0.03908690177090232,0.04988602605579133,0.03945428235874054,0.026667482258723684,0.0360208181070331,-0.05261795214978581,0.03647496436965038,-0.04340048773302449,0.041298187057351665,0.03461678263892891,0.04775225459211972,0.05419241940030654,0.05746628243803075,0.022770591233722336],"b":2.5305810397553516};
 // effects read from the skill, leader skill and extra skill text
 const TIER_TXT = { sparkcrit: /spark critical/i, extraact: /extra action/i, ownbbmax: /fills own bb gauge to max/i, sparkbc: /spark damage (?:[a-z0-9_]+ )?(?:fills|boosts) bb gauge/i,
   dmgto1: /damage reduction to 1/i, negall: /negates all status ailments/i, lockpurge: /(?:ls|es) (?:and es )?lock/i, defign: /def ignor/i, pierce: /pierce/i,
@@ -871,6 +871,7 @@ function tierFacts(DET, P, u, s, o) {  // s: its numbers among all roles, o: eac
   for (const k in TIER_TXT) f["tx_" + k] = TIER_TXT[k].test(txt) ? 1 : 0;
   for (const r in s) { f["s_" + r] = s[r]; f["o_" + r] = o[r]; }
   for (const c of TIER_MODEL.cols) { const m = /^(ls|es)_([0-9]+)$/.exec(c); if (m) f[c] = (m[1] === "ls" ? ls : es).has(m[2]) ? 1 : 0; }
+  f.ls_sup = supportOf(d.lsfx, d.leader?.desc, false).sup; f.es_sup = supportOf(d.esfx, d.extra, true).sup;  // support
   return f;
 }
 const tierScore = f => TIER_MODEL.cols.reduce((a, c, i) => a + TIER_MODEL.coef[i] * ((+f[c] || 0) - TIER_MODEL.mean[i]) / TIER_MODEL.scale[i], TIER_MODEL.b);
@@ -933,6 +934,26 @@ function passiveFxNums(list, el, es) {
     else if (pid === "105") add("ATK", g(1), f);  // boosts Atk each turn up to N turns: its top (the game: steps to it, then stays)
   }
   return out;
+}
+// a leader skill's or extra skill's support: the game's passives (mitigation 8/10008, BC each turn 9, HP each turn 33, BB
+// cost cut 48, max HP 1) and, from its text, what they don't give (negates all ailments, damage to 1, the foe's BB gauge
+// cut, KO resistance, mitigation, healing). sup: one sum (a fact of the formula); nums: [label, counted, as written] for
+// the Leader skill / Extra skill chips, each kind worth half the most a damage kind gives
+const SUP_TX = { negall: /negates all status ailments|negates all ailments/i, dmg1: /damage (?:reduction )?to 1|reduction to 1/i, drain: /reduction of foe'?s'? bb gauge|reduces foe'?s'? bb gauge/i,
+  ko: /ko resistance|ko attack|angel idol/i, heal: /restores? hp|hp each turn|hp restoration/i, mit: /damage reduction(?! to 1)|reduces damage taken/i };
+const SUP_LABEL = { negall: "Negates ailments", dmg1: "Damage to 1", drain: "Foe's BB gauge cut", ko: "KO resistance", heal: "Heal", mit: "Mitigation" };
+function supportOf(fx, text, es) {
+  const o = { mit: 0, bbf: 0, heal: 0, bbcut: 0, hp: 0 };
+  for (const e of fx || []) { const pid = String(e[0]), p = String(es ? e[2] : e[1]).split(",").map(x => +x || 0), g = k => p[k] || 0;
+    if (pid === "8" || pid === "10008") o.mit = Math.max(o.mit, g(0)); else if (pid === "9") o.bbf = Math.max(o.bbf, g(0) / 100);
+    else if (pid === "33") o.heal = Math.max(o.heal, g(1)); else if (pid === "48") o.bbcut = Math.max(o.bbcut, g(0)); else if (pid === "1") o.hp = Math.max(o.hp, g(4)); }
+  const t = Object.fromEntries(Object.entries(SUP_TX).map(([k, re]) => [k, re.test(String(text || "")) ? 1 : 0]));
+  if (o.mit) t.mit = 0; if (o.heal) t.heal = 0;
+  const sup = o.mit / 50 + o.bbf / 10 + o.heal / 5000 + o.bbcut / 50 + o.hp / 100 + Object.values(t).reduce((a, x) => a + x, 0);
+  const nums = [o.mit && ["Mitigation", o.mit / 50 * .5, `${o.mit}%`], o.bbf && ["BC each turn", Math.min(1, o.bbf / 10) * .5, `${+o.bbf.toFixed(1)} BC`],
+    o.heal && ["Heal", Math.min(1, o.heal / 5000) * .5, `${o.heal.toLocaleString("en")} HP`], o.bbcut && ["BB cost cut", o.bbcut / 50 * .5, `${o.bbcut}%`],
+    ...Object.entries(t).filter(([, v]) => v).map(([k]) => [SUP_LABEL[k], .25, ""])].filter(Boolean);  // (one the text only names: a quarter)
+  return { sup, nums };
 }
 const gameFirst = (game, text) => !game.length ? text : [...game, ...text.filter(x => !game.some(y => y[0] === x[0]))];
 // a unit's own SP options' damage numbers, the best value per SP first
@@ -1035,6 +1056,9 @@ function tierNums(DET, P, u) {
   // leader / extra skill: the game's own numbers (its passives), the text's for a kind they don't give
   const lsN = gameFirst(passiveFxNums(d.lsfx, u.e), passiveNums(d.leader?.desc, u.e)), esN = gameFirst(passiveFxNums(d.esfx, u.e, true), passiveNums(d.extra, u.e));
   for (const [r, l, ns] of [["lead", "Leader", lsN], ["extra", "Extra", esN], ["sp", "SP", spNums(P.W[u.id], u.e)]]) n[r] = numsLab(noLim(ns), l);
+  // the Leader skill / Extra skill chips: their damage and their support (All roles keeps the facts it was fitted on)
+  n.leadS = numsLab(noLim([...lsN, ...supportOf(d.lsfx, d.leader?.desc, false).nums]), "Leader");
+  n.extraS = numsLab(noLim([...esN, ...supportOf(d.esfx, d.extra, true).nums]), "Extra");
   // raised ATK limit: the biggest from its leader skill, extra skill or an SP option (within 100 SP; among all roles the
   // SP one is bought from the same 100 SP, tierAll)
   base.lim = limLab([[lsN, "Leader"], [esN, "Extra"]]);
@@ -1049,7 +1073,7 @@ const tierList = (ns, l) => ns.length ? `${l}: ${ns.slice(0, 2).join(", ")}${ns.
 const toolNums = tools => { const t = [...tools], def = t.filter(x => DEFENSE.includes(x)), deb = t.filter(x => DEBUFFS.includes(x));
   return { defense: [def.length / DEFENSE.length, tierList(def, "Defense")], debuff: [deb.length / DEBUFFS.length, tierList(deb, "Debuffs")] }; };
 const numsLab = (ns, l) => { const top = [...ns].sort((a, b) => b[1] - a[1])[0];
-  return [ns.reduce((a, x) => a + x[1], 0), top ? `${l}: ${top[0] === "ATK limit" ? `ATK limit ${top[2]}k` : `${top[0]} ${top[2]}%`}` : ""]; };
+  return [ns.reduce((a, x) => a + x[1], 0), top ? `${l}: ${top[0] === "ATK limit" ? `ATK limit ${top[2]}k` : typeof top[2] === "string" ? `${top[0]}${top[2] ? " " + top[2] : ""}` : `${top[0]} ${top[2]}%`}` : ""]; };
 // All roles: a unit has 100 SP, not 100 for each number. They go where they add most for the SP, as a player spends
 // them: on its own options (the SP options number), or on a BB/SBB's buff or tool; each number against the element's best
 const TIER_ALL = {};
@@ -1079,14 +1103,15 @@ function tierAll(n, best, id) {
 let tierEl = store.get("bf.tierel", "Fire"), tierRole = store.get("bf.tierrole", "all"), tierGet = store.get("bf.tierget", "all");
 function tierRows(DET, P, el, role) {
   const pool = tierPool(el), roles = role === "all" ? TIER_ROLES.map(r => r[0]) : [role];
-  const best = Object.fromEntries(roles.map(r => [r, TIER_SHARE.has(r) ? 1 : Math.max(1e-9, ...pool.map(u => tierNums(DET, P, u)[r][0]))]));
+  const K = r => role !== "all" && (r === "lead" || r === "extra") ? r + "S" : r;  // (one view: with their support)
+  const best = Object.fromEntries(roles.map(r => [r, TIER_SHARE.has(r) ? 1 : Math.max(1e-9, ...pool.map(u => tierNums(DET, P, u)[K(r)][0]))]));
   const scored = [], imp = r => role === "all" ? TIER_IMP[r] : 1;
   const each = pool.map(u => { const n = role === "all" ? tierAll(tierNums(DET, P, u), best, u.id) : tierNums(DET, P, u);
     let fs = null;  // among all roles: the fitted formula's score
     if (role === "all") { const o = tierNums(DET, P, u), sh = {}, so = {};
       for (const r of roles) { sh[r] = n[r][0] / best[r]; so[r] = o[r][0] / best[r]; }
       fs = tierScore(tierFacts(DET, P, u, sh, so)); }
-    return [u, roles.map(r => [n[r][0] / best[r], n[r][1], r]).filter(x => x[0] > 0).sort((a, b) => b[0] - a[0]), fs]; });
+    return [u, roles.map(r => [n[K(r)][0] / best[r], n[K(r)][1], r]).filter(x => x[0] > 0).sort((a, b) => b[0] - a[0]), fs]; });
   // what stands out: a number against the element's typical unit (its median), so one nearly every unit has (spark
   // timing) only shows where it's exceptional
   const med = Object.fromEntries(roles.map(r => [r, (v => v[v.length >> 1])(each.map(([, ns]) => ns.find(x => x[2] === r)?.[0] || 0).sort((a, b) => a - b))]));
@@ -1144,6 +1169,7 @@ async function showTiers() {
       <li><b>Spark timing:</b> how many of its hits land together with another unit's, on average with every other unit of its element (the same hit frames as the Team tab's spark check).</li>
       <li><b>Defense tools</b> (cures, ailment negation, barrier, KO resistance, revive, taunt) and <b>debuffs</b> on foes (DEF ignore, ATK/DEF down, spark, critical and elemental weakness), its skills' and the ones SP options add to them.</li>
       <li><b>Leader skill, extra skill and SP:</b> their ATK, spark, critical, elemental and BB ATK numbers; for SP, its own options.</li>
+      <li><b>Support from the leader and extra skill:</b> mitigation, BC each turn, healing, BB cost cuts, max HP, negating all ailments, damage to 1, cutting the foe's BB gauge and KO resistance. The Leader skill and Extra skill chips count them too: a number from the game's data up to half a top damage number, an effect only its text names a quarter.</li>
       <li><b>Raised ATK limit:</b> the biggest raise from its leader skill, extra skill or SP. In endgame, attacks hit the usual 100k ATK limit (the battle check shows it), so raising it is one of the biggest boosts.</li></ul>
       <p class="small" style="margin:8px 0 0"><b>SP:</b> a unit has 100 SP (Omni). Ranked on one role, it takes the SP options for that one; on all roles, its 100 SP go where they add the most, the way you'd spend them.</p>
       <p class="small" style="margin:8px 0 0"><b>Fair to each unit:</b> a skill that costs more than 30 BC fires less often, so its numbers count for less (30 ÷ its cost). An effect that needs a condition (HP above 50%, the first turns, a partner in the squad), or that works only for other element types, counts half; one that needs a sphere counts fully.</p>
