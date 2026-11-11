@@ -3587,7 +3587,9 @@ function teamDamage(t, half, fresh) {
 // how much a newer unit counts (0 to 1 by release, times this): new units are usually stronger (power creep), not always
 // 2026-11-09: the tier list's place replaces newness (A/B on empty teams and simulated boxes: more S picks, more damage,
 // the same roles); newness and old stay for a later look
-const FILL_W = { newness: 0, old: 0, tier: 40, tierEnd: 10, surv: 0, dmg: 100, role: 1 };
+// (2026-11-11, players: "it recs old early Omnis" in Fill from my box: newer units count more, newness 30 while building and
+// newEnd 80 in the team score: half the old picks, about 2% less damage)
+const FILL_W = { newness: 30, newEnd: 80, old: 0, tier: 40, tierEnd: 10, surv: 0, dmg: 100, role: 1 };
 // what each role is worth to Fill (the user, 2026-11-10: "auto fill shouldn't always cover all roles, just make it better",
 // then of a Fire team hitting 11% harder without BB ATK, status cure and KO resist: "isn't 1.045M better"): against
 // damage, worth 100 for the hardest-hitting team judged. Mitigation, heal and BB fill keep a team alive and casting; the
@@ -3632,6 +3634,11 @@ async function fillTierPrep(els) {
 }
 const FILL_SP = new Map();
 const tierP = id => FILL_TIER.get(id) || 0;
+// how new a unit is among its element's Omnis (0 the oldest, 1 the newest; 7★ and others count 0): players asked for teams
+// built around newer units (2026-11-11), so the team score adds the average times FILL_W.newEnd
+let FILL_NEWP = null;
+const newP = id => { if (!FILL_NEWP) { FILL_NEWP = new Map(); for (const e of ELS) { const l = UNITS.filter(u => u.r === 8 && u.e === e && u.no).sort((a, b) => a.no - b.no);
+  l.forEach((u, k) => FILL_NEWP.set(u.id, l.length > 1 ? k / (l.length - 1) : 1)); } } return FILL_NEWP.get(id) || 0; };
 // the swap check after Fill picks a team: how many rounds, and how many swaps (the best by the quick damage estimate) a round judges
 // (2026-11-10, faster: keep 5 -> 3, final 10 -> 6, screen 60/40 -> 40/25: the same teams, Water +8.6%, Thunder -0.2%, a fifth less time)
 const FILL_SWAP = { rounds: 6, keep: 3, screen: 40, screenKeep: 25, starts: 4, startsDmg: 2, perSlot: 6, perTier: 2, loss: 10, freshAll: true, final: 6, startsAny: 2 };  // loss: the role worth a swap may lose  // screen: a pool bigger than this is screened first  // old: what a unit from before release number 8000 counts less
@@ -4667,7 +4674,8 @@ async function renderTeam() {
     // (the hardest-hitting team judged, worked out again only when a team is added: sorting hundreds of teams by score
     // looked it up for every comparison, a 4 s freeze on a phone)
     let mxN = -1, mxD = 1, mxS = 1; const mx = () => { if (mxN !== all.length) { mxN = all.length; mxD = 1; mxS = 1; for (const x of all) { if (x.dmg > mxD) mxD = x.dmg; if (x.surv > mxS) mxS = x.surv; } } };
-    const score = c => { mx(); return c.roleW + c.can * 8 + c.rate * 8 + c.dmg / mxD * FILL_W.dmg + c.surv / mxS * FILL_W.surv + tierAvg(c) * FILL_W.tierEnd; };
+    const newAvg = c => news.reduce((a, i) => a + newP(c.t[i]), 0) / Math.max(1, news.length);
+    const score = c => { mx(); return c.roleW + c.can * 8 + c.rate * 8 + c.dmg / mxD * FILL_W.dmg + c.surv / mxS * FILL_W.surv + tierAvg(c) * FILL_W.tierEnd + newAvg(c) * (FILL_W.newEnd || 0); };
     const top = () => all.reduce((a, c) => score(c) > score(a) ? c : a, all[0]);
     // the swap check: each team is built one slot at a time, so one a single swap away that scores higher was never
     // tried. Each unit Fill can use, in each slot it filled: the quick damage estimate keeps the best few that lose no
