@@ -3399,14 +3399,21 @@ function dmgInfo(id, i, fresh) {
 // skills for the unit or all allies when their condition holds, spheres). kindOf(i): the skill slot i casts; W: the
 // wiki's units, for extra skills' effect targets ([] for the game's text); spOpts(i): the SP picked for slot i's skills
 const ES_SPH = new Map();  // a unit's spheres that switch on its extra skill, without the wiki (Fill asks often)
-function teamBuffs(team, kindOf, W = [], D = TEAM_D || {}, spOpts = () => []) {
+function teamBuffs(team, kindOf, W = [], D = TEAM_D || {}, spOpts = () => [], order = null) {
+  // with a casting order: a buff kind's value is the last caster's before the unit (a second cast replaces it), else the
+  // last of the turn before; without one, the biggest
+  const pos = order ? new Map(order.map((sl, k) => [sl, k])) : null, cands = new Map();
+  const pick = (list, u) => { let before = null, last = null; const p = pos.get(u) ?? 99, q = j => pos.get(j) ?? -1;
+    for (const x of list) { if (!(x[1] > 0)) continue; if (q(x[0]) < p && (!before || q(x[0]) > q(before[0]))) before = x; if (!last || q(x[0]) > q(last[0])) last = x; }
+    return (before || last)?.[1] || 0; };
   // the skill each slot casts and its game record don't change while these buffs are worked out: looked up once
   const kc = [], kind = i => i in kc ? kc[i] : (kc[i] = kindOf(i)), gc = [], castG = i => i in gc ? gc[i] : (gc[i] = (sk => { const g = sk.find(x => x.label === kind(i));
     return g && kind(i) === "BB" && xaBB(team[i]) ? mergeSk(g, sk.find(x => x.label === "SBB")) : g; })(D?.[team[i]]?.skills || []));  // BB + SBB on the extra action: both skills' buffs
   const ELN = { fire: 1, water: 2, earth: 3, thunder: 4, light: 5, dark: 6 };
   // party buffs on unit u (slot) for a role: [all elements, its element] (ATK and crit rate come as both kinds)
   const pc = new Map(), party = (c, u) => { const ck = c + u; if (pc.has(ck)) return pc.get(ck); const el = ELN[(UMAP[team[u]]?.e || "").toLowerCase()]; let all = 0, mine = 0;
-    team.forEach((id, j) => { if (!id) return; const g = castG(j);
+    const ja = [], jm = [];
+    team.forEach((id, j) => { if (!id) return; const A0 = all, M0 = mine; all = 0; mine = 0; const g = castG(j);
       if (!g) { const pw = powerOf(id, c); all = Math.max(all, pw && "BS".includes(pw[1]) ? pw[0] : 0); }
       else if ((c === "atk" || c === "critrate") && g.p5) { for (const [e, a, cr, who] of g.p5) if (who !== 3 || j === u) { const v = c === "atk" ? a : cr; if (!e) all = Math.max(all, v); else if (e === el) mine = Math.max(mine, v); } }
       // a skill's buff only for its caster (tags "self": the wiki's "To self", "boosts own ...") reaches no one else
@@ -3422,8 +3429,10 @@ function teamBuffs(team, kindOf, W = [], D = TEAM_D || {}, spOpts = () => []) {
       const xaL = L === "B" && xaBB(id);  // BB + its SBB on the extra action: the SP for either skill
       for (const x of spOpts(j)) { const v = (L === "U" && x.n.ubb?.[c]) || x.n[c] || 0; if (!v || !(x.L.includes(L) || xaL && x.L.includes("S")) || (/\bown\b|to self|\bself\b/.test(x.d) && j !== u)) continue;
         const xe = elsIn(x.d), en = /enhanc/.test(x.d) && p5el;
-        if (xe ? xe.map(e => ELN[e]).includes(el) : en ? p5el === el : true) { if (xe || en) mine = Math.max(mine, v); else all = Math.max(all, v); } } });
-    const r = [all, mine]; pc.set(ck, r); return r; };
+        if (xe ? xe.map(e => ELN[e]).includes(el) : en ? p5el === el : true) { if (xe || en) mine = Math.max(mine, v); else all = Math.max(all, v); } }
+      ja.push([j, all]); jm.push([j, mine]); all = Math.max(A0, all); mine = Math.max(M0, mine); });
+    if (pos) { all = pick(ja, u); mine = pick(jm, u); }
+    cands.set(ck, [ja, jm]); const r = [all, mine]; pc.set(ck, r); return r; };
   const partyAll = (c, u) => { const [a, b] = party(c, u); return a + b; };
   // its own (self) buffs from the skill it casts
   const ownOf = (c, u) => castG(u)?.own?.[c] || 0;
@@ -3477,7 +3486,7 @@ function teamBuffs(team, kindOf, W = [], D = TEAM_D || {}, spOpts = () => []) {
   const fxLimit = u => { const id = team[u], el = (UMAP[id]?.e || "").toLowerCase(), L = l => fxRole(l, el).limit || 0;
     return Math.max(0, ...leads.map(j => L(D?.[team[j]]?.lsfx || [])), ...(SQ.es ? team.map((x, j) => !x ? 0 : Math.max(0, ...(D?.[x]?.esfx || []).filter(e => (j === u || e[1] === 2) && esCond(e[3], team, j)).map(e => L([[e[0], e[2]]])))) : []),
       ...(TSPH[TCUR]?.[u] || []).map(sid => sid ? L(sphFxOwn(sid)) : 0), ...leads.flatMap(j => (TSPH[TCUR]?.[j] || []).map(sid => sid ? L(lsAddOf(sid)) : 0))); };
-  return { castG, party, partyAll, ownOf, passive, fxLimit };
+  return { castG, party, partyAll, ownOf, passive, fxLimit, cands };
 }
 // a team's damage per turn for Fill's shortlist: the battle check's second number (the game's formula, teamBuffs) with
 // what's known without the wiki: max-level ATK (no imps), the leader and extra skills' ATK % from the tags, a foe weak to
@@ -3960,7 +3969,7 @@ function sparkRates(members) {
   };
 }
 const SPARK_BO = new Map(), SPARK_NUM = new Map();
-function sparkCheck(rows, W, D) {
+function sparkCheck(rows, W, D, order = null) {
   // a unit with no wiki page (Revived's own, like Ultimate Behemoth) has no move data: timed as a teleporter from the game's
   // own move animation (mvf) when it has one, and said so under the sparks
   const members = rows.map(r => ({ r, id: r.id, slot: r.i, mv: W[r.i]?.mv || (D?.[r.id]?.mvf > 0 ? [2, 3, 0] : undefined), noMv: !W[r.i]?.mv, mvf: D?.[r.id]?.mvf, sp: (D?.[r.id]?.skills || []).find(x => x.label === r.s?.kind)?.sp }))
@@ -3987,7 +3996,9 @@ function sparkCheck(rows, W, D) {
   }
   if (SPARK_NUM.size > 20000) SPARK_NUM.clear();
   SPARK_NUM.set(key, { now, bo: best.order === slotOrder ? null : best.order.map(m => members.indexOf(m)), rate: best.rate, per: best.per }); }
-  const shown = best.rate > now.rate + 0.005 ? best.order : slotOrder;
+  // a casting order given (the one that hits hardest with the buffs): its sparks
+  if (order) { const o = order.map(sl => members.find(m => m.slot === sl)).filter(Boolean); if (o.length === members.length) best = { order: o, ...sparkRate(members, o), forced: true, sparkBest: Math.max(best.rate, now.rate) }; }
+  const shown = best.forced || best.rate > now.rate + 0.005 ? best.order : slotOrder;
   let det = null;  // the hit timeline: only when it's shown
   return { members, now, best, get detail() { return det || (det = sparkDetail(members, shown)); }, untimed: rows.filter(r => !members.some(m => m.r === r)), guessed: members.filter(m => m.tele === null), noMv: members.filter(m => m.noMv) };
 }
@@ -4008,9 +4019,9 @@ function sparkTimeline(S) {
     <div class="sax"><span>frame ${lo}</span><span>${hi}</span></div></div>`;
 }
 function sparkHtml(S) {
-  const pct = x => `${Math.round(x * 100)}%`, name = m => esc(UMAP[m.id].n), better = S.best.rate > S.now.rate + 0.005;
+  const pct = x => `${Math.round(x * 100)}%`, name = m => esc(UMAP[m.id].n), better = S.best.forced || S.best.rate > S.now.rate + 0.005;
   return `<div class="spark"><div class="bcl"><b>Sparks</b> (estimate): casting in slot order, <b>${pct(S.now.rate)}</b> of the team's hits spark.${
-    better ? ` In the best order, <b>${pct(S.best.rate)}</b>:` : " No order does better."}</div>
+    better ? S.best.forced ? ` In the best order, ${pct(S.best.sparkBest)}; in the order that hits hardest with the buffs, <b>${pct(S.best.rate)}</b>:` : ` In the best order, <b>${pct(S.best.rate)}</b>:` : " No order does better."}</div>
     ${better ? `<ol class="sorder">${S.best.order.map(m => `<li>${name(m)} <span class="dim">${pct(S.best.per[S.members.indexOf(m)])}</span></li>`).join("")}</ol>`
       : `<div class="bcd">${S.members.map((m, k) => `${name(m)} ${pct(S.now.per[k])}`).join(" · ")}</div>`}
     <div class="sdet"${SPARK_OPEN ? "" : " hidden"}>${sparkTimeline(S)}
@@ -4043,7 +4054,7 @@ async function bestCasts(team, added) {
     TCAST[TCUR][best] = "BB"; B = nb;
   }
 }
-function battleCheck(team, W, NUMS, D) {
+function battleCheckAt(team, W, NUMS, D, order = null) {
   // the wiki's skill, else the game's own (its BC cost, hits and damage modifier from the game's tables)
   const skill = (i, kind) => (W[i]?.skills || []).find(s => s.kind === kind)
     || (s => s && { ...s, kind })((D?.[team[i]]?.skills || []).find(s => s.label === kind && s.name));
@@ -4068,7 +4079,7 @@ function battleCheck(team, W, NUMS, D) {
   // of a kind replaces it: the biggest counts here), and the kinds add up: a party buff for all elements (process 5),
   // one for the unit's element, the caster's own (self) buffs, and passives (leader skills, extra skills, spheres)
   const kindOf = i => { const has = ["BB", "SBB", "UBB"].filter(k => skill(i, k)), set = TCAST[TCUR]?.[i]; return set && has.includes(set) ? set : skill(i, "SBB") ? "SBB" : skill(i, "BB") ? "BB" : null; };
-  const { castG, party, partyAll, ownOf, passive, fxLimit } = teamBuffs(team, kindOf, W, D, spOpts);
+  const { castG, party, partyAll, ownOf, passive, fxLimit, cands } = teamBuffs(team, kindOf, W, D, spOpts, order);
   const atkBuff = Math.max(0, ...team.map((id, j) => id ? party("atk", j)[0] : 0)), bbAtk = Math.max(0, ...team.map((id, j) => id ? party("bbatk", j)[0] : 0));
   // its ATK limit: 99,999, or what the leader skills, its spheres, extra skill, Elgif or SP raise it to
   const lsLim = Math.max(0, ...[0, 5].filter(j => team[j] && (j === 0 ? SQ.lead : SQ.friend)).map(j => atkLimitOf(lsText(team[j], W[j], D))));
@@ -4141,7 +4152,7 @@ function battleCheck(team, W, NUMS, D) {
   const lsCut = leadRows.reduce((a, r, k) => a + (D?.[r.id]?.lsfx ? cut48Of(D[r.id].lsfx) : costCut(lead[k])) + (TSPH[TCUR]?.[r.i] || []).reduce((s, sid) => s + (sid ? cut48Of(lsAddOf(sid)) : 0), 0), 0);
   const lsBack = leadRows.reduce((a, r) => a + back49Of(D?.[r.id]?.lsfx) + (TSPH[TCUR]?.[r.i] || []).reduce((s, sid) => s + (sid ? back49Of(lsAddOf(sid)) : 0), 0), 0);
   const esCut = Math.max(0, ...rows.map(r => r.esCutAll ? r.esCut : r.esCutParty)), esBack = Math.max(0, ...rows.map(r => r.esBackParty));
-  const spark = sparkCheck(rows, W, D);
+  const spark = sparkCheck(rows, W, D, order);
   // casting twice: the skill each unit casts may cast twice (game data "twice", %); one for all allies counts for everyone
   // (the team's best), one only for itself on itself. Expected damage: × (1 + chance)
   const twOf = (r, kind) => +((D?.[r.id]?.skills || []).find(x => x.label === kind)?.twice || 0);
@@ -4201,8 +4212,57 @@ function battleCheck(team, W, NUMS, D) {
     const n = known.filter(x => T2.full || F(x)[6] === 2 || T2.bc(x) + T2.sparkBC(x) >= need(x)).length;
     if (n > can && (!tip || n > tip.can)) tip = { id: r.id, f: r.bf, can: n };
   }
-  return { rows, teamFill: T.now + T.turn + lsTurn, full: T.full, ok, atkBuff, bbAtk, known: known.length, can, spark, tip,
+  return { rows, teamFill: T.now + T.turn + lsTurn, full: T.full, ok, atkBuff, bbAtk, known: known.length, can, spark, tip, cands, order,
     sparkBC: rows.some(r => r.sparkBC) };
+}
+// the battle check: the casting order that hits hardest when buffs of one kind from different units replace each other
+const battleHit = B => B.rows.reduce((a, r) => a + (r.sFull || r.sDmg || 0) * (B.ok(r) ? 1 : .5) * (1 + (dmgInfo(r.id, r.i).hp || 0) / 10), 0);
+const BUFF_NAME = { atk: "ATK", bbatk: "BB ATK", crit: "Critical damage", critrate: "Critical rate", spark: "Spark damage", sparkcrit: "Spark critical", elem: "Elemental damage" };
+const BC_DEEP = new Map();  // the order found by swapping, per team as set up (the team view draws again on every tap)
+function battleCheck(team, W, NUMS, D, deep = false, quick = false) {
+  const B0 = battleCheckAt(team, W, NUMS, D, null);
+  // quick: Fill's search (its teams the way it found them before; the best few are judged with the order at the end)
+  if (quick) return B0;
+  // the kinds two or more units give with different values (copies of one unit give the same: no matter)
+  const clash = {};
+  for (const [ck, lists] of B0.cands || []) { const c = ck.replace(/\d+$/, "");
+    for (const L of lists) { const xs = L.filter(x => x[1] > 0); if (new Set(xs.map(x => x[1])).size < 2) continue;
+      const m = clash[c] || (clash[c] = new Map()); for (const [j, v] of xs) m.set(j, Math.max(m.get(j) || 0, v)); } }
+  const kinds = Object.keys(clash); if (!kinds.length) return B0;
+  const slots = team.map((id, i) => id ? i : -1).filter(i => i >= 0), sp = B0.spark ? B0.spark.best.order.map(m => m.slot) : [];
+  const base = [...slots.filter(x => !sp.includes(x)), ...sp];  // (units without spark timing first)
+  // each such kind's casters together where its last one was, the biggest last
+  const group = o => { o = [...o]; for (const c of kinds) { const ps = o.filter(x => clash[c].has(x)); if (ps.length < 2) continue;
+    const at = o.indexOf(ps[ps.length - 1]) - (ps.length - 1); o = o.filter(x => !clash[c].has(x)); o.splice(Math.max(0, at), 0, ...ps.sort((a, b) => clash[c].get(a) - clash[c].get(b))); } return o; };
+  const tries = [base, group(base), group(slots)].filter((o, k, a) => a.findIndex(x => x.join() === o.join()) === k);
+  let best = null; const at = o => { const B = battleCheckAt(team, W, NUMS, D, o); B.hitV = battleHit(B); return B; };
+  const key = deep ? JSON.stringify([team, TCAST[TCUR], (TSPE[TCUR] || []).map(x => x?.k), TOMNI[TCUR], TSPH[TCUR], TELG[TCUR], TTYPE[TCUR], SQ]) : "";
+  if (deep && BC_DEEP.has(key)) best = at(BC_DEEP.get(key));
+  else {
+    // the team view: also the orders with the most sparks (each quick to count), each with its buffs grouped
+    if (deep && B0.spark) { const ms = B0.spark.members, fast = sparkRates(ms), rest = slots.filter(x => !ms.some(m => m.slot === x));
+      if (fast) { const top = permsOf(ms.length).map(o => [o, fast(o)]).sort((x, y) => y[1] - x[1]).slice(0, 6);
+        for (const [o] of top) { const sl = [...rest, ...o.map(k => ms[k].slot)]; tries.push(sl, group(sl)); } } }
+    for (const o of tries.filter((o, k, a) => a.findIndex(x => x.join() === o.join()) === k)) { const B = at(o); if (!best || B.hitV > best.hitV * 1.000001) best = B; }
+    // the team view: then any two units changing places, while that hits harder (at most 4 rounds)
+    if (deep) { for (let round = 0; round < 4; round++) { let won = null;
+        const n = best.order.length;
+        for (let a = 0; a < n; a++) for (let b = 0; b < n; b++) { if (a === b) continue;  // a unit moved to another place, or two changing places
+          for (const swap of b > a ? [true, false] : [false]) { const o = [...best.order]; if (swap) [o[a], o[b]] = [o[b], o[a]]; else o.splice(b, 0, ...o.splice(a, 1));
+            const B = at(o); if (B.hitV > (won || best).hitV * 1.000001) won = B; } }
+        if (!won) break; best = won; }
+      if (BC_DEEP.size > 300) BC_DEEP.clear(); BC_DEEP.set(key, best.order); }
+  }
+  best.clash = kinds.map(c => [c, [...clash[c]].sort((a, b) => a[1] - b[1])]); best.maxHit = battleHit(B0);
+  return best;
+}
+// what replaces what, and the order to cast in
+function buffClashHtml(B) {
+  const nm = j => esc(UMAP[B.rows.find(r => r.i === j)?.id || ""]?.n || "");
+  const loss = B.maxHit > B.hitV * 1.005 ? Math.round((1 - B.hitV / B.maxHit) * 100) : 0;
+  return `<div class="bctip small"><b>Buffs of one kind replace each other:</b> the last cast holds, not the biggest (${B.clash.map(([c, ps]) =>
+    `${BUFF_NAME[c] || c}: ${ps.map(([j, v]) => `${nm(j)} ${Math.round(v)}%`).join(", ")}`).join("; ")}). Cast in this order: <b>${(B.order || []).map(nm).join(" → ")}</b>,
+    the bigger ones last${loss ? `; still ${loss}% less damage than if every unit had the biggest of each` : ""}.</div>`;
 }
 function battleHtml(B) {
   if (!B.rows.length) return "";
@@ -4220,6 +4280,7 @@ function battleHtml(B) {
       ${r.sphs?.length ? `<div class="bcsph">${r.sphs.map(s => `<span title="${esc(s.name)}"><img src="${iImg(s.sid)}" alt="">${s.adds.length ? s.adds.map(([v, l]) => l === "ATK limit" ? `ATK limit ${v.toLocaleString("en")}` : `+${v}% ${l}`).join(" · ") : `<i>${esc(s.name)}</i>`}</span>`).join("")}</div>` : ""}</div></div>`).join("")}
     ${B.tip ? `<div class="bctip small"><b>Tip:</b> with ${esc(UMAP[B.tip.id].n)} casting <b>BB</b> instead of SBB (it ${B.tip.f[6] === 1 ? "fills everyone's gauge to max"
       : fillWords(B.tip.f, 0, true) ? `gives everyone ${fillWords(B.tip.f, 0, true)}` : "refills its own gauge"}), <b class="okc">${B.tip.can} of ${B.known}</b> can cast again right away.</div>` : ""}
+    ${B.clash ? buffClashHtml(B) : ""}
     ${B.spark ? sparkHtml(B.spark) : ""}
     <p class="small dim" style="margin:8px 0 0">Rough: counts the skills' BC fills (BB/SBB as the game's own data has them, with the SP you picked for them; leader and extra skills as the wiki words them; each turn and per spark, sparks as in the best order above) and BC cost cuts, not BC from hits, crystals, guarding or damage taken. Damage as the game works it out, per foe and added up over the skill's attacks (at full HP): each attack's ATK = base ATK × (1 + (ATK % from leader and extra skills, spheres and SP${B.atkBuff ? `, the team's +${B.atkBuff}% ATK buff` : ", ATK buffs"} + the attack's modifier + BB ATK${B.bbAtk ? ` (the team's +${B.bbAtk}% BB ATK, plus spheres)` : ""}) ÷ 100), at most 99,999 (or the limit a sphere, extra or leader skill raises it to); then before the foe's DEF (a third of it comes off) and with no crit. The second number: also expected crits (1.5× plus critical damage, at most 7×; critical rate 10% plus the attack's own, buffs and passives, at most 100%), sparks (1.5× plus spark damage, on its share of hits that spark) and a foe weak to its element (1.5× plus elemental damage). Buffs add up as the game adds them: the biggest party buff of each kind (all elements, and one for its element), its own buffs, leader and extra skills and spheres (a sphere boost without a number isn't counted).</p></div>`;
 }
@@ -4306,7 +4367,7 @@ async function renderTeam() {
       ${(par => par ? `<div class="note para"><b>Elemental Paradigm ${par.lv}</b> (${par.el} Omni+ squad): +${PARADIGM[par.lv][0]}% parameters, +${PARADIGM[par.lv][1]}% spark, +${PARADIGM[par.lv][2]}% critical and +${PARADIGM[par.lv][3]}% elemental damage for the squad${par.lv === 3 ? "; its boost, mitigation, critical and spark buffs last a turn longer" : ""}. Counted in the stats above; not in Summoner's Arc or Strategy Zone.</div>` : "")(paradigm(team))}
       <p class="small dim" style="margin:8px 0 0">Max level stats of the chosen type${SQ.imps ? ", max imps" : ""}${SQ.lead ? ", the leader's skill" : ""}${SQ.friend ? ", the friend's skill" : ""}${SQ.es ? ", each unit's extra skill and Elgif" : ""} and the spheres you pick (the app can't see yours). The friend's leader skill counts too, as it does in battle.
         Tap a sphere or Elgif to choose it (a unit holds one Elgif). ✱ = a boost with a condition (counted). Cost: friend not counted. ${elems.map(([e, n]) => `<span class="badge">${orb(e)}×${n}</span>`).join(" ")}</p></div></div>
-    <div class="tpane tr">${battleHtml(battleCheck(team, W, NUMS, D))}
+    <div class="tpane tr">${battleHtml(battleCheck(team, W, NUMS, D, true))}
     ${team[0] || team[5] ? `<div class="sec tls"><h3 class="blue">Leader skills</h3>${[0, 5].filter(i => team[i]).map(i => { const [n, d] = ls(team[i], W[i]); const b = boostText(statBoosts(lsText(team[i], W[i], D)));
         return `<div class="sk"><div class="kn"><span class="tag ls">${i ? "Friend" : "Leader"}</span><span class="nm">${esc(n || UMAP[team[i]]?.n)}</span></div><p>${d ? hl(d) : `<span class="dim">No leader skill</span>`}</p>${b ? `<div class="pills"><span class="pill">Counted: ${esc(b)}</span></div>` : ""}</div>`; }).join("")}</div>` : ""}
     <div class="sec tcov"><h3 class="green">What the team covers</h3><p class="covkey">Under each unit: where it gets it (LS, ES, BB, SBB, UBB, SP, or a small sphere icon, faded if only for that unit) and how much. Next to the role: the highest number in the team. <b style="color:#8fd0ff">Blue, self only</b>: it buffs only that unit. <b style="color:#e6c877">Dashed, if BB / SBB / UBB</b>: it's on that skill, and the unit casts another one in the battle check; tap it to cast that one. ◐: only self buffs. <b>Grey</b>: not active.</p>${(() => {
@@ -4460,7 +4521,7 @@ async function renderTeam() {
       TCAST[TCUR] = [...cast0]; TSPE[TCUR] = JSON.parse(spe0);
       for (const i of news) if (c.t[i] && UMAP[c.t[i]]?.r === 8) TSPE[TCUR][i] = await spFor_(c.t[i], i, c.spNeed[i]);
       const W = await Promise.all(c.t.map(id => id ? wiki(id) : {})), nums = () => c.t.map((id, i) => id && UMAP[id] ? unitNumbers(i, c.t, W, D, I) : null);
-      let Nm = nums(), B = battleCheck(c.t, W, Nm, D);
+      let Nm = nums(), B = battleCheck(c.t, W, Nm, D, false, !deep);
       // the leader's / friend's SP with its "Add to LS" options too (the players' builds are made for a unit slot; ven on
       // Discord: Phaedra's "Add to LS (300% Light elemental damage)"): kept when the battle check hits harder with it
       // a try's record [won, lost]: taken without a check / not tried (in the search 4 to 1 is enough; at the end only all one way)
@@ -4478,7 +4539,7 @@ async function renderTeam() {
       for (const i of news) {
         const id = c.t[i]; if (!deep || !c.spNeed?.[i]?.length || UMAP[id]?.r !== 8) continue;
         const alt = await spFor_(id, i, undefined); if (!alt || alt.k.join() === (TSPE[TCUR][i]?.k || []).join()) continue;
-        await breathe(); const was = TSPE[TCUR][i]; TSPE[TCUR][i] = alt; const N2 = nums(), B2 = battleCheck(c.t, W, N2, D);
+        await breathe(); const was = TSPE[TCUR][i]; TSPE[TCUR][i] = alt; const N2 = nums(), B2 = battleCheck(c.t, W, N2, D, false, !deep);
         if (hit(B2) > hit(B) * 1.001) { Nm = N2; B = B2; } else TSPE[TCUR][i] = was;
       }
       for (const i of [0, 5]) {
@@ -4486,9 +4547,9 @@ async function renderTeam() {
         const alt = await spLsFor(id, i); if (!alt || alt.k.join() === (TSPE[TCUR][i]?.k || []).join()) continue;
         // once its "Add to LS" build has won (or lost) three times with no other outcome, it's taken (or left) without a check
         const wl = lsWL.get(id + "|" + i) || [0, 0];
-        if (sure(wl)) { TSPE[TCUR][i] = alt; Nm = nums(); B = battleCheck(c.t, W, Nm, D); continue; }
+        if (sure(wl)) { TSPE[TCUR][i] = alt; Nm = nums(); B = battleCheck(c.t, W, Nm, D, false, !deep); continue; }
         if (hopeless(wl)) continue;
-        await breathe(); const was = TSPE[TCUR][i]; TSPE[TCUR][i] = alt; const N2 = nums(), B2 = battleCheck(c.t, W, N2, D);
+        await breathe(); const was = TSPE[TCUR][i]; TSPE[TCUR][i] = alt; const N2 = nums(), B2 = battleCheck(c.t, W, N2, D, false, !deep);
         if (hit(B2) > hit(B) * 1.001) { Nm = N2; B = B2; wl[0]++; } else { TSPE[TCUR][i] = was; wl[1]++; }
         lsWL.set(id + "|" + i, wl);
       }
@@ -4505,17 +4566,17 @@ async function renderTeam() {
       const xaAll = deep ? [] : news.filter(i => !TCAST[TCUR][i] && xaBB(c.t[i]) && !(w => w && hopeless(w))(xaWL.get(c.t[i])));
       if (xaAll.length > 1) {
         for (const i of xaAll) TCAST[TCUR][i] = "BB";
-        const N2 = nums(), B2 = battleCheck(c.t, W, N2, D);
+        const N2 = nums(), B2 = battleCheck(c.t, W, N2, D, false, !deep);
         if (hit(B2) > hit(B) * 1.001) { Nm = N2; B = B2; settled = false; for (const i of xaAll) { const wl = xaWL.get(c.t[i]) || [0, 0]; wl[0]++; xaWL.set(c.t[i], wl); } }
         else for (const i of xaAll) TCAST[TCUR][i] = null;
         await breathe();
       }
-      if (settled) { Nm = nums(); B = battleCheck(c.t, W, Nm, D); }
+      if (settled) { Nm = nums(); B = battleCheck(c.t, W, Nm, D, false, !deep); }
       for (const i of news) {
         const id = c.t[i]; if (TCAST[TCUR][i] || !xaBB(id)) continue;
         const wl = xaWL.get(id) || [0, 0];
         if (hopeless(wl)) continue;
-        TCAST[TCUR][i] = "BB"; const N2 = nums(), B2 = battleCheck(c.t, W, N2, D);
+        TCAST[TCUR][i] = "BB"; const N2 = nums(), B2 = battleCheck(c.t, W, N2, D, false, !deep);
         if (hit(B2) > hit(B) * 1.001) { Nm = N2; B = B2; wl[0]++; } else { TCAST[TCUR][i] = null; wl[1]++; }
         xaWL.set(id, wl); await breathe();
       }
@@ -4530,12 +4591,12 @@ async function renderTeam() {
         const last = deep || wl[2] >= 0 ? -1 : alts.findIndex(a => a.drop === limLast.get(id + "|" + i));
         const was = TSPE[TCUR][i], hb = hit(B); let won = -1;
         for (const [n, alt] of alts.entries()) { if (wl[2] >= 0 && n !== wl[2] || last >= 0 && n !== last) continue;
-          await breathe(); TSPE[TCUR][i] = alt; const N2 = nums(), B2 = battleCheck(c.t, W, N2, D);
+          await breathe(); TSPE[TCUR][i] = alt; const N2 = nums(), B2 = battleCheck(c.t, W, N2, D, false, !deep);
           if (hit(B2) > Math.max(hb * 1.001, won >= 0 ? hit(B) : 0)) { Nm = N2; B = B2; won = n; } }
         TSPE[TCUR][i] = won >= 0 ? alts[won] : was; if (won >= 0) { wl[0]++; wl[2] = won; limLast.set(id + "|" + i, alts[won].drop); } else if (last < 0) wl[1]++;
         limWL.set(lk, wl); ag[won >= 0 ? 0 : 1]++; limWL.set(id + "|" + i, ag);
       }
-      if (B.can < units && hope()) { const was = TCAST[TCUR].join(); await bestCasts(c.t, news.filter(i => c.t[i])); if (TCAST[TCUR].join() !== was) { Nm = nums(); B = battleCheck(c.t, W, Nm, D); } }
+      if (B.can < units && hope()) { const was = TCAST[TCUR].join(); await bestCasts(c.t, news.filter(i => c.t[i])); if (TCAST[TCUR].join() !== was) { Nm = nums(); B = battleCheck(c.t, W, Nm, D, false, !deep); } }
       // damage per turn: each SBB as the battle check works it out (sparks, crit, spheres; half if it can't cast every
       // turn, more with foes' max HP damage)
       const rate = B.spark?.best?.rate || 0, mult = 1;  // the battle check's damage has sparks, crit and elemental in it
@@ -4626,8 +4687,10 @@ async function renderTeam() {
     // the best few teams again, each Omni's other SP builds tried (its plain best build; the leader's / friend's with its
     // "Add to LS" options): the pick can change to one whose SP was picked short (Light's Avyn: -7%)
     const finals = [...all].sort((a, b) => score(b) - score(a)).filter((c, k, arr) => arr.findIndex(x => x.t.join() === c.t.join()) === k).slice(0, FILL_SWAP.final);
-    for (const f of finals) { const c = { t: f.t, spNeed: { ...f.spNeed } }; await judge(c, true); all.push(c); await breathe(); }
-    const pick = top();
+    // (with the casting order: buffs of one kind replace each other; the pick is one of these, judged the same way)
+    const fin = [];
+    for (const f of finals) { const c = { t: f.t, spNeed: { ...f.spNeed } }; await judge(c, true); all.push(c); fin.push(c); await breathe(); }
+    const pick = fin.length ? fin.reduce((a, c) => score(c) > score(a) ? c : a) : top();
     TCAST[TCUR] = pick ? pick.casts : cast0; TSPE[TCUR] = JSON.parse(pick ? pick.spe : spe0);
     let n = 0; const spNeed = pick?.spNeed || {};
     if (pick) for (const s of news) if (pick.t[s]) { team[s] = pick.t[s]; n++; }
