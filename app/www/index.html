@@ -249,6 +249,7 @@ main { padding-bottom: calc(var(--navh) + 20px); }
 .elgc .eic img { width: 48px; height: 48px; object-fit: contain; } .elgc .eic .er { width: auto; font-size: 11px; }
 .elgc .epill { display: inline-block; margin: 3px 0 4px; padding: 1px 8px; border-radius: 999px; background: rgba(90,200,120,.18); border: 1px solid #5ac878; color: #8ef0a8; font-weight: 700; font-size: 12.5px; }
 .elgc .eff { font-size: 12.5px; color: #cfd3dc; }
+.elgc { cursor: pointer; } .elgc .egw { margin-top: 4px; }
 .elgh { margin: 10px 12px 6px; font-weight: 700; font-size: 13px; color: var(--accent); }
 .item .er { flex: none; width: 46px; text-align: center; font-family: Rodin, Arial, sans-serif; font-size: 12px; color: var(--accent); text-shadow: var(--ol); }
 .item .er .sti { width: 15px; height: 15px; vertical-align: -2px; } .item .er .omi { width: 30px; height: 30px; display: block; margin: 0 auto; }
@@ -2281,17 +2282,21 @@ async function showUnit(id) {
       return o; };
     const sup = SUP.map(([k, label, say]) => [label, Object.values(EG).map(e => [e, supOf(e)[k] || 0]).filter(x => x[1] > 0)
       .sort((a, b) => elgifGets(b[0]) - elgifGets(a[0]) || b[1] - a[1]).slice(0, 2).map(([e, v]) => [e, say(+v.toFixed(1))])]).filter(x => x[1].length);
-    const card = (e, pill) => `<div class="item elgc"><div class="eic"><img src="${uImg("50792")}" alt="" onerror="this.style.visibility='hidden'"><span class="er">${elgifRarity(e.r)}</span></div>
-      <div style="min-width:0;flex:1"><div class="t">${esc(e.name)}${elgifGets(e) ? `<span class="craft got">in Revived</span>` : ""}</div><div class="epill">${pill}</div><div class="eff">${hl(e.desc)}</div></div></div>`;
+    const card = (e, pill) => `<div class="item elgc" data-eg="${e.id}"><div class="eic"><img src="${uImg("50792")}" alt="" onerror="this.style.visibility='hidden'"><span class="er">${elgifRarity(e.r)}</span></div>
+      <div style="min-width:0;flex:1"><div class="t">${esc(e.name)}${elgifGets(e) ? `<span class="craft got">in Revived</span>` : ""}</div>${pill ? `<div class="epill">${pill}</div>` : ""}<div class="eff">${hl(e.desc)}</div><div class="egw small dim">▾ Where to get it</div></div></div>`;
     const head = t => `<div class="elgh">${t}</div>`;
     const dmgHtml = `${get.length ? head("You can get in Revived") + get.map(e => card(e, `+${pc(e).toFixed(1)}% damage`)).join("") : ""}${
       any.length ? head("Others") + any.map(e => card(e, `+${pc(e).toFixed(1)}% damage`)).join("") : ""}
       <p class="small dim" style="margin:6px 10px 0">Its own damage per turn in the battle check, as the leader casting its SBB${UMAP[id]?.r === 8 ? " (Omni+3)" : ""}, alone. In a team, the Elgif picker's <b>Most damage</b> counts the whole team.</p>`;
-    const supHtml = `${sup.map(([label, xs]) => head(label) + xs.map(([e, say]) => card(e, say)).join("")).join("")}
+    const supHtml = `${sup.map(([label, xs]) => head(label) + xs.map(([e]) => card(e, "")).join("")).join("")}
       <p class="small dim" style="margin:6px 10px 0">The strongest of each kind from the game's own numbers, the ones you can get in Revived first. An Elgif works on the unit that holds it.</p>`;
     const show = t => { $("belglist").className = ""; $("belglist").innerHTML = t === "sup" ? supHtml : dmgHtml;
       document.querySelectorAll("#belgtab [data-bt]").forEach(b => b.classList.toggle("on", b.dataset.bt === t)); };
     document.querySelectorAll("#belgtab [data-bt]").forEach(b => b.onclick = () => show(b.dataset.bt));
+    // a card: tap for where to get it (again to fold it)
+    $("belglist").onclick = ev => { const c = ev.target.closest("[data-eg]"); if (!c) return; const w = c.querySelector(".egw"), e = EG[c.dataset.eg];
+      if (w.dataset.open) { w.dataset.open = ""; w.className = "egw small dim"; w.innerHTML = "▾ Where to get it"; return; }
+      w.dataset.open = 1; w.className = "egw"; w.innerHTML = elgifGetHtml(e, USRC) || `<div class="small dim">No way to get it in Revived right now.</div>`; };
     show("dmg"); };
   // (after the page below is drawn: the switch's buttons are in it)
   setTimeout(() => {
@@ -2568,6 +2573,12 @@ const ESRC = ["Summon promotion", "Guardians of Lore", "Forbidden Tablets", "Omn
   "Frontier Hunter", "Frontier Gate", "Frontier Rift", "Frontier Spire", "Grand Quest", "Clear reward", "Achievement", "Other"];
 const XTAG = { "Summon promotion": "summon", "Guardians of Lore": "capture", "Forbidden Tablets": "capture", "Omni Arcanum": "capture", Colosseum: "raid", "Event Bazaar": "eventshop",
   "Exchange Hall": "exchange", Arena: "achievement", "Clear reward": "clearreward", "Frontier Hunter": "frontier", "Frontier Gate": "frontier", "Frontier Rift": "frontier", "Frontier Spire": "frontier" };
+// where to get an Elgif in Revived (the Elgif tab, the unit page's Suggested Elgifs)
+const elgifGetHtml = (e, S) => elgifGets(e) ? `<div class="eget">${(e.g || []).map(([m, first]) => `<div><span class="gtag clearreward">Clear reward</span> ${first ? "first clear of" : "every clear of"} <b>${qpath(srcQuest(S, m))}</b></div>`).join("")}${
+        (e.p || []).map(([mode, at, how]) => `<div><span class="gtag ${mode === "Grand Quest" ? "grandquestreward" : "frontier"}">${esc(mode)}</span> <b>${esc(at)}</b>${how ? `: ${esc(how)}` : ""}</div>`).join("")}${
+        (e.a || []).map(([t, goal]) => `<div><span class="gtag achievement">Achievement</span> <b>${esc(t)}</b>${goal && goal !== t ? `: ${esc(goal)}` : ""}</div>`).join("")}${
+        xWays(e).map(([k, t]) => `<div><span class="gtag ${XTAG[k] || ""}">${esc(k)}</span> ${esc(xText(k, t))}</div>`).join("")}${
+        ELGX[e.id] && xWays(e).length && (ELGX[e.id].n || ELGX[e.id].l) ? `<div class="dim small">${ELGX[e.id].l ? "Limited time" : ""}${ELGX[e.id].l && ELGX[e.id].n ? " · " : ""}${esc(ELGX[e.id].n || "")}</div>` : ""}</div>` : "";
 const elgifWays = (e, S) => [...(e.g || []).map(([m]) => ["Clear reward", srcQuest(S, m)]), ...(e.p || []).map(([mode, at, how]) => [mode, `${at} ${how}`.trim()]),
   ...(e.a || []).map(([t]) => ["Achievement", t]), ...xWays(e)];
 const cmpNum = (a, b) => a.localeCompare(b, undefined, { numeric: true });  // "Hunter Rank 46" before "Hunter Rank 110"
@@ -2611,11 +2622,7 @@ async function renderElgifs() {
   $("ecount").querySelectorAll("[data-unit]").forEach(b => b.onclick = () => go(`#/unit/${b.dataset.unit}`));
   paged($("elist"), list, e => { const d = document.createElement("div"); d.className = "item"; d.style.cursor = "default";
     d.innerHTML = `<div class="er">${elgifRarity(e.r)}</div><div style="min-width:0;flex:1"><div class="t">${esc(e.name)}${elgifGets(e) ? `<span class="craft got">in Revived</span>` : ""}</div><div class="eff">${hl(e.desc)}</div>${
-      elgifGets(e) ? `<div class="eget">${(e.g || []).map(([m, first]) => `<div><span class="gtag clearreward">Clear reward</span> ${first ? "first clear of" : "every clear of"} <b>${qpath(srcQuest(S, m))}</b></div>`).join("")}${
-        (e.p || []).map(([mode, at, how]) => `<div><span class="gtag ${mode === "Grand Quest" ? "grandquestreward" : "frontier"}">${esc(mode)}</span> <b>${esc(at)}</b>${how ? `: ${esc(how)}` : ""}</div>`).join("")}${
-        (e.a || []).map(([t, goal]) => `<div><span class="gtag achievement">Achievement</span> <b>${esc(t)}</b>${goal && goal !== t ? `: ${esc(goal)}` : ""}</div>`).join("")}${
-        xWays(e).map(([k, t]) => `<div><span class="gtag ${XTAG[k] || ""}">${esc(k)}</span> ${esc(xText(k, t))}</div>`).join("")}${
-        ELGX[e.id] && xWays(e).length && (ELGX[e.id].n || ELGX[e.id].l) ? `<div class="dim small">${ELGX[e.id].l ? "Limited time" : ""}${ELGX[e.id].l && ELGX[e.id].n ? " · " : ""}${esc(ELGX[e.id].n || "")}</div>` : ""}</div>` : ""}</div>`;
+      elgifGetHtml(e, S)}</div>`;
     return d; }, "");
 }
 // ---------------- crafting planner (the game's Synthesis recipes: item -> [karma, [[material, count], ...]]) ----------------
