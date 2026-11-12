@@ -3538,7 +3538,8 @@ function dmgInfo(id, i, fresh) {
 // wiki's units, for extra skills' effect targets ([] for the game's text); spOpts(i): the SP picked for slot i's skills
 const ES_SPH = new Map();  // a unit's spheres that switch on its extra skill, without the wiki (Fill asks often)
 // UBB buffs: their own place (buffs stack once per source: LS, ES, Elgif, BB/SBB, UBB/DBB), on top of the BB/SBB ones;
-// a UBB needs a full OD gauge, so they count min(1, units with a UBB / UBB_ROT.n): 3 taking turns keep them up
+// the OD gauge is the squad's: one UBB at a time, the best UBB_ROT.n (3) different units taking turns, so a kind counts
+// the sum of those units' values for it / 3 (copies of a unit cast the same UBB: once); a unit's own UBB buffs a third
 const UBB_ROT = { on: true, n: 3 }, UBB_KINDS = new Set(["atk", "bbatk", "crit", "critrate", "elem", "spark"]);
 function teamBuffs(team, kindOf, W = [], D = TEAM_D || {}, spOpts = () => [], order = null) {
   // with a casting order: a buff kind's value is the last caster's before the unit (a second cast replaces it), else the
@@ -3575,16 +3576,18 @@ function teamBuffs(team, kindOf, W = [], D = TEAM_D || {}, spOpts = () => [], or
     if (pos) { all = pick(ja, u); mine = pick(jm, u); }
     const [ua, um] = ubbLayer(c, u, el); all += ua; mine += um;
     cands.set(ck, [ja, jm]); const r = [all, mine]; pc.set(ck, r); return r; };
-  // the UBB layer for a role on unit u: the biggest UBB buff of the kind on the team (for all; for its element), times
-  // the share of turns the UBBs are up (ubbUp)
-  const ubbSk = j => (D?.[team[j]]?.skills || []).find(x => x.label === "UBB");
-  const ubbUp = !UBB_ROT.on ? 0 : Math.min(1, team.filter((id, j) => id && ubbSk(j)).length / UBB_ROT.n);
-  function ubbLayer(c, u, el) { if (!ubbUp || !UBB_KINDS.has(c)) return [0, 0]; let a = 0, m = 0;
-    team.forEach((id, j) => { const g = id && kind(j) !== "UBB" && ubbSk(j); if (!g) return;
+  // the UBB layer for a role on unit u: the best UBB_ROT.n different units' UBB values for the kind (for all; for its
+  // element), added up and divided by UBB_ROT.n (they take turns)
+  const ubc = [], ubbSk = j => j in ubc ? ubc[j] : (ubc[j] = (D?.[team[j]]?.skills || []).find(x => x.label === "UBB"));  // (once per unit)
+  const ubbUp = !UBB_ROT.on ? 0 : 1 / UBB_ROT.n;
+  const topN = mp => [...mp.values()].sort((x, y) => y - x).slice(0, UBB_ROT.n).reduce((s2, v) => s2 + v, 0) * ubbUp;
+  function ubbLayer(c, u, el) { if (!ubbUp || !UBB_KINDS.has(c)) return [0, 0]; const A = new Map(), M = new Map();
+    team.forEach((id, j) => { const g = id && kind(j) !== "UBB" && ubbSk(j); if (!g) return; let a = 0, m = 0;
       if ((c === "atk" || c === "critrate") && g.p5) { for (const [e, x, cr, who] of g.p5) if (who !== 3 || j === u) { const v = c === "atk" ? x : cr; if (!e) a = Math.max(a, v); else if (e === el) m = Math.max(m, v); } }
       else if (j === u || !selfOf(id, c).includes("U") && !(g.bself || []).includes(c)) a = Math.max(a, g.buffs?.[c] || 0);
-      if ((c === "spark" || c === "crit") && g.pel) for (const [rc, e, v, who] of g.pel) if (rc === c && e === el && (who !== 3 || j === u)) m = Math.max(m, v); });
-    return [a * ubbUp, m * ubbUp]; }
+      if ((c === "spark" || c === "crit") && g.pel) for (const [rc, e, v, who] of g.pel) if (rc === c && e === el && (who !== 3 || j === u)) m = Math.max(m, v);
+      A.set(id, Math.max(A.get(id) || 0, a)); M.set(id, Math.max(M.get(id) || 0, m)); });  // (one unit, one UBB)
+    return [topN(A), topN(M)]; }
   const partyAll = (c, u) => { const [a, b] = party(c, u); return a + b; };
   // its own (self) buffs from the skill it casts
   const ownOf = (c, u) => (castG(u)?.own?.[c] || 0) + (ubbUp && UBB_KINDS.has(c) && kind(u) !== "UBB" ? (ubbSk(u)?.own?.[c] || 0) * ubbUp : 0);
@@ -3710,9 +3713,10 @@ const FILL_PRIO = { dmg: { ...FILL_ROLE_W },
   roles: Object.fromEntries([...Object.keys(FILL_ROLE_W).map(k => [k, 100]), ["pick", 1]]) };
 const FILL_PRIO_NAME = { dmg: "Most damage", bal: "Balanced", roles: "All roles" };
 // a role Fill counts the team has; with the Mitigator chip, mitigation only from a unit's BB, SBB, UBB or Dual BB
-const fillHas = (t, c) => c === "mit" && fillMit ? t.some((id, i) => id && roleSrc(t, i, c).on.some(l => "BSUD".includes(l))) : providers(t, c).length > 0;
-const roleWorth = t => ([...COVER, ...FILL_EXTRA].reduce((a, c) => a + (fillHas(t, c) ? FILL_ROLE_W[c] ?? 10 : 0), 0)
-  + (FILL_SURV.filter(c => fillHas(t, c)).length >= 2 ? FILL_ROLE_W.surv2 || 0 : 0)) * FILL_W.role;
+const fillHas = (t, c) => c === "mit" && fillMit ? t.some((id, i) => id && roleSrc(t, i, c).on.some(l => "BSUD".includes(l))) : t.some((id, i) => id && roleSrc(t, i, c).on.length > 0);
+const FILL_ALL = [...COVER, ...FILL_EXTRA];
+const roleWorth = t => { let a = 0, sv = 0; for (const c of FILL_ALL) if (fillHas(t, c)) { a += FILL_ROLE_W[c] ?? 10; if (FILL_SURV.includes(c)) sv++; }
+  return (a + (sv >= 2 ? FILL_ROLE_W.surv2 || 0 : 0)) * FILL_W.role; };  // (each role checked once)
 // a team's survival for Fill: effective HP (max HP with the leader skills' HP boosts, through the best mitigation up,
 // at most 75%), ×1.15 with KO resistance or revive. The leader and friend skills count as the squad's chips say
 function teamSurvival(t) {
@@ -4448,7 +4452,7 @@ function battleHtml(B) {
       : fillWords(B.tip.f, 0, true) ? `gives everyone ${fillWords(B.tip.f, 0, true)}` : "refills its own gauge"}), <b class="okc">${B.tip.can} of ${B.known}</b> can cast again right away.</div>` : ""}
     ${B.clash ? buffClashHtml(B) : ""}
     ${B.spark ? sparkHtml(B.spark) : ""}
-    <p class="small dim" style="margin:8px 0 0">Rough: counts the skills' BC fills (BB/SBB as the game's own data has them, with the SP you picked for them; leader and extra skills as the wiki words them; each turn and per spark, sparks as in the best order above) and BC cost cuts, not BC from hits, crystals, guarding or damage taken. Damage as the game works it out, per foe and added up over the skill's attacks (at full HP): each attack's ATK = base ATK × (1 + (ATK % from leader and extra skills, spheres and SP${B.atkBuff ? `, the team's +${B.atkBuff}% ATK buff` : ", ATK buffs"} + the attack's modifier + BB ATK${B.bbAtk ? ` (the team's +${B.bbAtk}% BB ATK, plus spheres)` : ""}) ÷ 100), at most 99,999 (or the limit a sphere, extra or leader skill raises it to); then before the foe's DEF (a third of it comes off) and with no crit. The second number: also expected crits (1.5× plus critical damage, at most 7×; critical rate 10% plus the attack's own, buffs and passives, at most 100%), sparks (1.5× plus spark damage, on its share of hits that spark) and a foe weak to its element (1.5× plus elemental damage). Buffs add up as the game adds them: the biggest party buff of each kind (all elements, and one for its element), its own buffs, leader and extra skills and spheres (a sphere boost without a number isn't counted). UBB buffs stack on top of the BB/SBB ones: the biggest of each kind, counted for the share of turns the squad's UBBs can be up (units with a UBB taking turns: a third each, all the time from three).</p></div>`;
+    <p class="small dim" style="margin:8px 0 0">Rough: counts the skills' BC fills (BB/SBB as the game's own data has them, with the SP you picked for them; leader and extra skills as the wiki words them; each turn and per spark, sparks as in the best order above) and BC cost cuts, not BC from hits, crystals, guarding or damage taken. Damage as the game works it out, per foe and added up over the skill's attacks (at full HP): each attack's ATK = base ATK × (1 + (ATK % from leader and extra skills, spheres and SP${B.atkBuff ? `, the team's +${B.atkBuff}% ATK buff` : ", ATK buffs"} + the attack's modifier + BB ATK${B.bbAtk ? ` (the team's +${B.bbAtk}% BB ATK, plus spheres)` : ""}) ÷ 100), at most 99,999 (or the limit a sphere, extra or leader skill raises it to); then before the foe's DEF (a third of it comes off) and with no crit. The second number: also expected crits (1.5× plus critical damage, at most 7×; critical rate 10% plus the attack's own, buffs and passives, at most 100%), sparks (1.5× plus spark damage, on its share of hits that spark) and a foe weak to its element (1.5× plus elemental damage). Buffs add up as the game adds them: the biggest party buff of each kind (all elements, and one for its element), its own buffs, leader and extra skills and spheres (a sphere boost without a number isn't counted). UBB buffs stack on top of the BB/SBB ones. The OD gauge is the squad's, so one UBB fires at a time: the best three units' UBBs take turns, each counted a third (two copies of a unit cast the same UBB).</p></div>`;
 }
 
 // the game's element wheel: an element deals 50% more damage to the one it beats and 50% less to the one that beats
