@@ -2415,8 +2415,9 @@ async function showUnit(id) {
       $("sklist").innerHTML = on ? `<p class="dim small rvnote">Revived's own skill text.${what ? ` New in Revived, marked green: ${what}.` : ""} ${nums}</p>${rs.map(skillBlock).join("")}` : skills.map(skillBlock).join(""); };
   }
   $("ubody").querySelectorAll("[data-unit]").forEach(b => b.onclick = () => go(`#/unit/${b.dataset.unit}`));
-  // a sticky row of the page's sections to jump to (the unit pages are long)
-  jumpBar($("ubody"), [...$("ubody").querySelectorAll(":scope > .sec")].filter(s => s.querySelector(":scope > h3")), true);
+  // a sticky row of the page's sections to jump to (the unit pages are long); every section shown, a chip scrolls to it
+  // (the user, 2026-11-12: "on mobile all should be the default on the unit page ... it just jumps to it": no tabs)
+  jumpBar($("ubody"), [...$("ubody").querySelectorAll(":scope > .sec")].filter(s => s.querySelector(":scope > h3")));
   if ($("toelgifs")) $("toelgifs").onclick = () => go("#/elgifs");
   $("ubody").querySelectorAll("[data-gif]").forEach(b => b.onclick = () => saveSpriteGif(id, b.dataset.gif === "1", b));
   // every unit at the same zoom, as in the game (whole numbers keep pixel art sharp); only one too big for the stage shrinks
