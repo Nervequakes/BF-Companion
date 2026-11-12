@@ -498,7 +498,23 @@ select.gsel { height: 38px; font-size: 12.5px; padding: 0 10px; }
 /* pages fade in */
 #page > *, .view.on { animation: fadein .14s ease-out; }
 @keyframes fadein { from { opacity: 0; transform: translateY(4px); } }
-@media (prefers-reduced-motion: reduce) { #page > *, .view.on, .slot .pad b { animation: none; } }
+/* a finger-sized tap area (40 px) around the small buttons; the look stays */
+.chip, .jump button, .tabs2 button, .foldbtn { position: relative; }
+.chip::after, .jump button::after, .tabs2 button::after, .foldbtn::after { content: ""; position: absolute; left: -2px; right: -2px; top: 50%; height: max(100%, 40px); transform: translateY(-50%); }
+/* the big buttons answer a press too */
+.gbtn { transition-property: transform, filter; transition-duration: .12s; transition-timing-function: ease-out; }
+.gbtn:active:not(:disabled) { transform: scale(.96); filter: brightness(1.15); } .foldbtn:active { transform: scale(.96); }
+/* numbers keep their width as they change; headings balanced, notes without a lone last word */
+body { font-variant-numeric: tabular-nums; }
+h1, h2, h3, .t, .gname { text-wrap: balance; } p, li, .small, .hint, .eff, .lore { text-wrap: pretty; }
+/* pop-ups come in */
+#modal:not([hidden]) .mbox { animation: popin .16s ease-out; }
+@keyframes popin { from { opacity: 0; transform: translateY(8px) scale(.98); } }
+/* the battle stage: a faint inner edge against the dark card */
+.stage { box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); }
+/* the unit page's tabs (phone): the sections not picked */
+#ubody > .sec.utoff { display: none; }
+@media (prefers-reduced-motion: reduce) { #page > *, .view.on, .slot .pad b, #modal .mbox { animation: none; } .gbtn { transition: none; } }
 
 /* compare */
 .cmpbar { position: fixed; right: 12px; bottom: calc(var(--navh) + 14px); z-index: 25; }
@@ -1539,16 +1555,39 @@ addEventListener("wheel", e => {
   if (p.scrollHeight - p.clientHeight - p.scrollTop < 1) return;
   p.scrollBy({ top: e.deltaMode === 1 ? e.deltaY * 40 : e.deltaMode === 2 ? e.deltaY * p.clientHeight : e.deltaY });
 }, { passive: true });
-function jumpBar(container, secs) {
+// tabs (the unit page on a phone): a chip shows its section alone, "All" shows them all; the pick is kept for the next unit
+let UTAB = store.get("bf.utab", "");
+function jumpBar(container, secs, tabs = false) {
   if (secs.length < 3) return;
+  tabs = tabs && !PANES.matches;
   const bar = document.createElement("div"); bar.className = "jump";
   const wrap = document.createElement("div"); wrap.className = "jumpw"; wrap.append(bar);
   const btns = secs.map(s => {
     const b = document.createElement("button"); b.textContent = s.querySelector(":scope > h3")?.textContent || s.dataset.jump || "";
-    b.onclick = () => { s.scrollIntoView({ behavior: "smooth", block: "start" }); if (inPane(s)) btns.forEach(x => x.classList.toggle("on", x === b)); };
+    b.onclick = () => { if (tabs) return pick(b.textContent);
+      s.scrollIntoView({ behavior: "smooth", block: "start" }); if (inPane(s)) btns.forEach(x => x.classList.toggle("on", x === b)); };
     bar.append(b); return b;
   });
   container.prepend(wrap);
+  if (tabs) {
+    const all = document.createElement("button"); all.textContent = "All"; all.onclick = () => pick("All"); bar.append(all);
+    // show one section (or all), light its chip, and go back up to the tabs when the page was scrolled past them
+    function pick(t, first) {
+      const k = secs.findIndex(s => (s.querySelector(":scope > h3")?.textContent || "") === t);
+      if (t !== "All" && k < 0) t = btns[0].textContent;
+      UTAB = t; store.set("bf.utab", t);
+      secs.forEach(s => s.classList.toggle("utoff", t !== "All" && (s.querySelector(":scope > h3")?.textContent || "") !== t));
+      [...btns, all].forEach(b => b.classList.toggle("on", b.textContent === t));
+      const b = [...btns, all].find(x => x.textContent === t);
+      if (b && (b.offsetLeft < bar.scrollLeft || b.offsetLeft + b.offsetWidth > bar.scrollLeft + bar.clientWidth)) bar.scrollTo({ left: b.offsetLeft - 10 });
+      if (first) return;
+      const top = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--toph")) || 0;
+      const y = container.getBoundingClientRect().top + scrollY - top - 4;
+      if (scrollY > y) scrollTo({ top: y });
+    }
+    pick(UTAB || btns[0].textContent, true);
+    return;
+  }
   // the section you're reading lights up, and the bar scrolls along to keep it in sight
   let raf = 0, cur = -1;
   const spy = () => {
@@ -2377,7 +2416,7 @@ async function showUnit(id) {
   }
   $("ubody").querySelectorAll("[data-unit]").forEach(b => b.onclick = () => go(`#/unit/${b.dataset.unit}`));
   // a sticky row of the page's sections to jump to (the unit pages are long)
-  jumpBar($("ubody"), [...$("ubody").querySelectorAll(":scope > .sec")].filter(s => s.querySelector(":scope > h3")));
+  jumpBar($("ubody"), [...$("ubody").querySelectorAll(":scope > .sec")].filter(s => s.querySelector(":scope > h3")), true);
   if ($("toelgifs")) $("toelgifs").onclick = () => go("#/elgifs");
   $("ubody").querySelectorAll("[data-gif]").forEach(b => b.onclick = () => saveSpriteGif(id, b.dataset.gif === "1", b));
   // every unit at the same zoom, as in the game (whole numbers keep pixel art sharp); only one too big for the stage shrinks
@@ -3497,6 +3536,9 @@ function dmgInfo(id, i, fresh) {
 // skills for the unit or all allies when their condition holds, spheres). kindOf(i): the skill slot i casts; W: the
 // wiki's units, for extra skills' effect targets ([] for the game's text); spOpts(i): the SP picked for slot i's skills
 const ES_SPH = new Map();  // a unit's spheres that switch on its extra skill, without the wiki (Fill asks often)
+// UBB buffs: their own place (buffs stack once per source: LS, ES, Elgif, BB/SBB, UBB/DBB), on top of the BB/SBB ones;
+// a UBB needs a full OD gauge, so they count min(1, units with a UBB / UBB_ROT.n): 3 taking turns keep them up
+const UBB_ROT = { on: true, n: 3 }, UBB_KINDS = new Set(["atk", "bbatk", "crit", "critrate", "elem", "spark"]);
 function teamBuffs(team, kindOf, W = [], D = TEAM_D || {}, spOpts = () => [], order = null) {
   // with a casting order: a buff kind's value is the last caster's before the unit (a second cast replaces it), else the
   // last of the turn before; without one, the biggest
@@ -3530,10 +3572,21 @@ function teamBuffs(team, kindOf, W = [], D = TEAM_D || {}, spOpts = () => [], or
         if (xe ? xe.map(e => ELN[e]).includes(el) : en ? p5el === el : true) { if (xe || en) mine = Math.max(mine, v); else all = Math.max(all, v); } }
       ja.push([j, all]); jm.push([j, mine]); all = Math.max(A0, all); mine = Math.max(M0, mine); });
     if (pos) { all = pick(ja, u); mine = pick(jm, u); }
+    const [ua, um] = ubbLayer(c, u, el); all += ua; mine += um;
     cands.set(ck, [ja, jm]); const r = [all, mine]; pc.set(ck, r); return r; };
+  // the UBB layer for a role on unit u: the biggest UBB buff of the kind on the team (for all; for its element), times
+  // the share of turns the UBBs are up (ubbUp)
+  const ubbSk = j => (D?.[team[j]]?.skills || []).find(x => x.label === "UBB");
+  const ubbUp = !UBB_ROT.on ? 0 : Math.min(1, team.filter((id, j) => id && ubbSk(j)).length / UBB_ROT.n);
+  function ubbLayer(c, u, el) { if (!ubbUp || !UBB_KINDS.has(c)) return [0, 0]; let a = 0, m = 0;
+    team.forEach((id, j) => { const g = id && kind(j) !== "UBB" && ubbSk(j); if (!g) return;
+      if ((c === "atk" || c === "critrate") && g.p5) { for (const [e, x, cr, who] of g.p5) if (who !== 3 || j === u) { const v = c === "atk" ? x : cr; if (!e) a = Math.max(a, v); else if (e === el) m = Math.max(m, v); } }
+      else if (j === u || !selfOf(id, c).includes("U") && !(g.bself || []).includes(c)) a = Math.max(a, g.buffs?.[c] || 0);
+      if ((c === "spark" || c === "crit") && g.pel) for (const [rc, e, v, who] of g.pel) if (rc === c && e === el && (who !== 3 || j === u)) m = Math.max(m, v); });
+    return [a * ubbUp, m * ubbUp]; }
   const partyAll = (c, u) => { const [a, b] = party(c, u); return a + b; };
   // its own (self) buffs from the skill it casts
-  const ownOf = (c, u) => castG(u)?.own?.[c] || 0;
+  const ownOf = (c, u) => (castG(u)?.own?.[c] || 0) + (ubbUp && UBB_KINDS.has(c) && kind(u) !== "UBB" ? (ubbSk(u)?.own?.[c] || 0) * ubbUp : 0);
   // passives for a role (not ATK %: that's in the unit's numbers): the leader skills (for all), its own extra skill and
   // others' for all allies, its spheres and spheres for all allies
   const leads = [0, 5].filter(j => team[j] && (j === 0 ? SQ.lead : SQ.friend));
@@ -3643,16 +3696,22 @@ const FILL_W = { newness: 30, newEnd: 80, old: 0, tier: 40, tierEnd: 10, surv: 0
 // damage buffs 10 each (at 0 the slot-by-slot shortlist started from weaker teams: Water 1,633M -> 762M); KO resist,
 // KO resistance 6 (the user, 2026-11-10: Light's Joshua team "was better": -0.7% damage for KO resistance); status cure,
 // debuffs, DEF ignore and extra action only break ties. pick: the least a role counts building the shortlist
-const FILL_ROLE_W = { mit: 15, heal: 10, bbf: 10, ko: 6, snull: 2, debuff: 2, defign: 2, xact: 2, twice: 10, atk: 10, bbatk: 10, spark: 10, crit: 10, critrate: 10, elem: 10, pick: .5 };
+// OD fill and evasion count too (FILL_EXTRA, not cover rows); surv2: a team with 2 or more of mitigation, heal, KO
+// resistance / revive and evasion (what players want a team to have: 2 or 3 of them)
+const FILL_ROLE_W = { mit: 15, heal: 10, bbf: 10, ko: 6, snull: 2, debuff: 2, defign: 2, xact: 2, twice: 10, atk: 10, bbatk: 10, spark: 10, crit: 10, critrate: 10, elem: 10, od: 6, evade: 4, surv2: 10, pick: .5 };
+// a leader skill's roles for the leader Fill picks: spark and elemental damage most, critical little (crit damage caps at 700%)
+const LS_FILL_W = { spark: 2, elem: 2, atk: 1, mit: 1, bbf: 1, heal: 1, crit: .5, critrate: .5 };
+const FILL_EXTRA = ["od", "evade"], FILL_SURV = ["mit", "heal", "ko", "evade"];
 // the priorities: Most damage (as tuned above), Balanced (the roles that keep a team alive count more), All roles
 // (a role worth 100: every role it can cover first, then the hardest-hitting such team)
 const FILL_PRIO = { dmg: { ...FILL_ROLE_W },
-  bal: { ...FILL_ROLE_W, mit: 30, heal: 25, bbf: 20, ko: 12, snull: 12, debuff: 6, defign: 6, xact: 6, pick: 1 },
+  bal: { ...FILL_ROLE_W, mit: 30, heal: 25, bbf: 20, ko: 20, snull: 12, debuff: 6, defign: 6, xact: 6, od: 15, evade: 20, surv2: 40, pick: 1 },
   roles: Object.fromEntries([...Object.keys(FILL_ROLE_W).map(k => [k, 100]), ["pick", 1]]) };
 const FILL_PRIO_NAME = { dmg: "Most damage", bal: "Balanced", roles: "All roles" };
 // a role Fill counts the team has; with the Mitigator chip, mitigation only from a unit's BB, SBB, UBB or Dual BB
 const fillHas = (t, c) => c === "mit" && fillMit ? t.some((id, i) => id && roleSrc(t, i, c).on.some(l => "BSUD".includes(l))) : providers(t, c).length > 0;
-const roleWorth = t => COVER.reduce((a, c) => a + (fillHas(t, c) ? FILL_ROLE_W[c] ?? 10 : 0), 0) * FILL_W.role;
+const roleWorth = t => ([...COVER, ...FILL_EXTRA].reduce((a, c) => a + (fillHas(t, c) ? FILL_ROLE_W[c] ?? 10 : 0), 0)
+  + (FILL_SURV.filter(c => fillHas(t, c)).length >= 2 ? FILL_ROLE_W.surv2 || 0 : 0)) * FILL_W.role;
 // a team's survival for Fill: effective HP (max HP with the leader skills' HP boosts, through the best mitigation up,
 // at most 75%), ×1.15 with KO resistance or revive. The leader and friend skills count as the squad's chips say
 function teamSurvival(t) {
@@ -3734,12 +3793,12 @@ function* autoFillSteps(team, el, S, keep = 1) {
     const lead = s === 0 || s === 5, now = castNow(s, u.id, true), got = missing.filter(c => teamLetters(u.id, c).some(l => now.includes(l)) || dbbR?.includes(c));
     const covers = got.reduce((a, c) => a + Math.max(FILL_ROLE_W.pick, (FILL_ROLE_W[c] ?? 10) / 10) + (powerOf(u.id, c)?.[0] || 0) / (POWER_MAX[c] || 1) * .6, 0);
     const sp = u.r === 8 ? spFill(u.id, missing.filter(c => !got.includes(c)), lead, omniOf(s)[1], now) : [];
-    const ls = lead ? ["atk", "mit", "bbf", "crit", "critrate", "elem", "spark", "heal"].filter(c => teamLetters(u.id, c).includes("L")).length : 0;
+    const ls = lead ? Object.entries(LS_FILL_W).reduce((a, [c, w]) => a + (teamLetters(u.id, c).includes("L") ? w : 0), 0) : 0;
     if (live) return { score: (covers + sp.length * .8) * 10 + ls * 3 + newness.get(u.id) * 15 + u.r + u.atk / 1e5, sp };  // the 5.6.30 Fill
     const raise = NUM_ROLES.reduce((a, c) => a + Math.min(1, Math.max(0, teamVal(u.id, s, c, true) - tops[c]) / (POWER_MAX[c] || 1)), 0);
     return { score: (covers + sp.length * .8) * 10 + ls * 3 + raise * 6 + newness.get(u.id) * FILL_W.newness - ((u.no || 0) < 8000 ? FILL_W.old : 0) + tierP(u.id) * FILL_W.tier + (dbbR ? 10 : 0) + u.r / 10, sp };
   }
-  const missingIn = (t, spNeed) => COVER.filter(c => !fillHas(t, c) && !Object.values(spNeed).some(r => r.includes(c)));
+  const missingIn = (t, spNeed) => [...COVER, ...FILL_EXTRA].filter(c => !fillHas(t, c) && !Object.values(spNeed).some(r => r.includes(c)));
   // the rest of the empty slots, one at a time, the best unit for each
   function* finish(t, spNeed, from, est) {
     for (const s of empty.slice(from)) {
@@ -4388,7 +4447,7 @@ function battleHtml(B) {
       : fillWords(B.tip.f, 0, true) ? `gives everyone ${fillWords(B.tip.f, 0, true)}` : "refills its own gauge"}), <b class="okc">${B.tip.can} of ${B.known}</b> can cast again right away.</div>` : ""}
     ${B.clash ? buffClashHtml(B) : ""}
     ${B.spark ? sparkHtml(B.spark) : ""}
-    <p class="small dim" style="margin:8px 0 0">Rough: counts the skills' BC fills (BB/SBB as the game's own data has them, with the SP you picked for them; leader and extra skills as the wiki words them; each turn and per spark, sparks as in the best order above) and BC cost cuts, not BC from hits, crystals, guarding or damage taken. Damage as the game works it out, per foe and added up over the skill's attacks (at full HP): each attack's ATK = base ATK × (1 + (ATK % from leader and extra skills, spheres and SP${B.atkBuff ? `, the team's +${B.atkBuff}% ATK buff` : ", ATK buffs"} + the attack's modifier + BB ATK${B.bbAtk ? ` (the team's +${B.bbAtk}% BB ATK, plus spheres)` : ""}) ÷ 100), at most 99,999 (or the limit a sphere, extra or leader skill raises it to); then before the foe's DEF (a third of it comes off) and with no crit. The second number: also expected crits (1.5× plus critical damage, at most 7×; critical rate 10% plus the attack's own, buffs and passives, at most 100%), sparks (1.5× plus spark damage, on its share of hits that spark) and a foe weak to its element (1.5× plus elemental damage). Buffs add up as the game adds them: the biggest party buff of each kind (all elements, and one for its element), its own buffs, leader and extra skills and spheres (a sphere boost without a number isn't counted).</p></div>`;
+    <p class="small dim" style="margin:8px 0 0">Rough: counts the skills' BC fills (BB/SBB as the game's own data has them, with the SP you picked for them; leader and extra skills as the wiki words them; each turn and per spark, sparks as in the best order above) and BC cost cuts, not BC from hits, crystals, guarding or damage taken. Damage as the game works it out, per foe and added up over the skill's attacks (at full HP): each attack's ATK = base ATK × (1 + (ATK % from leader and extra skills, spheres and SP${B.atkBuff ? `, the team's +${B.atkBuff}% ATK buff` : ", ATK buffs"} + the attack's modifier + BB ATK${B.bbAtk ? ` (the team's +${B.bbAtk}% BB ATK, plus spheres)` : ""}) ÷ 100), at most 99,999 (or the limit a sphere, extra or leader skill raises it to); then before the foe's DEF (a third of it comes off) and with no crit. The second number: also expected crits (1.5× plus critical damage, at most 7×; critical rate 10% plus the attack's own, buffs and passives, at most 100%), sparks (1.5× plus spark damage, on its share of hits that spark) and a foe weak to its element (1.5× plus elemental damage). Buffs add up as the game adds them: the biggest party buff of each kind (all elements, and one for its element), its own buffs, leader and extra skills and spheres (a sphere boost without a number isn't counted). UBB buffs stack on top of the BB/SBB ones: the biggest of each kind, counted for the share of turns the squad's UBBs can be up (units with a UBB taking turns: a third each, all the time from three).</p></div>`;
 }
 
 // the game's element wheel: an element deals 50% more damage to the one it beats and 50% less to the one that beats
@@ -4463,7 +4522,7 @@ async function renderTeam() {
       <div class="chipwrap prio" style="margin:-4px 0 8px"><span class="small dim">Priority</span>${
         Object.entries(FILL_PRIO_NAME).map(([k, n]) => `<button class="chip ${fillPrio === k ? "on" : ""}" data-prio="${k}">${n}</button>`).join("")}</div>
       <p class="small dim" style="margin:0">Tap a spot to choose a unit. <b>Fill</b> picks ${SQ.mineOnly ? `from the ${mine.size} units in your box` : "7★ and Omni units you can get in Revived"} (a unit twice or more when that's better) for the team that hits hardest in the battle check, with every unit casting every turn. ${
-        fillPrio === "roles" ? "<b>All roles</b>: every role it can cover first, then damage." : fillPrio === "bal" ? "<b>Balanced</b>: mitigation, heal, BB fill, KO resistance and status cure count more." : "<b>Most damage</b>: mitigation, heal and BB fill count a little, other roles only break ties."}${
+        fillPrio === "roles" ? "<b>All roles</b>: every role it can cover first, then damage." : fillPrio === "bal" ? "<b>Balanced</b>: two or more of mitigation, heal, KO resistance and evasion, plus BB and OD fill and status cure, count more." : "<b>Most damage</b>: mitigation, heal and BB fill count a little, other roles only break ties."}${
         fillMit ? " <b>Mitigator</b>: the team gets a unit whose BB or SBB reduces damage (a leader skill's few % doesn't count)." : ""} Omni units it adds come at ${OMNI_PLUS[FILL_OMNI][0]} (${OMNI_PLUS[FILL_OMNI][1]} SP), with their SP for it. Units you put in stay.</p></div>
     <div class="sec"><h3>Squad</h3>
       <div class="sqbar"><span class="costplate ${SQ.maxcost && cost > +SQ.maxcost ? "over" : ""}">COST <b>${cost}</b>/<input id="maxcost" inputmode="numeric" value="${esc(SQ.maxcost)}" placeholder="max" aria-label="Your max cost"></span>
