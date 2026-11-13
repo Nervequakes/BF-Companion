@@ -63,6 +63,10 @@ import java.util.zip.ZipInputStream;
 
 public class MainActivity extends Activity {
     private static final String HOST = "bf.app";
+    // Community builds (site/builds, a Cloudflare Worker): the one address the page may reach, and only once the player
+    // turned it on (Bridge.setCommunity, kept in the app's settings); everything else stays on the phone
+    private static final String BUILDS_HOST = "bf-builds.bfcompanion.workers.dev";
+    private volatile boolean community;
     private static MainActivity current;  // for Installed, Android's answer to an update install
     private WebView web;
     private boolean resumed;
@@ -73,6 +77,7 @@ public class MainActivity extends Activity {
         super.onCreate(state);
         current = this;
         usePack = keepPack();
+        community = getSharedPreferences("bf", MODE_PRIVATE).getBoolean("community", false);
         getWindow().setStatusBarColor(Color.parseColor("#161922"));
         web = new WebView(this);
         web.setBackgroundColor(Color.parseColor("#0b0a14"));
@@ -88,7 +93,8 @@ public class MainActivity extends Activity {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView v, WebResourceRequest req) {
                 Uri u = req.getUrl();
-                if (!HOST.equals(u.getHost())) return blocked();  // nothing leaves the phone
+                if (community && BUILDS_HOST.equals(u.getHost()) && "https".equals(u.getScheme())) return null;  // the network, as asked
+                if (!HOST.equals(u.getHost())) return blocked();  // nothing else leaves the phone
                 String path = u.getPath() == null || u.getPath().equals("/") ? "/index.html" : u.getPath();
                 if (path.contains("..")) return blocked();
                 try {
@@ -215,6 +221,16 @@ public class MainActivity extends Activity {
         /** Downloads and installs the release the last check found (never an address from the page). */
         @JavascriptInterface
         public void installUpdate() { runOnUiThread(MainActivity.this::install); }
+
+        /** Community builds on or off (the player's choice on the page): on, the page may reach BUILDS_HOST. */
+        @JavascriptInterface
+        public void setCommunity(boolean on) {
+            community = on;
+            getSharedPreferences("bf", MODE_PRIVATE).edit().putBoolean("community", on).apply();
+        }
+
+        @JavascriptInterface
+        public boolean communityOn() { return community; }
     }
 
     private Uri savePicture(String base64, String name, String mime) {

@@ -288,6 +288,15 @@ main { padding-bottom: calc(var(--navh) + 20px); }
 .sk .kn { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .tag { font-size: 10.5px; padding: 2px 8px; border-radius: 5px; text-shadow: var(--ol); background: linear-gradient(#5aa8ff, #1e5fe0); border: 1px solid rgba(255,255,255,.35); }
 .tag.ls { background: linear-gradient(#ff9a3c, #c73a0e); } .tag.es { background: linear-gradient(#d7a6ff, #7a3fc4); } .tag.dbb { background: linear-gradient(#ffe38a, #c98a16); }
+.dbbp { display: inline-flex; align-items: center; gap: 8px; margin: 2px 0 6px; padding: 3px 10px 3px 3px; border-radius: 999px; background: rgba(255,215,106,.12); border: 1px solid rgba(255,215,106,.45); color: var(--text); text-decoration: none; font-size: 13px; }
+.dbbp img { width: 30px; height: 30px; border-radius: 50%; display: block; } .dbbp b { color: #ffd76a; font-weight: normal; }
+.dbbsw { margin: 10px 0; padding: 10px 10px 2px; border: 1px solid rgba(255,215,106,.45); border-radius: 12px; background: rgba(255,215,106,.05); }
+.dbbsw > .kn { margin-bottom: 8px; display: flex; gap: 8px; align-items: center; } .dbbsw .dbbone .tag.dbb { display: none; } .dbbsw .dbbone .sk { border: 0; padding-left: 0; padding-right: 0; margin: 0; background: none; }
+.dbbtabs { display: flex; flex-wrap: wrap; gap: 6px; padding: 2px 0 8px; }
+.dbbtab { flex: 0 0 auto; display: flex; align-items: center; gap: 6px; padding: 4px 10px 4px 4px; border-radius: 10px; border: 1px solid rgba(255,215,106,.3); background: rgba(0,0,0,.25); color: var(--dim); cursor: pointer; text-align: left; font: inherit; }
+.dbbtab img { width: 34px; height: 34px; border-radius: 7px; display: block; } .dbbtab span { display: flex; flex-direction: column; line-height: 1.2; }
+.dbbtab b { font-size: 13px; font-weight: normal; color: var(--text); } .dbbtab small { font-size: 11px; }
+.dbbtab.on { border-color: #ffd76a; background: linear-gradient(rgba(255,215,106,.22), rgba(201,138,22,.18)); color: #ffe9b0; } .dbbtab.on b { color: #ffd76a; }
 .tag.ubb { background: linear-gradient(#ff7ab0, #b8237a); } .tag.sbb { background: linear-gradient(#7ad6ff, #1e8fe0); }
 .sk .nm { font-family: Rodin, Arial, sans-serif; text-shadow: var(--ol); color: var(--accent); font-size: 14px; }
 .sk p { margin: 5px 0 0; color: #ece6d6; }
@@ -514,6 +523,56 @@ h1, h2, h3, .t, .gname { text-wrap: balance; } p, li, .small, .hint, .eff, .lore
 .stage { box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); }
 /* the unit page's tabs (phone): the sections not picked */
 #ubody > .sec.utoff { display: none; }
+/* community builds */
+.bcorder { padding: 2px 0 10px; border-bottom: 1px solid rgba(255,255,255,.06); margin-bottom: 4px; } .bcorder b { color: var(--accent); }
+.bic em.num { left: 1px; right: auto; top: 1px; bottom: auto; background: linear-gradient(#ffe38a, #c98a16); color: #000; text-shadow: none; padding: 0 4px; font-size: 10px; }
+.bpic.picked img { outline: 2px solid #ffe38a; outline-offset: -2px; } #bpq1 { margin: 6px 0 2px; align-items: center; flex-wrap: wrap; }
+.bpedit { display: block; min-height: 120px; max-height: 320px; overflow: auto; margin-top: 4px; padding: 8px; border-radius: 8px; border: 1px solid var(--gold3); background: #0b0d18; color: var(--text); font: 14px/1.6 Arial, sans-serif; white-space: pre-wrap; word-break: break-word; outline: none; }
+.bpedit:focus { border-color: var(--accent); } .bpedit:empty::before { content: attr(data-ph); color: var(--dim); pointer-events: none; }
+.bpedit img.bnu { width: 26px; height: 26px; vertical-align: middle; border-radius: 5px; margin: 0 1px; }
+.bpcount { text-align: right; margin-top: 3px; } .bpcount.over { color: #ff8a7a; }
+.bwarn { margin: 8px 0; padding: 10px 12px; border-radius: 10px; border: 1px solid #ffb35c; background: rgba(255,170,60,.12); font-size: 13px; } .bwarn b { color: #ffcf8a; }
+.bwarn div { margin-top: 3px; } .bwarn .gbtn { margin-top: 8px; width: 100%; }
+.bnu img, img.bnu { width: 28px; height: 28px; vertical-align: middle; border-radius: 5px; margin: 0 1px; } .bnote img.bnu { width: 22px; height: 22px; }
+.bpicons { margin: -2px 0 8px; } .bpic { padding: 0; border: 0; background: none; cursor: pointer; } .bpic img { width: 40px; height: 40px; border-radius: 6px; display: block; }
+#bpfbox { margin-top: 6px; } #bpfbox input { width: 100%; box-sizing: border-box; }
+.badmrow { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; } .badmrow .gbtn { flex: 1; text-decoration: none; }
+.badm-hidden { opacity: .55; } .badmbox { border-color: #ff6a5a; } .gbtn.red { background: linear-gradient(#ff6a5a, #b8231a); border-color: #ffb0a6; }
+.bfbanner { display: flex; align-items: center; gap: 10px; width: 100%; margin: 0 0 10px; padding: 10px 12px; border-radius: 12px; cursor: pointer; text-align: left; color: #fff;
+  border: 2px solid #c9a0ff; background: linear-gradient(100deg, #6a2fd6, #3b2a9e 55%, #1e3a9e); box-shadow: 0 0 0 1px #000, 0 3px 10px rgba(120,60,255,.45); transition-property: transform, filter; transition-duration: .12s; }
+.bfbanner:active { transform: scale(.98); filter: brightness(1.15); }
+.bfbanner .bfi { flex: none; width: 46px; height: 46px; object-fit: contain; margin: -6px -2px -6px -4px; filter: drop-shadow(0 2px 2px #000); } .bfbanner .bft { flex: 1; min-width: 0; } .bfbanner b { display: block; font: 16px Rodin, Arial, sans-serif; text-shadow: var(--ol); }
+.bfbanner small { display: block; font-size: 12px; color: #e6dcff; margin-top: 2px; } .bfbanner .bfgo { flex: none; font-size: 26px; color: #ffe38a; text-shadow: var(--ol); }
+.bfrow .gbtn { flex: 1; }
+.bcard { display: block; margin: 10px 10px 0; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--gold3); border-left: 4px solid var(--bel, var(--gold2)); background: linear-gradient(#141a2e, #0b0e1c); text-decoration: none; color: inherit; box-shadow: 0 2px 6px rgba(0,0,0,.4); }
+.bcard:active { filter: brightness(1.15); }
+.el-Fire { --bel: #ff6a3d; } .el-Water { --bel: #3db8ff; } .el-Earth { --bel: #5fd35f; } .el-Thunder { --bel: #ffd83d; } .el-Light { --bel: #fff2b0; } .el-Dark { --bel: #b07cff; } .el-Mixed { --bel: var(--gold); }
+.bchead { display: flex; gap: 8px; align-items: flex-start; } .bct { flex: 1; min-width: 0; } .bct .t { font-family: Rodin, Arial, sans-serif; font-size: 15px; text-shadow: var(--ol); }
+.bmeta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 4px; font-size: 12px; } .bmeta img { width: 18px; height: 18px; } .bmix { color: var(--gold); }
+.bctag { padding: 1px 8px; border-radius: 999px; background: rgba(160,110,255,.2); border: 1px solid #a06eff; color: #d9c4ff; font-weight: 700; font-size: 11.5px; }
+.bvote { flex: none; min-width: 46px; padding: 4px 6px; border-radius: 10px; border: 1px solid var(--gold3); background: rgba(255,255,255,.04); color: var(--accent); font-size: 12px; line-height: 1.1; cursor: pointer; }
+.bvote b { display: block; font-size: 16px; } .bvote.on { border-color: var(--accent); background: rgba(90,168,255,.15); }
+.bicons { gap: 4px; margin: 8px 0 2px; } .bic { position: relative; display: block; line-height: 0; } .bic em { position: absolute; right: 1px; bottom: 1px; line-height: 1.3; font: 700 9px Rodin, Arial, sans-serif; font-style: normal; padding: 0 3px; border-radius: 3px; text-shadow: var(--ol); }
+.bic em.lead { background: linear-gradient(#ffe38a, #c98a16); } .bic em.fr { background: linear-gradient(#7ad6ff, #1e8fe0); }
+.bicons img, .bicons i { width: 44px; height: 44px; }
+.bnote { font-size: 12.5px; color: #cfd3dc; margin-top: 6px; }
+.bfcc { margin-top: 8px; } .bfcc .chip small { opacity: .7; margin-left: 3px; } .bfpostbtn { width: 100%; margin-top: 10px; }
+.bform { height: 300px; margin: 0 0 10px; } .bform.small { height: 230px; } .bform .slot { pointer-events: none; }
+.bhero { border-top: 3px solid var(--bel, var(--gold2)); } .bhtitle { font-family: Rodin, Arial, sans-serif; font-size: 19px; text-shadow: var(--ol); line-height: 1.25; }
+.bacts { display: flex; gap: 8px; margin-top: 12px; } .bacts .gbtn { flex: 1; } .bvbig .bvn { margin-left: 6px; padding: 0 7px; border-radius: 999px; background: rgba(0,0,0,.35); }
+.bnotes { margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); white-space: pre-wrap; font-size: 13.5px; line-height: 1.5; } .bnh { font-weight: 700; color: var(--accent); margin-bottom: 4px; white-space: normal; }
+.bslot { display: flex; gap: 10px; align-items: flex-start; padding: 10px 0; border-top: 1px solid rgba(255,255,255,.06); } .bslot:first-of-type { border-top: 0; }
+.bsimg img { width: 56px; height: 56px; border-radius: 8px; display: block; } .bslot .t a { color: inherit; text-decoration: none; font-family: Rodin, Arial, sans-serif; text-shadow: var(--ol); }
+.bchips { display: flex; flex-wrap: wrap; gap: 4px; margin: 5px 0 2px; } .bgear { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 4px; font-size: 12.5px; }
+.bgear span { display: inline-flex; align-items: center; gap: 4px; } .bslot .bgear img { width: 22px; height: 22px; margin: 0; border-radius: 0; object-fit: contain; } .bgear em { font-style: normal; font-size: 10.5px; color: var(--dim); margin-right: 2px; }
+.bsp { margin-top: 6px; font-size: 12.5px; } .bsp summary { color: var(--accent); cursor: pointer; } .bsp[open] .bsh, .bsp:not([open]) .bhd { display: none; } .bsp div { color: #cfd3dc; margin: 2px 0 0 4px; }
+#bpgo { width: 100%; } .bsharerow { display: flex; gap: 8px; margin-top: 8px; } .bsharerow .gbtn { flex: 1; } .blink { background: none; border: 0; padding: 0; color: var(--accent); font: inherit; text-decoration: underline; cursor: pointer; }
+.bcard { text-decoration: none; color: inherit; align-items: flex-start; } .bvotes { flex: none; text-align: center; color: var(--accent); font-size: 12px; padding-left: 8px; } .bvotes b { display: block; font-size: 16px; }
+.bicons { display: flex; gap: 3px; margin: 6px 0 2px; } .bicons img, .bicons i { width: 40px; height: 40px; border-radius: 6px; } .bicons i { display: inline-block; border: 1px dashed rgba(255,255,255,.25); }
+.bnote { color: #cfd3dc; margin-top: 4px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.bnotes { white-space: pre-wrap; margin-top: 10px; } .bslot { align-items: flex-start; } .bslot img { width: 52px; height: 52px; flex: none; margin-right: 8px; border-radius: 6px; }
+.bfbar { display: flex; gap: 8px; margin-top: 8px; } .bfbar .qwrap, .bfbar input { flex: 1; min-width: 0; } .bfrow { margin-top: 8px; }
+.flab { display: block; margin: 8px 0; font-size: 13px; } .flab input, .flab textarea, .flab select { display: block; width: 100%; box-sizing: border-box; margin-top: 4px; padding: 8px; border-radius: 8px; border: 1px solid var(--gold3); background: #0b0d18; color: var(--text); font: 14px Arial, sans-serif; }
 @media (prefers-reduced-motion: reduce) { #page > *, .view.on, .slot .pad b, #modal .mbox { animation: none; } .gbtn { transition: none; } }
 
 /* compare */
@@ -603,6 +662,43 @@ body.boxedit .totop { bottom: calc(var(--navh) + 78px); } body.boxedit .toast { 
 @media (min-width: 700px) { .grid { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); } .hero { min-height: 300px; } .list { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); } }
 /* a wide header: the picture under the glow (70% across), whole, instead of against the right edge and cut off */
 @media (min-width: 700px) { .hero .art { right: auto; left: 70%; transform: translateX(-50%); max-width: 56%; object-position: center bottom; } .hero .art.icon { transform: translate(-50%, 50%); } }
+
+.dbxbtn { display: flex; align-items: center; gap: 8px; width: 100%; margin: 12px 0 0; text-align: left; }
+.dbxbtn b { margin-left: auto; min-width: 22px; text-align: center; padding: 1px 7px; border-radius: 999px; background: rgba(0,0,0,.35); font-weight: normal; }
+.dbxbtn i { font-style: normal; } .dbxcov { margin-top: 8px; }
+.cov > .covsub { display: block; min-height: 0; padding: 10px 0 3px; border-top: 0; font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: .05em; text-shadow: var(--ol); }
+
+@media (min-width: 1000px) {
+  .bslots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 10px; }
+  .bslots .bslot { flex-direction: column; align-items: center; text-align: center; gap: 8px; padding: 14px 14px 12px; border: 1px solid rgba(255,215,106,.22); border-radius: 12px; background: linear-gradient(rgba(255,255,255,.04), rgba(0,0,0,.25)); }
+  .bslots .bslot:first-of-type { border-top: 1px solid rgba(255,215,106,.22); }
+  .bslots .bslot > div { width: 100%; } .bslots .bsimg img { width: 84px; height: 84px; border-radius: 10px; }
+  .bslots .bslot .t { font-size: 16px; } .bslots .bchips, .bslots .bgear { justify-content: center; }
+  .bslots .bsp { text-align: left; } .bslots .bsp summary { text-align: center; }
+  #page > .sec:has(#bpgo) { max-width: 920px; margin-inline: auto; }  /* the post form: a readable width, not the whole screen */
+  .bcorder .bicons img { width: 56px; height: 56px; } .bcorder .bic em.num { font-size: 12px; padding: 0 5px; }
+}
+@media (min-width: 1000px) {  /* the list: cards in a grid, bigger team pictures (the user: "on pc there is a lot of space") */
+  #bflist { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 10px 10px 0; align-items: start; }
+  #bflist > .bcard { margin: 0; height: 100%; box-sizing: border-box; } #bflist > :not(.bcard) { grid-column: 1 / -1; }
+  #bflist .bcard .bicons img, #bflist .bcard .bicons i { width: 52px; height: 52px; } #bflist .bcard .t { font-size: 16px; }
+}
+@media (min-width: 1400px) { .bslots, #bflist { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+.bnotes.bfmt { white-space: normal; border-left: 3px solid var(--accent); padding: 12px 14px; line-height: 1.6; }
+.bfmt p { margin: 0 0 8px; } .bfmt p:last-child, .bfmt ul:last-child { margin-bottom: 0; }
+.bfmt ul.bnl { margin: 0 0 8px; padding-left: 20px; } .bfmt ul.bnl li { margin: 3px 0; } .bfmt ul.bnl li::marker { color: var(--accent); }
+.bfmt b { color: #fff; } .bfmt b.bnlab { color: var(--accent); font-family: Rodin, Arial, sans-serif; font-weight: normal; text-shadow: var(--ol); margin-right: 2px; }
+.bfmt .bnu img, .bfmt img.bnu { width: 26px; height: 26px; vertical-align: -7px; }
+#bpct::-webkit-calendar-picker-indicator, #bfct::-webkit-calendar-picker-indicator { display: none !important; }  /* the browser's ▼ on a field with suggestions (the chips do that job) */
+.bpfmt { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 6px 0 2px; } .bpfmt .chip { min-height: 0; padding: 3px 10px; }
+
+.ctsug { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-top: 6px; } .ctsug:empty { display: none; }
+.ctsug .chip { min-height: 0; padding: 3px 10px; } .ctsug .chip small { opacity: .7; margin-left: 2px; }
+
+.bglink { display: inline-flex; align-items: center; gap: 4px; padding: 1px 6px 1px 2px; border-radius: 6px; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; text-decoration: underline dotted rgba(255,215,106,.55); text-underline-offset: 3px; }
+.bglink:hover { background: rgba(255,215,106,.12); color: #ffe9b0; }
+.bslot .bgear .bglink img { width: 22px; height: 22px; margin: 0; border-radius: 0; object-fit: contain; }
 </style>
 </head>
 <body>
@@ -1863,10 +1959,28 @@ function rvSkills(w, d, ch) {  // the skills as Revived has them, in the wiki's 
 // a skill's text with the parts naming a kind Revived added marked
 const rvMark = (desc, add) => String(desc || "").split(/(,\s+(?![^()]*\))|\s+&\s+)/)
   .map((p, i) => i % 2 ? esc(p) : [...rvKinds(p)].some(k => add.includes(k)) ? `<span class="rvnew">${hl(p)}</span>` : hl(p)).join("");
+// a Dual BB partner's unit id from its name (its highest rarity)
+const unitIdByName = n => UNITS.filter(u => u.n === n).sort((a, b) => b.r - a.r)[0]?.id;
+// the skill list, a unit's Dual BBs behind buttons when it has more than one (partner picture + bond name)
+function skillList(list) {
+  const dbb = list.filter(s => s.kind === "Dual BB");
+  if (dbb.length < 2) return list.map(skillBlock).join("");
+  const at = list.findIndex(s => s.kind === "Dual BB"), rest = list.filter(s => s.kind !== "Dual BB");
+  // one box: the Dual BB heading, then its partners' buttons, then the picked bond (so the buttons read as the Dual BB's, not the skill above)
+  const sw = `<div class="dbbsw"><div class="kn"><span class="tag dbb">Dual BB</span><span class="nm">${dbb.length} bonds</span><span class="small dim">· pick a partner</span></div><div class="dbbtabs">${dbb.map((s, i) => { const pid = unitIdByName(s.partner);
+      return `<button class="dbbtab${i ? "" : " on"}" data-dbbi="${i}">${pid ? `<img src="${uImg(pid)}" alt="">` : ""}<span><b>${esc(s.name)}</b><small>with ${esc(s.partner || "?")}</small></span></button>`; }).join("")}</div>
+    ${dbb.map((s, i) => `<div class="dbbone" data-dbbi="${i}"${i ? " hidden" : ""}>${skillBlock(s)}</div>`).join("")}</div>`;
+  return [...rest.slice(0, at).map(skillBlock), sw, ...rest.slice(at).map(skillBlock)].join("");
+}
+document.addEventListener("click", e => { const b = e.target.closest(".dbbtab"); if (!b) return; const box = b.closest(".dbbsw");
+  box.querySelectorAll(".dbbtab").forEach(x => x.classList.toggle("on", x === b));
+  box.querySelectorAll(".dbbone").forEach(x => x.hidden = x.dataset.dbbi !== b.dataset.dbbi); });
 function skillBlock(s) {
   const cls = { "Leader Skill": "ls", "Extra Skill": "es", "Dual BB": "dbb", "UBB": "ubb", "SBB": "sbb", "BB": "" }[s.kind] ?? "";
-  const pills = [s.bc && s.kind !== "Dual BB" ? `${s.bc} BC` : "", s.hits ? `${s.hits} hits` : "", s.type, s.partner ? `with ${s.partner}` : ""].filter(Boolean);
+  const pills = [s.bc && s.kind !== "Dual BB" ? `${s.bc} BC` : "", s.hits ? `${s.hits} hits` : "", s.type].filter(Boolean);
+  const pid = s.partner && unitIdByName(s.partner);
   return `<div class="sk"><div class="kn"><span class="tag ${cls}">${s.kind}</span><span class="nm">${esc(s.name)}</span></div>
+    ${s.partner ? `<a class="dbbp" href="${pid ? `#/unit/${pid}` : "#"}">${pid ? `<img src="${uImg(pid)}" alt="">` : ""}<span>with <b>${esc(s.partner)}</b></span></a>` : ""}
     <p>${s.rv?.length ? rvMark(s.desc, s.rv) : hl(s.desc)}</p>${pills.length ? `<div class="pills">${pills.map(p => `<span class="pill">${esc(p)}</span>`).join("")}</div>` : ""}
     ${s.rvn?.length ? `<div class="pills rvnums">${s.rvn.map(([l, g, r, u]) => `<span class="pill ${rvBetter([l, g, r]) ? "up" : "down"}">${esc(l)} ${g}${u} → ${r}${u}</span>`).join("")}</div>` : ""}
     ${s.item ? `<div class="note" style="border-color:#b382ff">Needs: ${esc(s.item)}</div>` : ""}
@@ -2387,7 +2501,7 @@ async function showUnit(id) {
     ${spr ? `<div class="sec"><h3 class="green">In battle</h3><div class="stage"><img class="spr" id="spr" src="${sImg(id)}" alt=""></div>
       <div class="gifs"><button class="gbtn small" data-gif="1">Save GIF</button><button class="gbtn small dark" data-gif="0">GIF, see-through</button></div></div>` : ""}
     <div class="sec"><h3>Stats</h3>${statTable(u, w)}</div>
-    ${skills.length || roles ? `<div class="sec"><h3 class="blue">Skills</h3>${rvOn ? `<button class="rvbtn" id="rvbtn">${rvLabel}</button>` : ""}${roles ? `<div class="roles">${roles}</div>` : ""}<div id="sklist">${skills.map(skillBlock).join("")}</div></div>` : ""}
+    ${skills.length || roles ? `<div class="sec"><h3 class="blue">Skills</h3>${rvOn ? `<button class="rvbtn" id="rvbtn">${rvLabel}</button>` : ""}${roles ? `<div class="roles">${roles}</div>` : ""}<div id="sklist">${skillList(skills)}</div></div>` : ""}
     ${spheres || elgOk ? `<div class="sec"><h3 class="purple">Suggested</h3><div class="chipwrap" id="sugsw">${spheres ? `<button class="chip on" data-sw="sph">Spheres</button>` : ""}${elgOk ? `<button class="chip${spheres ? "" : " on"}" data-sw="elg">Elgifs</button>` : ""}</div>
       ${spheres ? `<div id="sugsph">${spheres}</div>` : ""}${elgOk ? `<div id="sugelg"${spheres ? " hidden" : ""}><div class="chipwrap" id="belgtab"><button class="chip on" data-bt="dmg">Damage</button><button class="chip" data-bt="sup">Support</button></div><div id="belglist" class="small dim">Working it out…</div></div>` : ""}</div>` : ""}
     ${sp ? `<div class="sec"><h3>SP Enhancements</h3>${sp}</div>` : ""}
@@ -2412,7 +2526,7 @@ async function showUnit(id) {
     const what = Object.entries(rvc.add).map(([k, v]) => `<b>${k}</b>: ${v.map(esc).join(", ")}`).join(" · ");
     const nums = Object.values(rvc.num).length ? "Numbers Revived changed are under each skill (global → Revived)." : "";
     btn.onclick = () => { on = !on; btn.classList.toggle("on", on); btn.textContent = on ? "Show global" : rvLabel;
-      $("sklist").innerHTML = on ? `<p class="dim small rvnote">Revived's own skill text.${what ? ` New in Revived, marked green: ${what}.` : ""} ${nums}</p>${rs.map(skillBlock).join("")}` : skills.map(skillBlock).join(""); };
+      $("sklist").innerHTML = on ? `<p class="dim small rvnote">Revived's own skill text.${what ? ` New in Revived, marked green: ${what}.` : ""} ${nums}</p>${skillList(rs)}` : skillList(skills); };
   }
   $("ubody").querySelectorAll("[data-unit]").forEach(b => b.onclick = () => go(`#/unit/${b.dataset.unit}`));
   // a sticky row of the page's sections to jump to (the unit pages are long); every section shown, a chip scrolls to it
@@ -3318,7 +3432,8 @@ const COVER_SHOW = [...COVER, "bbcut"];
 const CAST_L = { BB: "B", SBB: "S", UBB: "U" }, SRC_NAME = { L: "LS", E: "ES", B: "BB", S: "SBB", U: "UBB", P: "SP", D: "DBB", H: "SPH" };
 // a Dual BB (tags.json "dbb": unit -> {p: its partner's ids, n: its name, r: role codes}), only with the partner in the
 // squad; like a UBB it isn't what the battle check has the unit cast, so its buffs show but don't count
-const dbbWith = (team, id) => { const d = TAGS.dbb?.[id]; return d && d.p.some(p => p !== id && team.includes(p)) ? d : null; };
+const dbbAll = id => TAGS.dbbx?.[id] || (TAGS.dbb?.[id] ? [TAGS.dbb[id]] : []);  // "dbbx": all its bonds, when it has more than one
+const dbbWith = (team, id) => dbbAll(id).find(d => d.p.some(p => p !== id && team.includes(p))) || null;
 let TEAM_D = null, TEAM_I = null, TEAM_W = [];  // details.json, items.json and the squad's wiki pages, once the Team tab has them
 // a BB cost cut from the game's passives: 48 (BB gauge required, %: each gauge segment cut) and 49 (BB gauge consumed:
 // after a cast, a random share from p0 to p1 of the BB segment comes back; its low end). Lists as the data has them:
@@ -3343,6 +3458,107 @@ const HASC = { d: null, m: new Map() };  // the skills a unit has, as letters: o
 function hasOf(id) { if (HASC.d !== TEAM_D) { HASC.d = TEAM_D; HASC.m = new Map(); } let h = HASC.m.get(id);
   if (h === undefined) HASC.m.set(id, h = (TEAM_D?.[id]?.skills || []).map(s => CAST_L[s.label]).filter(Boolean).join("") || (UMAP[id]?.r >= 6 ? "BS" : "B"));
   return h; }
+// debuffs on foes and status ailments, from a skill's game text (What the team covers, Debuffs & ailments)
+const DEBUFF_KINDS = [["atk", "ATK down"], ["def", "DEF down"], ["rec", "REC down"], ["elem", "Elemental weakness"], ["spark", "Spark vulnerability"], ["crit", "Critical vulnerability"]];
+const AIL_KINDS = [["poison", "Poison"], ["weak", "Weak"], ["sick", "Sick"], ["injury", "Injury"], ["curse", "Curse"], ["para", "Paralysis"], ["random", "Random ailment"]];
+const DBX_SEP = String.raw`(?:,\s*|\s+and\s+|\s*&\s*)`, DBX_AIL = "poison|weak|sick|injury|curse|paralysis";
+// ev (optional): [kind, the words that gave it] for each find, to check them
+function debuffsOf(text, ev) {
+  let t = " " + String(text || "").toLowerCase().replace(/\s+/g, " ") + " ";
+  // what protects your own side doesn't count: negates/cures/prevents/resistance/immunity and the lists they name ("negates all
+  // status ailments and Atk, Def, Rec reduction"); buffs named after a debuff ("boosts elemental weakness damage"); own stats
+  // (each stays inside its own piece of the text: it never runs past a comma or "&" into the next effect, except a stat list)
+  // item and unit names in a condition ("when Cursed Photon Rod is equipped", "when Plaguewarden Theodor is in squad") aren't effects
+  // (a short list of names may have commas: "when Vellum of Curses, Salvation or Brilliance is equipped")
+  const SEP = DBX_SEP, ITEM = String.raw`(?:status ailments?|ailments?|${DBX_AIL}|atk|def|rec)`;
+  // the next piece starts a new effect when it starts with a verb or a number (a negated list stops there)
+  const NEXT = String.raw`(?!\s*(?:random|adds?|boosts?|inflicts?|probable|highly|high|low|reduces?|restores?|recovers?|fills?|activates?|damage (?:taken|dealt)|hugely|enormously|considerably|greatly|slightly|massively|largely|normal|chance|may|raises?|grants?|increases?|gradually|[\d#]))`;
+  t = t.replace(/\b(?:or )?when [^&|.;]{0,80}? (?:is|are) (?:equipped|in (?:the )?(?:same )?squad)\b/g, " ")
+    .replace(/\bor [^&|.;]{0,60}? (?:is|are) equipped\b/g, " ")
+    .replace(/\bdisease\b/g, "sick")  // the game's older word for Sick
+    .replace(/\bpurg\w*[^,&|.;]*?negations?\b/g, " | ")
+    // a protection named after the list (first, before "removal" alone is taken): "adds status ailment and Atk, Def, Rec
+    // reduction effect removal", "Curse resistance", "all status ailments removed and nullified"
+    .replace(new RegExp(String.raw`${ITEM}(?:${SEP}${ITEM})*(?:\s+reductions?)?(?:\s+effects?)?\s+(?:removal|negation|nullification|resistance|immunity|resistant|protection|removed|negated|nullified|healed|cured|cleared)\b[^,&|.;]*`, "g"), " | ")
+    // a protection and the list it names, across commas up to the next effect ("negates critical damage, elemental damage,
+    // all status ailments and Atk, Def, Rec reduction effects & damage taken boosts BB gauge": all of it up to "&"); an "and"
+    // that starts a new effect ends it ("negates status ailments and random status ailment counter")
+    .replace(new RegExp(String.raw`\b(?:negat|nullif|cur(?!se)|remov|prevent|immun|resist(?!ance reduction))\w*(?:(?!\s+and\s+(?:random|probable|adds?|inflicts?|boosts?|chance|high|may))[^,&|.;])*(?:${SEP}${NEXT}(?:(?!\s+and\s+(?:random|probable|adds?|inflicts?|boosts?|chance|high|may))[^,&|.;])*)*`, "g"), " | ")
+    .replace(/\b(?:ignor|protect)\w*[^,&|.;]*/g, " | ")
+    .replace(/\b(?:elemental )?weakness damage|\bweakness (?:boost|bonus)|\breductions? (?:in |from |to (?=(?:the )?(?:bb|sbb|ubb|bc|activation|cost|damage)))|\b(?:damage|dot|bc|hc|cost) reduction|\bown (?:atk|def|rec)\b[^,.;&]*|\b(?:atk|def|rec)\b[^,.;&]*\b(?:to|for) self\b/g, " | ")
+    // a condition on the foe isn't an infliction: "damage against status afflicted foes", "when foes have poison", "foes with ailments"
+    .replace(/\b(?:against|vs\.?|versus)\s+[^,&|.;]*?\b(?:foes?|enem\w*|targets?)\b(?:\s+(?:with|that have|that are|inflicted with|afflicted (?:by|with)|under)\s+[^,&|.;]*)?/g, " ")
+    .replace(/\bwhen (?:a |the |all )?(?:foes?|enem\w*|targets?)\s+(?:is|are|has|have)\s+[^,&|.;]*|\bif (?:a |the )?(?:foes?|enem\w*|targets?)\s+[^,&|.;]*/g, " ")
+    .replace(/\b(?:status[- ]afflicted|afflicted|inflicted|poisoned|cursed|paralyzed|sickened|injured|weakened)\s+(?:foes?|enem\w*|targets?)\b|\bfoes? (?:with|afflicted|inflicted|under)\s+[^,&|.;]*/g, " ");
+  // a list of stats before "reduction" names each one ("Atk, Def, Rec reduction")
+  t = t.replace(new RegExp(String.raw`\b((?:atk|def|rec)(?:${SEP}(?:atk|def|rec))+)\s+(reductions?|down)\b`, "g"), (m, list) => list.match(/atk|def|rec/g).map(k => `${k} reduction`).join(" & "));
+  const out = new Set(), add = (k, p) => { out.add(k); if (ev) ev.push([k, p.trim()]); };
+  for (const p of t.split(/,\s*(?![^()]*\))|\s*&\s*|\s*\|\s*|;\s*|\.\s+/)) {
+    for (const m of p.matchAll(/\b(atk|def|rec)\s+(?:reductions?|down|reducing|lowering)\b/g)) add(m[1], p);
+    // the verbs: "enormously reduces Atk", "chance of decreasing enemy's Atk and Def"
+    for (const m of p.matchAll(new RegExp(String.raw`\b(?:reduc(?:e|es|ing)|decreas(?:e|es|ing)|lower(?:s|ing)?|decrease (?:of|in))\s+(?:(?:the\s+)?(?:all\s+)?(?:enem\w*'?s?|foes?'?s?|targets?'?s?)\s+)?((?:atk|def|rec)(?:${SEP}(?:atk|def|rec))*)\b`, "g")))
+      for (const k of m[1].match(/atk|def|rec/g)) add(k, p);
+    // vulnerability lists, in any order: "critical and elemental (damage) vulnerability", "elemental and spark vulnerability"
+    for (const m of p.matchAll(/\b((?:critical|elemental|spark)(?:\s+(?:and|&|,)\s+(?:critical|elemental|spark))*)\s+(?:damage\s+)?vulnerabilit/g))
+      for (const w of m[1].match(/critical|elemental|spark/g)) add({ critical: "crit", elemental: "elem", spark: "spark" }[w], p);
+    if (/elemental weakness\b(?! damage)/.test(p)) add("elem", p);
+    if (/spark damage resistance reduction/.test(p)) add("spark", p);  // lowers the foes' resistance to sparks (Gildorf's LS)
+    if (/\bpoison(?:s|ed)?\b/.test(p)) add("poison", p);
+    if ((/\bweak\b|(?<!elemental )\bweakness\b/.test(p) && !/weak(?:ness)? (?:point|spot|element)/.test(p)) || /\bweakening effect/.test(p)) add("weak", p);
+    if (/\bsick(?:ness)?\b/.test(p)) add("sick", p);
+    if (/\binjur(?:y|ies|ed)\b/.test(p)) add("injury", p);
+    if (/\bcurses?\b/.test(p)) add("curse", p);
+    if (/\bparaly/.test(p)) add("para", p);
+    // a random one: "random status ailment", "random status infliction", or a status ailment with none named ("probable status
+    // ailment counter", "chance of inflicting a status ailment", "adds probable status ailment infliction to attack")
+    if (/\brandom\b[^,&|]*?\b(?:ailments?|status infliction|status effects?)\b|\bstatus ailment (?:counter|infliction)\b|\binflicting a (?:random )?status ailment\b/.test(p)) add("random", p);
+    // every ailment at once ("all status ailments infliction", "adds all status ailments to all allies' attack")
+    else if (/\ball (?:status )?ailments?\b/.test(p)) for (const k of ["poison", "weak", "sick", "injury", "curse", "para"]) add(k, p);
+  }
+  return out;
+}
+// each squad unit's debuffs: from what it uses now (on) and from its other skills only (off, with the skills' letters)
+function teamDebuffs(team) {
+  return team.map((id, i) => { if (!id || !TEAM_D?.[id]) return null; const d = TEAM_D[id], now = castNow(i, id), lead = i === 0 || i === 5;
+    const src = [["E", d.extra], ...(lead ? [["L", d.leader?.desc]] : []), ...(d.skills || []).map(s => [CAST_L[s.label], s.desc])].filter(([l]) => l);
+    const on = new Map(), off = new Map();  // kind -> the skills (letters) it's on
+    for (const [l, txt] of src) for (const k of debuffsOf(txt)) { const m = now.includes(l) ? on : off; m.set(k, [...(m.get(k) || []), l]); }
+    return { i, id, on, off }; }).filter(Boolean);
+}
+// the table, in the same grid and look as the buffs above it (What the team covers): a column per squad slot, the unit's
+// picture with the skill it comes from under it; greyed when it's only on a BB/SBB/UBB it doesn't cast (a tap says why and
+// offers "Cast BB", like the buffs); Find on a missing row. Behind one button, open or shut as you left it.
+// The table is built only while open, so a closed one adds nothing to the page (one cover table, as before).
+let DBX_OPEN = false;
+function dbxWire(body) {  // what renderTeam does for the buff table: a unit opens its page, a greyed one says why, Find picks
+  const team = TEAMS[TCUR];
+  body.querySelectorAll("[data-u]").forEach(b => b.onclick = () => go(`#/unit/${b.dataset.u}`));
+  body.querySelectorAll(".src.off [data-u]").forEach(b => b.onclick = () => { const s = b.closest(".src"); covTip(b, s.dataset.tip, s.dataset.alt, +s.dataset.i); });
+  body.querySelectorAll("[data-find]").forEach(b => b.onclick = () => { let s = team.findIndex((x, i) => !x && i !== 5); if (s < 0) s = team[5] ? 4 : 5; go(`#/pick/${s}?role=${b.dataset.find}`); });
+}
+document.addEventListener("click", e => { const b = e.target.closest?.(".dbxbtn"); if (!b) return; DBX_OPEN = !DBX_OPEN;
+  b.setAttribute("aria-expanded", DBX_OPEN); b.querySelector("i").textContent = DBX_OPEN ? "▴" : "▾";
+  const body = b.nextElementSibling; body.innerHTML = DBX_OPEN ? dbxTable(TEAMS[TCUR]) : ""; body.hidden = !DBX_OPEN; if (DBX_OPEN) dbxWire(body); });
+function debuffHtml(team) {
+  if (!TEAM_D) return "";
+  const rows = teamDebuffs(team), n = [...DEBUFF_KINDS, ...AIL_KINDS].filter(([k]) => rows.some(r => r.on.has(k))).length;
+  if (DBX_OPEN) setTimeout(() => { const body = document.querySelector(".dbxbody"); if (body) dbxWire(body); });  // drawn open: wire it once it's in
+  return `<button class="gbtn small blue dbxbtn" aria-expanded="${DBX_OPEN}"><span>Debuffs &amp; ailments on foes</span><b>${n}</b><i>${DBX_OPEN ? "▴" : "▾"}</i></button><div class="dbxbody"${DBX_OPEN ? "" : " hidden"}>${DBX_OPEN ? dbxTable(team) : ""}</div>`;
+}
+function dbxTable(team) {
+  const nm = ls => [...new Set(ls)].map(l => SRC_NAME[l]).join(" "), rows = teamDebuffs(team);
+  const pic = (r, k) => { const on = r.on.get(k), off = r.off.get(k), name = esc(UMAP[r.id]?.n || "");
+    if (on) return `<span class="src" title="${name}: from its ${nm(on)}"><span class="pw"><img src="${uImg(r.id)}" alt="" data-u="${r.id}"></span><small>${nm(on)}</small></span>`;
+    const alt = ["B", "S", "U"].find(l => off.includes(l)), cast = [...castNow(r.i, r.id)].find(l => "BSU".includes(l));
+    // the buff table's own sentences: a short one for the tap, the whole reason on hover
+    const sk = [...new Set(off)].map(l => SRC_NAME[l]).join(" and "), its = cast ? `its ${SRC_NAME[cast]}` : "another skill";
+    const tip = `it's on its ${sk}, but it casts ${its}.`, why = `it's on its ${sk}, and it casts ${its} in the battle check (choose its skill on its Battle check row).`;
+    return `<span class="src off alt" data-i="${r.i}" data-alt="${SRC_NAME[alt]}" data-tip="${esc(`<b>${name}</b>: ${tip}`)}" title="${name} doesn't give it to the team right now: ${esc(why)}"><span class="pw"><img src="${uImg(r.id)}" alt="" data-u="${r.id}"></span><small>if ${nm(off).replace(/ /g, "/")}</small></span>`; };
+  const line = ([k, label], find) => { const has = rows.filter(r => r.on.has(k) || r.off.has(k)), ok = rows.some(r => r.on.has(k));
+    return `<div><span class="cl ${ok ? "ok" : has.length ? "part" : "no"}">${ok ? "✓" : "✗"} ${label}${ok ? "" : `<button class="gbtn small blue cfind" data-find="${find}" aria-label="Find units for ${label}">Find</button>`}</span>${has.length ? team.map((id, i) => { const r = has.find(x => x.i === i); return r ? pic(r, k) : `<span class="nos"></span>`; }).join("") : ""}</div>`; };
+  return `<div class="cov dbxcov"><div class="covh"><span></span>${team.map((id, i) => `<span>${id ? (i === 0 ? "Leader" : i === 5 ? "Friend" : `Unit ${i + 1}`) : ""}</span>`).join("")}</div>
+    <div class="covsub">Debuffs</div>${DEBUFF_KINDS.map(x => line(x, "debuff")).join("")}<div class="covsub">Status ailments</div>${AIL_KINDS.map(x => line(x, "ail")).join("")}</div>`;
+}
 function castNow(i, id, fresh) {  // fresh: a unit not in the slot yet casts its default skill
   const has = hasOf(id), set = !fresh && CAST_L[TCAST[TCUR]?.[i]], k = set && has.includes(set) ? set : has.includes("S") ? "S" : "B";
   return "E" + (i === 0 || i === 5 ? "L" : "") + (k === "B" && set === "B" && xaBB(id) ? "BS" : k);  // BB, then its SBB on the extra action
@@ -3795,7 +4011,7 @@ function* autoFillSteps(team, el, S, keep = 1) {
   // leader skill as the leader, how much it raises the team's top numbers (its damage: addDamage), newness
   function rate(u, s, t, missing, tops = Object.fromEntries(NUM_ROLES.map(c => [c, top(t, c)])), live) {
     // its Dual BB, when its partner is already in the team (the user, 2026-11-10: "Dual BB can fit the auto fill")
-    const dbbR = TAGS.dbb?.[u.id]?.p?.some(p => t.includes(p)) ? TAGS.dbb[u.id].r.split(" ") : null;
+    const dbbR = dbbAll(u.id).find(d => d.p.some(p => t.includes(p)))?.r.split(" ") || null;
     const lead = s === 0 || s === 5, now = castNow(s, u.id, true), got = missing.filter(c => teamLetters(u.id, c).some(l => now.includes(l)) || dbbR?.includes(c));
     const covers = got.reduce((a, c) => a + Math.max(FILL_ROLE_W.pick, (FILL_ROLE_W[c] ?? 10) / 10) + (powerOf(u.id, c)?.[0] || 0) / (POWER_MAX[c] || 1) * .6, 0);
     const sp = u.r === 8 ? spFill(u.id, missing.filter(c => !got.includes(c)), lead, omniOf(s)[1], now) : [];
@@ -4517,13 +4733,14 @@ async function renderTeam() {
   if (keep) v.style.minHeight = `${v.offsetHeight}px`;
   // two panes (side by side on a PC): what you edit, then what it does (on a PC the cover table first)
   v.innerHTML = `<div class="tpanes"><div class="tpane tl"><div class="sec" style="padding:8px" data-jump="Field">
+      ${buildsShown() ? `<button class="bfbanner" id="tbuilds"><img class="bfi" src="/static/nav_team.png" alt=""><span class="bft"><b>Community builds</b><small>Teams other players use: open one, copy it in a tap</small></span><span class="bfgo">›</span></button>` : ""}
       <div class="tabs2 teams">${TEAMS.map((t, i) => `<button class="${i === TCUR ? "on" : ""}" data-t="${i}">${esc(teamName(i))}${i === TCUR ? " ✎" : ""}</button>`).join("")}${
         TEAMS.length < MAXT ? `<button class="add" id="tnew" aria-label="New team">＋</button>` : ""}</div>
       <div class="formation">${team.map((id, i) => `<button class="slot" data-s="${i}" style="left:${SPOS[i][0]}%;top:${SPOS[i][1]}%;z-index:${SPOS[i][1]}" aria-label="${SLOTS[i]}">${id && UMAP[id]
         ? `<img src="${sImg(id)}" alt="" onerror="this.onerror=null;this.src='${uImg(id)}'">` : `<span class="pad"><b>+</b></span>`}${i === 0 ? `<span class="sl lead">Leader</span>` : i === 5 ? `<span class="sl friend">Friend</span>` : ""}</button>`).join("")}${team.some(Boolean) ? "" : `<div class="hint">Tap a + to add a unit</div>`}</div>
       <div class="btngrid"><button class="gbtn" id="tfill">Fill empty slots</button>
         <select id="tfillel" class="gsel" aria-label="Element for Fill"><option value="">Any element</option>${ELS.map(e => `<option ${e === fillEl ? "selected" : ""}>${e}</option>`).join("")}</select>
-        <button class="gbtn blue" id="tshare" ${team.some(Boolean) ? "" : "disabled"}>Share picture</button><button class="gbtn dark" id="tclear">Clear team</button></div>
+        <button class="gbtn blue" id="tshare" ${team.some(Boolean) ? "" : "disabled"}>Share picture</button><button class="gbtn dark" id="tclear">Clear team</button></div>${buildsShown() ? `<div class="btnrow bfrow"><button class="gbtn small blue" id="tpost" ${team.some(Boolean) ? "" : "disabled"}>＋ Post this team to Community builds</button></div>` : ""}
       <div class="chipwrap" style="margin:-2px 0 8px"><button class="chip ${SQ.mineOnly ? "on" : ""}" data-opt="mineOnly">✓ Fill from my box only</button><button class="chip ${fillMit ? "on" : ""}" data-fmit>✓ Mitigator</button></div>
       <div class="chipwrap prio" style="margin:-4px 0 8px"><span class="small dim">Priority</span>${
         Object.entries(FILL_PRIO_NAME).map(([k, n]) => `<button class="chip ${fillPrio === k ? "on" : ""}" data-prio="${k}">${n}</button>`).join("")}</div>
@@ -4578,7 +4795,7 @@ async function renderTeam() {
         const pic = (r, dim) => `<span class="src${dim ? ` off${r.self.length ? " self" : altOf(r) ? " alt" : ""}` : ""}"${dim ? ` data-i="${r.i}" data-alt="${altOf(r)}" data-tip="${esc(`<b>${esc(UMAP[r.id]?.n || "")}</b>: ${tipOf(r)}`)}"` : ""} title="${esc(UMAP[r.id]?.n || "")}${dim ? `${r.self.length ? " has it only for itself" : " doesn't give it to the team right now"}: ${esc(dimWhy(r))}.` : `: from its ${r.on.map(l => SRC_NAME[l]).join(", ")}${r.v ? `: ${fmtPower(c, r.v)}${r.v[3] ? " per spark" : ""}${r.v[2] ? " for itself" : ""}` : ""}`}"><span class="pw"><img src="${uImg(r.id)}" alt="" data-u="${r.id}"${!dim && r.on.join("") === "P" ? ` class="viasp"` : ""}>${r.sphIds?.length ? `<span class="sphi">${r.sphIds.map((sid, k) => `<img src="${iImg(sid)}" alt="" class="${sphTeamOf(r.sph[k], r.i) ? "" : "own"}" title="${esc(TEAM_I?.[sid]?.name || "")}${sphTeamOf(r.sph[k], r.i) ? "" : ": only for this unit"}">`).join("")}</span>` : ""}</span><small>${(dim ? dimCap(r) : r.on.filter(l => l !== "H").map(l => SRC_NAME[l]).join(" ")) || "sphere"}</small>${!dim && r.v ? `<em>${fmtShort(c, r.v)}${r.v[3] ? " per spark" : ""}${r.v[2] ? " self" : ""}</em>` : ""}</span>`;
         const selfOnly = !on.length && off.some(r => r.self.length);  // only units buffing themselves: ◐, not ✗
         return `<div><span class="cl ${on.length ? "ok" : selfOnly ? "selfc" : off.length ? "part" : "no"}">${on.length ? "✓" : selfOnly ? "◐" : "✗"} ${esc(TAGS.labels[c] || c)}${best ? `<small> ${fmtPower(c, best)}${best[3] ? " per spark" : ""}${best[2] ? " self" : ""}</small>` : selfOnly ? `<small>only for itself</small>` : ""}${!on.length ? `<button class="gbtn small blue cfind" data-find="${c}" aria-label="Find units for ${esc(TAGS.labels[c] || c)}">Find</button>` : ""}</span>${src.length ? team.map((id, i) => { const r = src.find(x => x.i === i); return r ? pic(r, !r.on.length) : `<span class="nos"></span>`; }).join("") : ""}</div>`; }).join("")}</div>
-      <p class="small dim" style="margin:8px 0 0">It counts the units' extra skills, the skill each one casts in the battle check (its SBB unless you change it there), the SP picked for them and their spheres' effects for all allies; leader skills for the leader and the friend. A BB's buff while the unit casts its SBB, or a UBB's, doesn't count. Green ring: only from its SP.</p></div>
+      ${debuffHtml(team)}<p class="small dim" style="margin:8px 0 0">It counts the units' extra skills, the skill each one casts in the battle check (its SBB unless you change it there), the SP picked for them and their spheres' effects for all allies; leader skills for the leader and the friend. A BB's buff while the unit casts its SBB, or a UBB's, doesn't count. Green ring: only from its SP. Debuffs &amp; ailments count the same skills (not SP or spheres), as the game words them; some bosses resist ailments.</p></div>
     ${matchupHtml(team)}</div><button class="gbtn small blue tmore" hidden>▾ More</button></div>`;
   if ($("muchart")) $("muchart").onclick = elementChart;
   jumpBar(v, [...v.querySelectorAll(".tpane > .sec")]);
@@ -4872,6 +5089,7 @@ async function renderTeam() {
     } finally { FILLING = false; }
   };
   $("tshare").onclick = () => shareTeam(team, W);
+  if ($("tpost")) { $("tpost").onclick = () => go("#/post"); $("tbuilds").onclick = () => go("#/builds"); }
   $("tclear").onclick = () => { if (!team.some(Boolean)) return; const s = teamSnap(), t = TCUR;
     TEAMS[TCUR] = Array(6).fill(null); for (let i = 0; i < 6; i++) resetSlot(i); saveTeams(); renderTeam(); undoToast(`${teamName(t)} cleared`, () => teamRestore(t, s)); };
   if (keep) {
@@ -5317,6 +5535,321 @@ function go(hash) { if (location.hash !== hash) location.hash = hash; else route
 const scrollPos = {};
 // counts page changes: a page that finishes loading after you've moved on doesn't draw over the new one
 let NAV = 0;
+// ---------------- community builds (website only: the app stays offline) ----------------
+// players post a whole team build (units, Omni+, type, SP, spheres, Elgifs, the skill each casts) for some content, and
+// upvote, report or load others' (a Cloudflare Worker keeps them: site/builds). BUILDS_API: its address ("" hides it)
+const BUILDS_API = store.get("bf.buildsapi", "") || "https://bf-builds.bfcompanion.workers.dev";
+// in the app: only once the player turned them on (the app then lets the page reach BUILDS_API, nothing else);
+// buildsShown: the banner and Post button, also in an app that can ask (an older app can't: no setCommunity)
+const appBuilds = () => !!window.BFApp && typeof window.BFApp.setCommunity === "function";
+const buildsOn = () => !!BUILDS_API && (!window.BFApp || (appBuilds() && window.BFApp.communityOn()));
+const buildsShown = () => !!BUILDS_API && (!window.BFApp || appBuilds());
+const BUILD_CONTENT = ["General", "Boss", "Raid", "Trial", "Grand Quest", "Frontier Gate", "Arena", "Event", "Farming"];
+const BUILDS_PRIVACY = "To stop spam and double votes, a scrambled (hashed) form of your IP address is kept for 30 days, then deleted.";
+// contents other players used ([name, builds]) and the chips that suggest them under a field as you type
+let BF_CTS = null;
+const bfContents = async () => BF_CTS || (BF_CTS = buildsApi("/api/builds").then(j => (j.contents || []).map(c => [c.content, c.n])).catch(() => []));
+function ctSuggest(input, box, pick) {
+  const draw = async () => { const q = input.value.trim().toLowerCase(), all = await bfContents();
+    const hits = q.length < 2 ? [] : all.filter(([c]) => c.toLowerCase().includes(q) && c.toLowerCase() !== q).slice(0, 6);
+    box.innerHTML = hits.length ? `<span class="small dim">Others used:</span>${hits.map(([c, n]) => `<button class="chip" data-sg="${esc(c)}">${esc(c)} <small>${n}</small></button>`).join("")}` : "";
+    box.querySelectorAll("[data-sg]").forEach(b => b.onclick = e => { e.preventDefault(); input.value = b.dataset.sg; box.innerHTML = ""; pick?.(b.dataset.sg); }); };
+  input.addEventListener("input", draw); }
+async function buildsApi(path, body) {
+  const r = await fetch(BUILDS_API + path, body === undefined ? {} : { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || `error ${r.status}`);
+  return j;
+}
+const agoS = s => { const d = Date.now() / 1000 - s; return d < 3600 ? `${Math.max(1, Math.round(d / 60))} min ago` : d < 86400 ? `${Math.round(d / 3600)} h ago` : `${Math.round(d / 86400)} d ago`; };
+const buildIcons = ids => `<div class="bicons">${ids.map((id, i) => `<span class="bic">${id && UMAP[id] ? `<img src="${uImg(id)}" alt="${esc(UMAP[id].n)}" title="${esc(UMAP[id].n)}">` : `<i></i>`}${
+  i === 0 ? `<em class="lead">L</em>` : i === 5 ? `<em class="fr">F</em>` : ""}</span>`).join("")}</div>`;
+// the team as on the Team tab: battle sprites on the field, Leader and Friend marked
+const buildForm = (ids, small) => `<div class="formation bform${small ? " small" : ""}">${ids.map((id, i) => id && UMAP[id] ? `<div class="slot" style="left:${SPOS[i][0]}%;top:${SPOS[i][1]}%;z-index:${SPOS[i][1]}">
+  <img src="${sImg(id)}" alt="" onerror="this.onerror=null;this.src='${uImg(id)}'">${i === 0 ? `<span class="sl lead">Leader</span>` : i === 5 ? `<span class="sl friend">Friend</span>` : ""}</div>` : "").join("")}</div>`;
+const buildOrb = e => ELS.includes(e) ? orb(e) : `<span class="bmix">◆</span>`;
+const buildMeta = b => `<div class="bmeta">${buildOrb(b.element)}<span class="bctag">${esc(b.content)}</span><span class="dim">by <b>${esc(b.name)}</b> · ${agoS(b.created)}</span></div>`;
+const buildsOff = () => {
+  if (!appBuilds()) { $("page").innerHTML = `<div class="empty">Community builds are on the website: <b>bfcompanion.app</b></div>`; return; }
+  // the app: ask once; the rest of the app stays offline either way
+  $("page").innerHTML = `<div class="sec"><h3 class="purple">Community builds</h3>
+    <p>Teams other players post for raids, trials, arena and more, with their SP, spheres and Elgifs. Open one and copy it into your teams in a tap.</p>
+    <p class="small dim">They live online, so this part of the app connects to the internet when you open it (to load builds, vote and post). The rest of the app stays offline (apart from the update check, if you use it), and no account is needed. You can turn it off again at the bottom of the list.</p>
+    <div class="btnrow"><button class="gbtn blue" id="bfon">Turn on</button><button class="gbtn dark" id="bfno">Not now</button></div></div>`;
+  $("bfon").onclick = () => { window.BFApp.setCommunity(true); route(); };
+  $("bfno").onclick = () => go("#/team"); };
+let buildsQ = { element: "", content: "", sort: "top" };
+async function showBuilds() {
+  setTitle("Community builds", true);
+  if (!buildsOn()) return buildsOff();
+  const nav = NAV;
+  $("page").innerHTML = `<div class="sec"><h3 class="purple">Community builds</h3>
+    <p class="small" style="margin:0 0 8px">Teams players use for some content, with their SP, spheres and Elgifs. Open one to see it whole, upvote it or load it into your teams.</p>
+    <div class="chipwrap" id="bfel"><button class="chip" data-el="">All</button>${[...ELS, "Mixed"].map(e => `<button class="chip" data-el="${e}">${e}</button>`).join("")}</div>
+    <div class="bfbar"><input type="search" id="bfct" placeholder="Search content: Raid, Kranus hard boss…" value="${esc(buildsQ.content)}">
+      <select id="bfsort" class="gsel" aria-label="Order"><option value="top">Most upvoted</option><option value="new">Newest</option></select></div><div class="ctsug" id="bfsug"></div>
+    <div class="chipwrap bfcc" id="bfcc"></div>
+    <button class="gbtn bfpostbtn" id="bfpost">＋ Post your team</button></div>
+    <div id="bflist"><div class="empty">Loading…</div></div>`;
+  let off = 0, items = [];
+  const fill = async more => {
+    if (!more) { off = 0; items = []; }
+    const q = new URLSearchParams({ sort: buildsQ.sort, offset: off });
+    if (buildsQ.element) q.set("element", buildsQ.element); if (buildsQ.content) q.set("content", buildsQ.content);
+    let j; try { j = await buildsApi("/api/builds?" + q); } catch (e) { if (nav === NAV) $("bflist").innerHTML = `<div class="empty">Couldn't load the builds (${esc(e.message)})</div>`; return; }
+    if (nav !== NAV) return;
+    items.push(...j.builds); off += j.builds.length;
+    BF_CTS = Promise.resolve((j.contents || []).map(c => [c.content, c.n]));
+    if (!more) { const top = (j.contents || []).slice(0, 8);  // the contents players use most, one tap away
+      $("bfcc").innerHTML = top.length ? [["", "All content", 0], ...top.map(c => [c.content, c.content, c.n])].map(([v, l, n]) =>
+        `<button class="chip${v === buildsQ.content ? " on" : ""}" data-ct="${esc(v)}">${esc(l)}${n ? ` <small>${n}</small>` : ""}</button>`).join("") : "";
+      $("bfcc").querySelectorAll("[data-ct]").forEach(c => c.onclick = () => { buildsQ.content = c.dataset.ct; $("bfct").value = buildsQ.content; fill(); }); }
+    $("bflist").innerHTML = items.length ? items.map(b => `<a class="bcard el-${esc(b.element)}" href="#/build/${b.id}">
+      <div class="bchead"><div class="bct"><div class="t">${esc(b.title)}</div>${buildMeta(b)}</div><button class="bvote" data-v="${b.id}" aria-label="Upvote">▲<b>${b.votes}</b></button></div>
+      ${buildIcons(b.units.split(",").map(x => x || null))}${b.notes ? `<div class="bnote">${noteIcons(cardNote(notePlain(b.notes), b.notes.length >= 160))}</div>` : ""}</a>`).join("")
+      + (j.more ? `<button class="gbtn small dark" id="bfmore" style="margin:10px auto;display:block">Show more</button>` : "")
+      : `<div class="empty">No builds here yet. <a href="#/post">Post the first one</a></div>`;
+    if ($("bfmore")) $("bfmore").onclick = () => fill(true);
+    $("bflist").querySelectorAll("[data-v]").forEach(v => v.onclick = async e => { e.preventDefault(); e.stopPropagation();
+      try { const r = await buildsApi(`/api/builds/${v.dataset.v}/vote`, {}); v.querySelector("b").textContent = r.votes; v.classList.add("on"); toast(r.already ? "You upvoted this one already" : "Upvoted"); } catch (er) { toast(er.message); } });
+  };
+  const chips = () => document.querySelectorAll("#bfel [data-el]").forEach(c => c.classList.toggle("on", c.dataset.el === buildsQ.element));
+  chips(); $("bfsort").value = buildsQ.sort;
+  document.querySelectorAll("#bfel [data-el]").forEach(c => c.onclick = () => { buildsQ.element = c.dataset.el; chips(); fill(); });
+  $("bfsort").onchange = () => { buildsQ.sort = $("bfsort").value; fill(); };
+  let tm = 0; ctSuggest($("bfct"), $("bfsug"), v => { buildsQ.content = v; fill(); });
+  $("bfct").oninput = () => { clearTimeout(tm); tm = setTimeout(() => { buildsQ.content = $("bfct").value.trim(); fill(); }, 400); };
+  $("bfpost").onclick = () => go("#/post");
+  if (appBuilds()) { $("page").insertAdjacentHTML("beforeend", `<p class="small dim" style="text-align:center;margin:14px 0">Community builds connect to the internet. <button class="blink" id="bfoff">Turn them off in the app</button></p>`);
+    $("bfoff").onclick = () => { window.BFApp.setCommunity(false); toast("Community builds are off"); go("#/team"); }; }
+  searchX(); fill();
+}
+async function showBuild(id) {
+  setTitle("Build", true);
+  if (!buildsOn()) return buildsOff();
+  const nav = NAV; $("page").innerHTML = `<div class="empty">Loading…</div>`;
+  let b; try { b = (await buildsApi("/api/builds/" + id)).build; } catch (e) { if (nav === NAV) $("page").innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
+  const d = b.data, [I, EG, DET] = await Promise.all([load("items"), elgifMap(), load("details")]), W = await Promise.all(d.t.map(x => x && UMAP[x] ? wiki(x) : null));
+  if (nav !== NAV) return;
+  // what it casts: the skill set for it, else its SBB (its BB when it has none); a BB that gives it an extra action and
+  // refills its gauge casts its SBB too in the same turn
+  const xa = id => { const sk = DET[id]?.skills || [], bb = sk.find(x => x.label === "BB");
+    return !!(bb && sk.some(x => x.label === "SBB") && (TAGS.units[id]?.xact || "").includes("B") && (TAGS.self?.[id]?.xact || "").includes("B") && [1, 2].includes((bb.fill || [])[6])); };
+  const castLab = (id, c) => { c = c || ((DET[id]?.skills || []).some(x => x.label === "SBB") ? "SBB" : "BB"); return c === "BB" && xa(id) ? "Casts BB + SBB (extra action)" : `Casts ${c}`; };
+  const om = i => UMAP[d.t[i]]?.r === 8 ? OMNI_PLUS[d.o?.[i] || 0]?.[0] || "" : "";
+  const spList = i => (d.s?.[i]?.k || []).map(k => { const [c, o] = k.split(":").map(Number); return W[i]?.sp?.[c]?.opts?.[o]?.desc; }).filter(Boolean);
+  const slot = i => { const id = d.t[i]; if (!id || !UMAP[id]) return "";
+    const sph = (d.h?.[i] || []).filter(Boolean).map(x => I[x]?.name || x), eg = d.e?.[i] && EG[d.e[i]]?.name, sp = spList(i), ty = d.y?.[i];
+    const sphIds = (d.h?.[i] || []).filter(Boolean); void sph;
+    return `<div class="bslot"><a href="#/unit/${id}" class="bsimg"><img src="${uImg(id)}" alt=""></a><div style="min-width:0;flex:1">
+      <div class="t"><a href="#/unit/${id}">${esc(UMAP[id].n)}</a>${i === 0 ? ` <span class="tag ls">Leader</span>` : i === 5 ? ` <span class="tag sbb">Friend</span>` : ""}</div>
+      <div class="bchips">${[om(i), (ty || "lord")[0].toUpperCase() + (ty || "lord").slice(1), castLab(id, d.c?.[i])].filter(Boolean).map(x => `<span class="pill">${esc(x)}</span>`).join("")}</div>
+      ${sphIds.length ? `<div class="bgear"><em>Spheres</em>${sphIds.map(x => `<a class="bglink" href="#/item/${x}" title="Where to get ${esc(I[x]?.name || "it")}"><img src="${iImg(x)}" alt="" onerror="this.style.visibility='hidden'">${esc(I[x]?.name || x)}</a>`).join("")}</div>` : ""}
+      ${eg ? `<div class="bgear"><em>Elgif</em><button class="bglink" data-elg="${esc(d.e[i])}" title="Where to get ${esc(eg)}"><img src="${uImg("50792")}" alt="" onerror="this.style.visibility='hidden'">${esc(eg)}</button></div>` : ""}
+      ${sp.length ? `<details class="bsp"><summary><span class="bsh">Show SP build (${sp.length})</span><span class="bhd">Hide SP build</span></summary>${sp.map(x => `<div>· ${esc(x)}</div>`).join("")}</details>` : ""}</div></div>`; };
+  $("page").innerHTML = `<div class="sec bhero el-${esc(b.element)}">${buildForm(d.t)}
+    <div class="bhtitle">${esc(b.title)}</div>${buildMeta(b)}
+    <div class="bacts"><button class="gbtn bvbig" id="bvote">▲ Upvote <span class="bvn" id="bvn">${b.votes}</span></button><button class="gbtn blue" id="buse">Use this build</button></div>
+    <div class="bsharerow"><button class="gbtn small dark" id="bcopy">🔗 Copy link</button>${navigator.share || window.BFApp ? `<button class="gbtn small dark" id="bshare">Share…</button>` : ""}</div>
+    ${b.notes ? `<div class="bnotes bfmt"><div class="bnh">How to play it</div>${noteHtml(b.notes)}</div>` : ""}</div>
+    <div class="sec"><h3>The team</h3>${Array.isArray(d.q) && d.q.length > 1 ? `<div class="bcorder"><b>Cast order</b> <span class="small dim">${d.qo ? "the poster's own" : "battle check"}</span>
+      <div class="bicons">${d.q.filter(x => d.t[x] && UMAP[d.t[x]]).map((x, k) => `<span class="bic" title="${esc(UMAP[d.t[x]].n)}"><img src="${uImg(d.t[x])}" alt=""><em class="num">${k + 1}</em></span>`).join("")}</div></div>` : ""}<div class="bslots">${d.t.map((_, i) => slot(i)).join("")}</div></div>
+    <p class="small dim" style="margin:12px">Posted by a player; BF Companion doesn't check it. <button class="blink" id="brep">Report this build</button><br>${BUILDS_PRIVACY}</p>
+    ${bAdminKey() ? `<div class="sec badmbox"><b>Admin</b><div class="badmrow"><button class="gbtn small dark" id="bahide">Hide</button><button class="gbtn small red" id="badel">Delete this build</button><a class="gbtn small dark" href="#/builds-admin">All posts</a></div></div>` : ""}`;
+  $("bvote").onclick = async () => { try { const r = await buildsApi(`/api/builds/${id}/vote`, {}); $("bvn").textContent = r.votes; toast(r.already ? "You upvoted this one already" : "Upvoted"); } catch (e) { toast(e.message); } };
+  $("brep").onclick = async () => { const why = prompt("Why report this build? (spam, rude, wrong team…)"); if (why === null) return;
+    try { await buildsApi(`/api/builds/${id}/report`, { reason: why }); toast("Thanks: reported"); } catch (e) { toast(e.message); } };
+  $("buse").onclick = () => useBuild(b);
+  if ($("badel")) { $("badel").onclick = async () => { if (!confirm("Delete this build for good? This can't be undone.")) return;
+      try { await buildsAdmin(`/api/admin/builds/${id}/delete`, "POST"); toast("Deleted"); go("#/builds"); } catch (e) { toast(e.message); } };
+    $("bahide").onclick = async () => { try { await buildsAdmin(`/api/admin/builds/${id}/hide`, "POST"); toast("Hidden"); go("#/builds-admin"); } catch (e) { toast(e.message); } }; }
+  // the link: copied (Copy link), or through the phone's share menu (Discord, WhatsApp…) with the title before it
+  const burl = `${window.BFApp ? "https://bfcompanion.app/" : location.origin + location.pathname}#/build/${id}`;
+  // an Elgif: a window with where to get it (spheres are links to their own page)
+  $("page").querySelectorAll("[data-elg]").forEach(btn => btn.onclick = async () => { const e = EG[btn.dataset.elg]; if (!e) return;
+    if (!USRC) USRC = await load("usrc");
+    modal(`<div class="t" style="font-size:16px;margin-bottom:2px">${esc(e.name)}</div><div class="er" style="display:inline-block">${elgifRarity(e.r)}</div>
+      <div class="eff" style="margin:8px 0">${hl(e.desc || "")}</div><div class="bnh">Where to get it</div>
+      ${elgifGetHtml(e, USRC) || `<div class="small dim">No way to get it in Revived right now.</div>`}
+      <div class="btnrow" style="justify-content:center;margin-top:10px"><button class="gbtn dark" id="mtoelg">All Elgifs</button><button class="gbtn mclose">Close</button></div>`);
+    $("mtoelg").onclick = () => { $("modal").hidden = true; go("#/elgifs"); }; });
+  $("bcopy").onclick = async () => { if (window.BFApp) { window.BFApp.copyText(burl); toast("Link copied: paste it anywhere"); return; } try { await navigator.clipboard.writeText(burl); toast("Link copied: paste it anywhere"); } catch { prompt("Copy this link:", burl); } };
+  if ($("bshare")) $("bshare").onclick = async () => { if (window.BFApp) return window.BFApp.shareText(`${b.title} (${b.content}) on BF Companion: ${burl}`); try { await navigator.share({ title: b.title, text: `${b.title} (${b.content}) on BF Companion`, url: burl }); } catch (e) { if (e.name !== "AbortError") $("bcopy").click(); } };
+}
+// the owner's admin mode: the key lives in this browser only; the Worker checks it on every admin call
+const bAdminKey = () => store.get("bf.badmin", "");
+async function buildsAdmin(path, method = "GET") {
+  const r = await fetch(BUILDS_API + path, { method, headers: { "X-Admin-Key": bAdminKey() } });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || `error ${r.status}`);
+  return j;
+}
+async function showBuildsAdmin() {
+  setTitle("Builds admin", true);
+  if (!buildsOn()) return buildsOff();
+  const nav = NAV;
+  const keyForm = msg => { $("page").innerHTML = `<div class="sec"><h3 class="purple">Builds admin</h3>
+    <p class="small" style="margin:0 0 8px">${msg || "Paste your admin key (site/builds/ADMIN_KEY.txt). It stays in this browser only."}</p>
+    <label class="flab">Admin key<input id="bakey" type="password" autocomplete="off"></label>
+    <button class="gbtn" id="basave" style="width:100%">Open admin</button></div>`;
+    $("basave").onclick = () => { store.set("bf.badmin", $("bakey").value.trim()); showBuildsAdmin(); }; };
+  if (!bAdminKey()) return keyForm();
+  let j; try { j = await buildsAdmin("/api/admin/builds"); } catch (e) { if (nav !== NAV) return; store.set("bf.badmin", ""); return keyForm(`That didn't work (${esc(e.message)}). Paste the key again.`); }
+  if (nav !== NAV) return;
+  const list = j.builds || [];
+  $("page").innerHTML = `<div class="sec"><h3 class="purple">Builds admin</h3>
+    <p class="small" style="margin:0 0 8px">${list.length} posts · ${list.filter(b => b.hidden).length} hidden · ${list.filter(b => b.reports).length} reported. Hidden posts don't show to players; 3 reports hide a post by itself.</p>
+    <button class="gbtn small dark" id="baout">Leave admin mode on this device</button></div>
+    ${list.map(b => `<div class="bcard el-${esc(b.element)} ${b.hidden ? "badm-hidden" : ""}" data-id="${b.id}">
+      <div class="bchead"><div class="bct"><div class="t">${esc(b.title)}</div>${buildMeta(b)}</div><div class="bvote">▲<b>${b.votes}</b></div></div>
+      <div class="small" style="margin-top:4px">${b.hidden ? `<b style="color:#ff8a7a">Hidden</b> · ` : ""}${b.reports ? `<b style="color:#ffb35c">${b.reports} report${b.reports > 1 ? "s" : ""}</b> · ` : ""}#${b.id}</div>
+      ${b.notes ? `<div class="bnote">${noteIcons(cardNote(notePlain(b.notes), b.notes.length >= 160))}</div>` : ""}
+      <div class="badmrow"><a class="gbtn small dark" href="#/build/${b.id}">Open</a><button class="gbtn small dark" data-a="${b.hidden ? "show" : "hide"}">${b.hidden ? "Show" : "Hide"}</button><button class="gbtn small red" data-a="delete">Delete</button></div></div>`).join("") || `<div class="empty">No posts yet</div>`}`;
+  $("baout").onclick = () => { store.set("bf.badmin", ""); toast("Admin mode off on this device"); go("#/builds"); };
+  $("page").querySelectorAll("[data-a]").forEach(btn => btn.onclick = async () => {
+    const id = btn.closest("[data-id]").dataset.id, a = btn.dataset.a;
+    if (a === "delete" && !confirm(`Delete post #${id} for good? This can't be undone.`)) return;
+    try { await buildsAdmin(`/api/admin/builds/${id}/${a}`, "POST"); toast(a === "delete" ? "Deleted" : a === "hide" ? "Hidden" : "Shown again"); showBuildsAdmin(); } catch (e) { toast(e.message); } });
+}
+// a build's notes with its unit codes (:850988:) as icons: links to the unit on the build page, plain in a list card
+const noteIcons = (text, link) => esc(text).replace(/:(\d{3,9}):/g, (m, id) => !UMAP[id] ? m : link
+  ? `<a class="bnu" href="#/unit/${id}"><img src="${uImg(id)}" alt="${esc(UMAP[id].n)}" title="${esc(UMAP[id].n)}"></a>`
+  : `<img class="bnu" src="${uImg(id)}" alt="${esc(UMAP[id].n)}" title="${esc(UMAP[id].n)}">`);
+// the notes, formatted: paragraphs, "- " bullets, **bold**, a gold label at a line's start ("Turn 1:"); units as pictures
+const noteHtml = t => { let out = "", list = false;
+  for (const raw of String(t || "").split("\n")) { const l = raw.trim(), bullet = /^[-•*]\s+/.test(l);
+    if (list && !bullet) { out += "</ul>"; list = false; }
+    if (!l) continue;
+    if (bullet && !list) { out += `<ul class="bnl">`; list = true; }
+    let h = noteIcons(l.replace(/^[-•*]\s+/, ""), true).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
+    h = h.replace(/^([A-Za-z][\w ()+.\/-]{0,22}:)(?=\s|$)/, `<b class="bnlab">$1</b>`);
+    out += bullet ? `<li>${h}</li>` : `<p>${h}</p>`; }
+  return out + (list ? "</ul>" : ""); };
+// a list card's preview without the marks
+const notePlain = t => String(t || "").replace(/\*\*(.+?)\*\*/g, "$1").replace(/\*\*/g, "").replace(/^[ \t]*[-•*]\s+/gm, "");
+const cardNote = (t, cut = t.length >= 160) => !cut ? t : t.trimEnd().replace(/(?<!:\d{3,9}):\d*$/, "").trimEnd().replace(/\s+\S*$/, "").replace(/[\s,.;:]+$/, "") + "…";
+// a build loaded into a new team of yours (named after it), with its SP, spheres, Elgifs and skills
+function useBuild(b) {
+  if (TEAMS.length >= MAXT) return toast(`You have ${MAXT} teams already: clear or remove one first`);
+  const d = b.data, n = TEAMS.length, six = (a, f) => Array.from({ length: 6 }, (_, i) => a?.[i] ?? f());
+  TEAMS[n] = six(d.t, () => null).map(id => id && UMAP[id] ? id : null); TTYPE[n] = six(d.y, () => "lord").map(x => TYPES.includes(x) ? x : "lord");
+  TSPH[n] = six(d.h, () => [null, null]).map(p => [p?.[0] ?? null, p?.[1] ?? null]); TELG[n] = six(d.e, () => null);
+  TSPE[n] = six(d.s, () => null); TOMNI[n] = six(d.o, () => 0); TCAST[n] = six(d.c, () => null); TNAMES[n] = String(b.title).slice(0, 30);
+  TCUR = n; saveTeams(); saveSquad(); go("#/team"); toast(`Loaded into ${teamName(n)}`);
+}
+async function showPost() {
+  setTitle("Post your team", true);
+  if (!buildsOn()) return buildsOff();
+  const t = TEAMS[TCUR];
+  if (!t.some(Boolean)) { $("page").innerHTML = `<div class="empty">This team is empty: build it on the <a href="#/team">Team tab</a>, then post it.</div>`; return; }
+  const els = [...new Set(t.filter(Boolean).map(id => UMAP[id]?.e))], el0 = els.length === 1 && ELS.includes(els[0]) ? els[0] : "Mixed";
+  // units with no sphere or no Elgif set: a warning, so the post carries the whole build (Fill sets neither)
+  const filled = t.map((id, i) => [id, i]).filter(([id]) => id), noSph = filled.filter(([, i]) => !(TSPH[TCUR][i] || []).some(Boolean)), noElg = filled.filter(([, i]) => !TELG[TCUR][i]);
+  const who = l => l.length === filled.length ? "any unit" : l.map(([id]) => esc(UMAP[id]?.n || "")).join(", ");
+  const gearWarn = noSph.length || noElg.length ? `<div class="bwarn"><b>⚠ Not set yet:</b>${noSph.length ? `<div>No spheres on ${who(noSph)}</div>` : ""}${noElg.length ? `<div>No Elgif on ${who(noElg)}</div>` : ""}
+    <div class="small">Others copy exactly what you post. Set them in <b>Squad</b> on the Team tab first, or post without them.</div><button class="gbtn small dark" id="bpsquad">Go to Squad</button></div>` : "";
+  $("page").innerHTML = `<div class="sec"><h3 class="purple">Post ${esc(teamName(TCUR))}</h3>${buildForm(t, true)}${gearWarn}
+    <p class="small" style="margin:8px 0">The whole build goes with it: units, Omni+, types, SP, spheres, Elgifs and the skill each casts. Set those on the Team tab first.</p>
+    <label class="flab">Your name<input id="bpname" maxlength="24" value="${esc(store.get("bf.bname", ""))}" autocomplete="nickname"></label>
+    <label class="flab">Title<input id="bptitle" maxlength="60" value="${esc(TNAMES[TCUR] || "")}" placeholder="Light 2x Kranus, UBB rotation"></label>
+    <label class="flab">For (content)<input id="bpct" maxlength="40" placeholder="Kranus hard boss, Raid, Arena…"><div class="ctsug" id="bpsug"></div></label>
+    <div class="chipwrap bfcc">${BUILD_CONTENT.map(c => `<button class="chip" data-pc="${c}">${c}</button>`).join("")}</div>
+    <label class="flab">Element<select id="bpel" class="gsel">${[...ELS, "Mixed"].map(e => `<option ${e === el0 ? "selected" : ""}>${e}</option>`).join("")}</select></label>
+    <label class="flab">How to play it (optional)<div id="bpnotes" class="bpedit" contenteditable="true" role="textbox" aria-multiline="true" data-ph="Rotation, who uses UBB when, what to swap…"></div></label>
+    <div class="bpicons"><span class="small dim">Add a unit icon to the notes:</span><div class="bicons">${[...new Set(t.filter(Boolean))].map(id =>
+      `<button class="bpic" data-u="${id}" title="${esc(UMAP[id]?.n || "")}"><img src="${uImg(id)}" alt=""></button>`).join("")}<button class="chip" id="bpfind">Other unit…</button></div>
+      <div id="bpfbox" hidden><input type="search" id="bpq" placeholder="Unit name" autocomplete="off"><div class="bicons" id="bpqr"></div></div>
+      <div class="small dim">Tap a unit to put its picture where your cursor is.</div>
+      <div class="bpfmt"><button class="chip" id="bpbold"><b>B</b> Bold</button><button class="chip" id="bplist">• List</button><span class="small dim">Start a line with "- " for a list, **text** is bold, and "Turn 1:" at a line's start is highlighted.</span></div></div>
+    <div class="flab">Cast order<div class="chipwrap" style="margin-top:4px"><button class="chip on" data-qm="auto">Suggested</button><button class="chip" data-qm="own">My own order</button></div>
+      <div id="bpq1" class="bicons"><span class="small dim">Working it out…</span></div><div id="bpqh" class="small dim"></div></div>
+    <div class="btnrow"><button class="gbtn" id="bpgo">Post</button></div>
+    <p class="small dim" style="margin:8px 0 0">Posts are public and need no account; links aren't allowed. ${BUILDS_PRIVACY}</p></div>`;
+  document.querySelectorAll("[data-pc]").forEach(c => c.onclick = () => { $("bpct").value = c.dataset.pc; $("bpsug").innerHTML = ""; $("bpct").focus(); });
+  ctSuggest($("bpct"), $("bpsug"));
+  if ($("bpsquad")) $("bpsquad").onclick = () => { go("#/team"); setTimeout(() => [...document.querySelectorAll("#v-team .sec > h3")].find(h => h.textContent === "Squad")?.closest(".sec").scrollIntoView({ behavior: "smooth", block: "start" }), 400); };
+  // the notes box: unit pictures in the text (img data-u), written back as :id: codes when posting
+  const ed = $("bpnotes"), pic = id => { const im = document.createElement("img"); im.src = uImg(id); im.className = "bnu"; im.dataset.u = id; im.alt = UMAP[id]?.n || ""; im.title = UMAP[id]?.n || ""; im.contentEditable = "false"; return im; };
+  const noteText = () => { let out = ""; const walk = n => { for (const c of n.childNodes) {
+      if (c.nodeType === 3) out += c.nodeValue.replace(/\u00a0/g, " ");
+      else if (c.nodeName === "IMG" && c.dataset.u) out += `:${c.dataset.u}:`;
+      else if (c.nodeName === "BR") out += "\n";
+      else { if (/^(DIV|P)$/.test(c.nodeName) && out && !out.endsWith("\n")) out += "\n"; walk(c); } } };
+    walk(ed); return out.replace(/\n{3,}/g, "\n\n").trim(); };
+  let saved = null;  // where the cursor was in the box (a tap on a unit button takes the focus away)
+  document.addEventListener("selectionchange", () => { const sel = getSelection(); if (sel.rangeCount && ed.contains(sel.getRangeAt(0).startContainer)) saved = sel.getRangeAt(0).cloneRange(); });
+  const putIcon = id => { if (noteText().length + id.length + 2 > 3000) return toast("The notes are full");
+    ed.focus(); const sel = getSelection(); let r = saved && ed.contains(saved.startContainer) ? saved : null;
+    if (!r) { r = document.createRange(); r.selectNodeContents(ed); r.collapse(false); }
+    r.deleteContents(); const im = pic(id), sp = document.createTextNode("\u00a0"); r.insertNode(sp); r.insertNode(im);
+    r.setStartAfter(sp); r.collapse(true); sel.removeAllRanges(); sel.addRange(r); saved = r.cloneRange(); };
+  // a typed :id: turns into its picture; pasted text comes in plain; Enter makes a line
+  // (every finished code in the line the cursor is in, wherever it is: swipe typing and autocomplete put in whole words)
+  ed.addEventListener("input", () => { const sel = getSelection(); if (!sel.rangeCount) return; const n = sel.anchorNode;
+    if (!n || n.nodeType !== 3 || !ed.contains(n)) return; const text = n.nodeValue, caret = sel.anchorOffset, re = /:(\d{3,9}):/g, hits = []; let m;
+    while ((m = re.exec(text))) if (UMAP[m[1]]) hits.push([m.index, m.index + m[0].length, m[1]]);
+    if (!hits.length) return;
+    const frag = document.createDocumentFragment(); let pos = 0, cNode = null, cOff = 0;
+    const addText = (t, start) => { const tn = document.createTextNode(t); frag.append(tn); if (!cNode && caret >= start && caret <= start + t.length) { cNode = tn; cOff = caret - start; } };
+    for (const [a, z, id] of hits) { addText(text.slice(pos, a), pos); frag.append(pic(id)); pos = z; }
+    addText(pos < text.length ? text.slice(pos) : "\u00a0", pos); if (pos >= text.length && cNode) cOff = 1;
+    n.replaceWith(frag); if (cNode) { const r = document.createRange(); r.setStart(cNode, Math.min(cOff, cNode.length)); r.collapse(true); sel.removeAllRanges(); sel.addRange(r); } });
+  // the 3000-character limit (the Worker keeps 3000; 1500 until the user raised it, 2026-11-13: "up the 1500 char limit to 3000"): a counter under the box, typing stops there, a paste keeps what fits,
+  // Post won't send more (the user, 2026-11-13: "what happen if the how to play text has 14000 character")
+  const NOTE_MAX = 3000, cnt = document.createElement("div"); cnt.className = "small dim bpcount"; ed.after(cnt);
+  // Bold wraps the selection in ** (or puts ** ** to type into); List starts a new line with "- "
+  const keepSel = e => e.preventDefault();
+  $("bpbold").onmousedown = keepSel; $("bplist").onmousedown = keepSel;
+  $("bpbold").onclick = e => { e.preventDefault(); ed.focus(); const sel = getSelection(), r = saved && ed.contains(saved.startContainer) ? saved : null;
+    if (r) { sel.removeAllRanges(); sel.addRange(r); } const t = sel.toString();
+    document.execCommand("insertText", false, t ? `**${t}**` : "****"); if (!t) { const r2 = sel.getRangeAt(0); r2.setStart(r2.startContainer, Math.max(0, r2.startOffset - 2)); r2.collapse(true); sel.removeAllRanges(); sel.addRange(r2); } };
+  $("bplist").onclick = e => { e.preventDefault(); ed.focus(); const sel = getSelection(), r = saved && ed.contains(saved.startContainer) ? saved : null;
+    if (r) { sel.removeAllRanges(); sel.addRange(r); } if (noteText()) document.execCommand("insertLineBreak"); document.execCommand("insertText", false, "- "); };
+  const upd = () => { const n = noteText().length; cnt.textContent = `${n} / ${NOTE_MAX} characters${n ? " (a unit picture counts as its code, about 8)" : ""}`; cnt.classList.toggle("over", n >= NOTE_MAX); };
+  ed.addEventListener("input", upd); upd();
+  ed.addEventListener("beforeinput", e => { if (/^insert(Text|LineBreak|Paragraph|CompositionText|ReplacementText)$/.test(e.inputType) && noteText().length >= NOTE_MAX) { e.preventDefault(); toast(`The notes are full (${NOTE_MAX} characters)`); } });
+  ed.addEventListener("paste", e => { e.preventDefault(); let t2 = (e.clipboardData || window.clipboardData).getData("text/plain"); const room = NOTE_MAX - noteText().length;
+    if (room <= 0) return toast(`The notes are full (${NOTE_MAX} characters)`);
+    if (t2.length > room) { t2 = t2.slice(0, room); toast(`Only the first ${room} characters fit: the notes hold ${NOTE_MAX}`); }
+    document.execCommand("insertText", false, t2); upd(); });
+  $("bpgo").addEventListener("click", e => { const n = noteText().length; if (n > NOTE_MAX) { e.stopImmediatePropagation(); e.preventDefault(); toast(`The notes are too long: ${n} of ${NOTE_MAX} characters`); } }, true);
+  ed.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); document.execCommand("insertLineBreak"); } });
+  const wire = root => root.querySelectorAll("[data-u]").forEach(b2 => b2.onclick = e => { e.preventDefault(); putIcon(b2.dataset.u); });
+  wire($("page"));
+  $("bpfind").onclick = e => { e.preventDefault(); $("bpfbox").hidden = !$("bpfbox").hidden; if (!$("bpfbox").hidden) $("bpq").focus(); };
+  $("bpq").oninput = () => { const q = $("bpq").value.trim().toLowerCase();
+    const hits = q.length < 2 ? [] : UNITS.filter(u => u.n.toLowerCase().includes(q)).sort((x, y) => y.r - x.r).slice(0, 12);
+    $("bpqr").innerHTML = hits.map(u => `<button class="bpic" data-u="${u.id}" title="${esc(u.n)}"><img src="${uImg(u.id)}" alt=""></button>`).join("") || (q.length >= 2 ? `<span class="small dim">No unit by that name</span>` : "");
+    wire($("bpqr")); };
+  // the cast order: the battle check's best one (worked out once the form is open), or the poster's own taps
+  let qAuto = null, qMode = "auto", qOwn = [];
+  const slots = t.map((id, i) => id && UMAP[id] ? i : -1).filter(i => i >= 0);
+  const numbered = q => q.map((x, k) => `<span class="bic"><img src="${uImg(t[x])}" alt="" title="${esc(UMAP[t[x]].n)}"><em class="num">${k + 1}</em></span>`).join("");
+  const drawQ = () => {
+    document.querySelectorAll("[data-qm]").forEach(c => c.classList.toggle("on", c.dataset.qm === qMode));
+    if (qMode === "auto") { $("bpq1").innerHTML = qAuto ? numbered(qAuto) : `<span class="small dim">Working it out…</span>`; $("bpqh").textContent = "The order that hits hardest in the battle check (sparks and buffs)."; return; }
+    $("bpq1").innerHTML = slots.map(x => { const k = qOwn.indexOf(x); return `<button class="bpic${k >= 0 ? " picked" : ""}" data-qs="${x}"><span class="bic"><img src="${uImg(t[x])}" alt="" title="${esc(UMAP[t[x]].n)}">${k >= 0 ? `<em class="num">${k + 1}</em>` : ""}</span></button>`; }).join("")
+      + `<button class="chip" id="bpqr0">Reset</button>`;
+    $("bpqh").textContent = qOwn.length === slots.length ? "Your order is set." : `Tap the units in the order you cast them (${qOwn.length} of ${slots.length}). Left unfinished, the post has no cast order.`;
+    document.querySelectorAll("[data-qs]").forEach(b2 => b2.onclick = e => { e.preventDefault(); const x = +b2.dataset.qs; if (!qOwn.includes(x)) qOwn.push(x); drawQ(); });
+    $("bpqr0").onclick = e => { e.preventDefault(); qOwn = []; drawQ(); }; };
+  document.querySelectorAll("[data-qm]").forEach(c => c.onclick = e => { e.preventDefault(); qMode = c.dataset.qm; drawQ(); });
+  drawQ();
+  (async () => { try { const [D2, I2] = await Promise.all([load("details"), load("items")]), W2 = await Promise.all(t.map(id => id ? wiki(id) : {}));
+      const N2 = t.map((id, i) => id && UMAP[id] ? unitNumbers(i, t, W2, D2, I2) : null), B2 = battleCheck(t, W2, N2, D2, true);
+      const q = (B2.spark?.best?.order || []).map(o => o.slot).filter(x => Number.isInteger(x)); qAuto = q.length > 1 ? q : slots; } catch { qAuto = slots; }
+    if ($("bpq1")) drawQ(); })();
+  $("bpgo").onclick = async () => {
+    // My own order left unfinished: the build goes up without a cast order (the user, 2026-11-13: "if they dont fill the cast order, it just ignore it")
+    const ownDone = qMode === "own" && qOwn.length === slots.length, q = qMode === "own" ? (ownDone ? qOwn : null) : qAuto, qo = ownDone ? 1 : 0;
+    const b = { name: $("bpname").value, title: $("bptitle").value, content: $("bpct").value, element: $("bpel").value, notes: noteText(),
+      data: { t: [...t], o: [...TOMNI[TCUR]], s: TSPE[TCUR].map(x => x && { b: x.b || null, k: x.k || [] }), h: TSPH[TCUR].map(p => [p?.[0] ?? null, p?.[1] ?? null]),
+        e: [...TELG[TCUR]], c: [...TCAST[TCUR]], y: [...TTYPE[TCUR]], ...(q && q.length > 1 ? { q, qo } : {}) } };
+    if (!b.name.trim() || !b.title.trim() || !b.content.trim()) return toast("Your name, a title and the content are needed");
+    store.set("bf.bname", b.name.trim()); $("bpgo").disabled = true;
+    try { const r = await buildsApi("/api/builds", b); toast("Posted"); go(`#/build/${r.id}`); } catch (e) { toast(e.message); $("bpgo").disabled = false; }
+  };
+}
 async function route() {
   NAV++;
   const h = location.hash || "#/units";
@@ -5332,6 +5865,10 @@ async function route() {
   if ((m = h.match(/^#\/gate\/(\d+)/))) return showGate(m[1]);
   if (h === "#/compare") return showCompare();
   if (h === "#/tiers") return showTiers();
+  if (h === "#/builds") return showBuilds();
+  if (h === "#/builds-admin") return showBuildsAdmin();
+  if (h === "#/post") return showPost();
+  if ((m = h.match(/^#\/build\/(\d+)/))) return showBuild(m[1]);
   if ((m = h.match(/^#\/pulls(?:\/(\d+))?/))) return showPulls(m[1]);
   const t = (h.match(/^#\/(\w+)/) || [])[1];
   tab = TABS[t] ? t : "units";

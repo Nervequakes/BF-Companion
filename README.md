@@ -4,11 +4,11 @@ An offline Android guide for **Brave Frontier Revived**: every unit, sphere, dro
 pocket, plus a team builder that shows your squad's numbers like the game's Manage Squad screen.
 
 No account, no ads, no internet needed: everything is inside the app. If you want, it checks GitHub for new versions
-and installs them for you.
+and installs them for you, and shows Community builds (teams other players post) once you turn them on.
 
 No Android phone? The same guide is a website too: **[bfcompanion.app](https://bfcompanion.app)**, in any browser, iPhone included. It's rebuilt from every release, so it always matches the app.
 
-**[⬇ Download the latest APK](../../releases/latest)** · ✅ Collects nothing · ✅ Offline (online only to check for updates, if you want) · ✅ [Code you can read](app) · ✅ [Scanned on VirusTotal (4.9)](https://www.virustotal.com/gui/file/4a0becfd3c7d33b522ca3ecc7b6105d0245334f8b0ad832bdbb7cdcc6cafebd6) · [Is it safe?](#is-it-safe)
+**[⬇ Download the latest APK](../../releases/latest)** · ✅ Collects nothing · ✅ Offline (online only for updates and Community builds, if you want) · ✅ [Code you can read](app) · ✅ [Scanned on VirusTotal (4.9)](https://www.virustotal.com/gui/file/4a0becfd3c7d33b522ca3ecc7b6105d0245334f8b0ad832bdbb7cdcc6cafebd6) · [Is it safe?](#is-it-safe)
 
 Slow download from GitHub? Get the APK from the **[Google Drive mirror](https://drive.google.com/file/d/1uFvBd24L8b5KQAOG_Wnh-q1i7tvH-koN/view)** (Google says it can't scan files this big for viruses: tap *Download anyway*).
 
@@ -102,15 +102,19 @@ mean anything is wrong. If Google Play Protect offers to scan the app, let it.
 
 Yes, and you don't have to take my word for it:
 
-- **It only goes online when you ask, and only to GitHub.** Updates are off until you tap *Check for updates* or turn on
+- **It only goes online when you ask.** Updates are off until you tap *Check for updates* or turn on
   *Check for updates automatically* (tap the logo, then *Privacy*). Then the app asks GitHub's API for this repo's newest
   release. If you tap *Download and install*, it downloads that release's APK, checks it against the SHA-256 GitHub gives
   for it, and hands it to Android, which asks you before installing and only takes an APK signed with the same key.
   When only the guide's data changed, it downloads just that release's small zip of the page and data instead (a few
   MB), checks it against GitHub's SHA-256 the same way, and keeps it in the app's own storage until the next APK.
-  The app's pages still can't load anything that isn't built in
-  ([MainActivity.java, line 91](app/src/sg/bf/companion/MainActivity.java#L91)).
-- **Two permissions, both only for updates.** *Internet*, to ask GitHub, and *Install unknown apps*, to hand the new
+  The app's pages still can't load anything that isn't built in, except the Community builds server once you turn it on
+  ([MainActivity.java, lines 96-97](app/src/sg/bf/companion/MainActivity.java#L96-L97)).
+- **Community builds, only if you turn them on.** Teams players post live on a small server (`bf-builds.bfcompanion.workers.dev`,
+  a Cloudflare Worker). The app reaches it only after you tap *Turn on* in Community builds (off by default; *Turn them
+  off* at the bottom of the list), and only that address. Posting needs no account; to stop spam and double votes, a
+  scrambled (hashed) form of your IP address is kept for 30 days, then deleted.
+- **Two permissions.** *Internet*, to ask GitHub (and the Community builds server, if you turn it on), and *Install unknown apps*, to hand the new
   version to Android's installer (Android asks you to allow it the first time). Android's own tool lists exactly these
   two for the APK (`aapt2 dump permissions`).
 - **It collects nothing.** No account, no ads, no analytics, no trackers. Your favorites and teams are saved only
@@ -120,7 +124,7 @@ Yes, and you don't have to take my word for it:
   and a data update you choose to download, in the app's own storage.
 - **Read the code.** The [`app`](app) folder holds everything that makes the APK:
   - [`AndroidManifest.xml`](app/AndroidManifest.xml): what the app is allowed to do (the two update permissions, nothing else).
-  - [`MainActivity.java`](app/src/sg/bf/companion/MainActivity.java): the whole Android part, about 610 lines. It
+  - [`MainActivity.java`](app/src/sg/bf/companion/MainActivity.java): the whole Android part, about 640 lines. It
     shows the app's pages, colours the phone's status and navigation bars, saves, shares or copies a picture when you tap
     *Share*, *Save GIF* or *Copy picture*, shares a unit's link, handles the back button, and checks for and installs updates when you ask
     (the whole APK, or only new data).
