@@ -5215,6 +5215,7 @@ async function shareTeam(team, W) {
 // choosing a sphere for a squad unit: the ones its extra skill wants first, then the biggest stat boosts for it
 let sphQ = "", sphFav = false;  // sphFav: only your favorite spheres
 let sphDmg = store.get("bf.sphdmg", false);  // sorted by the team's damage with it (sarc on Discord)
+let sphRev = store.get("bf.sphrev", false);  // only spheres you can get in Revived (sarc again)
 // the roles that can make a sphere add damage in the battle check (its own numbers, or more units casting every turn)
 const SPH_DMG_ROLES = ["atk", "bbatk", "crit", "critrate", "spark", "elem", "bbf", "bbcut", "od", "twice"];
 async function showSpherePick(slot, n) {
@@ -5258,10 +5259,10 @@ async function showSpherePick(slot, n) {
   const esOn = !!other && (best.includes(other.id) || bonusTypes(D[id]).includes(other.type)), bestOk = best.filter(x => !clash(I[x]));
   const row = s => { const b = boostText(statBoosts(s.desc)), no = clash(s);
     return `<div class="item${no ? " clash" : ""}" ${no ? "" : `data-pick="${s.id}"`}><img loading="lazy" src="${iImg(s.id)}" alt="" onerror="this.style.visibility='hidden'"><div style="min-width:0;flex:1">
-      <div class="t">${ifavs.has(s.id) ? IFSTAR : ""}${esc(s.name)} <span class="dim small">${s.rarity ? `${s.rarity}${STAR}` : ""} ${esc(s.type || "")}</span></div>${
+      <div class="t">${ifavs.has(s.id) ? IFSTAR : ""}${esc(s.name)} <span class="dim small">${s.rarity ? `${s.rarity}${STAR}` : ""} ${esc(s.type || "")}</span>${s.ok === 1 ? `<span class="craft got">in Revived</span>` : ""}</div>${
       no ? `<div class="clashw">Can't go with ${esc(other.name)}: a unit can't hold two ${esc(s.type)} spheres</div>` : ""}${dmgTag(s)}${b ? `<div class="sb">${esc(b)}</div>` : ""}<div class="s">${esc(s.desc)}</div></div></div>`; };
   $("page").innerHTML = `<div id="sphpage"><div class="bar2"><div class="searchrow"><input id="spq" type="search" placeholder="Search spheres…" value="${esc(sphQ)}" autocomplete="off"></div>
-      <div class="scroller"><button class="chip on" id="spnone">No sphere</button><button class="chip${sphDmg ? " on" : ""}" id="spdmg">Most damage</button>${[...ifavs].some(x => I[x]?.type) ? `<button class="chip${sphFav ? " on" : ""}" id="spfav">${FAVSTAR} Favorites</button>` : ""}</div></div>
+      <div class="scroller"><button class="chip on" id="spnone">No sphere</button><button class="chip${sphDmg ? " on" : ""}" id="spdmg">Most damage</button><button class="chip rev${sphRev ? " on" : ""}" id="sprev">Can get in Revived (${Object.values(I).filter(s => s.type && s.name && s.ok === 1).length})</button>${[...ifavs].some(x => I[x]?.type) ? `<button class="chip${sphFav ? " on" : ""}" id="spfav">${FAVSTAR} Favorites</button>` : ""}</div></div>
     ${!best.length ? "" : esOn ? `<div class="count">${esc(other.name)} (sphere ${2 - n}) already switches on ${esc(u.n)}'s extra skill</div>`
       : bestOk.length ? `<div class="count">These switch on ${esc(u.n)}'s extra skill</div><div style="padding-top:8px" id="spbest">${bestOk.map(x => row(I[x])).join("")}</div>`
       : `<div class="count">${esc(u.n)}'s extra skill needs ${best.map(x => esc(I[x].name)).join(" or ")}, which can't go with ${esc(other.name)} (both ${esc(other.type)}): put it in sphere ${2 - n} instead to switch it on</div>`}
@@ -5272,17 +5273,19 @@ async function showSpherePick(slot, n) {
   $("spnone").onclick = () => pick(null);
   if (sphFav && ![...ifavs].some(x => I[x]?.type)) sphFav = false;
   if ($("spfav")) $("spfav").onclick = () => { sphFav = !sphFav; $("spfav").classList.toggle("on", sphFav); draw(); };
+  $("sprev").onclick = () => { sphRev = !sphRev; store.set("bf.sphrev", sphRev); $("sprev").classList.toggle("on", sphRev); draw(); };
   $("spdmg").onclick = () => { sphDmg = !sphDmg; store.set("bf.sphdmg", sphDmg); $("spdmg").classList.toggle("on", sphDmg); draw(); };
   const draw = () => {
     const q = sphQ.trim().toLowerCase();
     if (sphDmg && dmgState !== "done") { $("spcount").textContent = "Working out each sphere's damage…"; $("splist").innerHTML = ""; runDmg(); return; }
     const dm = s => sphDmg ? dmgOf.get(s.id) || dmgBase : 0;
     if ($("spbest")) $("spbest").innerHTML = bestOk.map(x => row(I[x])).join("");  // with their damage too (or without)
-    const list = Object.values(I).filter(s => s.type && s.name && (!sphFav || ifavs.has(s.id)) && (!q || s.name.toLowerCase().includes(q) || s.desc.toLowerCase().includes(q)))
+    const list = Object.values(I).filter(s => s.type && s.name && (!sphFav || ifavs.has(s.id)) && (!sphRev || s.ok === 1) && (!q || s.name.toLowerCase().includes(q) || s.desc.toLowerCase().includes(q)))
       .map(s => [s, gain(s)]).sort((a, b) => clash(a[0]) - clash(b[0]) || dm(b[0]) - dm(a[0]) || b[1] - a[1] || (b[0].rarity || 0) - (a[0].rarity || 0) || a[0].name.localeCompare(b[0].name)).map(x => x[0]);
-    $("spcount").textContent = sphDmg ? `${list.length} ${sphFav ? "of your favorite " : ""}spheres, the most team damage first: the battle check's damage per turn (crits, sparks, a weak foe) with it in sphere ${n + 1}, against none there${
+    const only = `${sphFav ? "of your favorite " : ""}${sphRev ? "Revived " : ""}`;
+    $("spcount").textContent = sphDmg ? `${list.length} ${only}spheres, the most team damage first: the battle check's damage per turn (crits, sparks, a weak foe) with it in sphere ${n + 1}, against none there${
       other?.type ? `. ${other.type} spheres are greyed out at the end: it already holds ${other.name}` : ""}`
-      : `${list.length} ${sphFav ? "of your favorite " : ""}spheres, the best for what it does (${focus.label}) first, with its extra skill, SP and other sphere in mind${
+      : `${list.length} ${only}spheres, the best for what it does (${focus.label}) first, with its extra skill, SP and other sphere in mind${
       other?.type ? `. ${other.type} spheres are greyed out at the end: it already holds ${other.name}` : ""}`;
     paged($("splist"), list, s => { const d = document.createElement("div"); d.innerHTML = row(s); return d.firstElementChild; }, "");
   };
