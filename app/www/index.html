@@ -2336,6 +2336,8 @@ function weekHtml() {
     <p class="small dim" style="margin:6px 0 0">Vortex dungeons, from Revived's game server.${W.dayStart ? ` A day in the game starts at ${W.dayStart} your time.` : ""} Featured summon gates are below.</p></div>`;
 }
 
+// an evolution material's unit id: the data gives an id ("10130") or a name ("Fire Mecha God")
+const evoMat = m => UMAP[m] ? String(m) : UNITS.find(x => x.n === String(m).replace(/\s*\(.*\)$/, ""))?.id || null;
 async function evoChain(id) {
   const chain = [id]; const seen = new Set(chain);
   for (let cur = id, i = 0; i < 8; i++) { const w = await wiki(cur); const f = w.evo?.from; if (!f || seen.has(f) || !UMAP[f]) break; chain.unshift(f); seen.add(f); cur = f; }
@@ -2421,7 +2423,7 @@ async function showUnit(id) {
   }
   const chain = await evoChain(id);
   if (nav !== NAV) return;  // left the page while it loaded
-  const mats = (w.evo?.mats || []).map(n => { const m = UNITS.find(x => x.n === n.replace(/\s*\(.*\)$/, "")); return m ? unitMini(m.id) : `<span class="pill">${esc(n)}</span>`; }).join("");
+  const mats = (w.evo?.mats || []).map(n => { const m = evoMat(n); return m ? unitMini(m) : `<span class="pill">${esc(n)}</span>`; }).join("");
   // SP enhancements: the players' builds from the wiki (the first one's options ticked in the list), else an estimate
   const builds = w.builds || [], spPick = !w.sp?.length ? null : builds.length ? { keys: buildKeys(builds[0], w.sp) } : TAGS.units[id] ? spPicks(id, w.sp) : null;
   const sp = w.sp?.length ? (builds.length ? builds.map((b, k) => `<div class="spb"><div class="bcl"><b>Suggested build</b>${b.name ? ` · ${esc(b.name)}` : ""} · <b>${b.sp} SP</b>${
